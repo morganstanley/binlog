@@ -23,6 +23,10 @@ Building requires `cmake`. The build files are generated in a separate directory
     Sanitized/$ cmake .. -DBINLOG_USE_ASAN=On
     Sanitized/$ make VERBOSE=1
 
+## Further Build Options
+
+ - `BINLOG_USE_CLANG_TIDY`: runs clang-tidy on built sources.
+
 ## Clean
 
     $ rm -rf Release/ Debug/ Sanitized/
