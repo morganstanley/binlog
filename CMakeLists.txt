@@ -4,11 +4,12 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 include(CTest)
 include(AddressSanitizer)
+include(Coverage)
 
 # Set default type to Release with debug symbols
-if (NOT CMAKE_BUILD_TYPE)
+if (NOT CMAKE_BUILD_TYPE AND NOT BINLOG_GEN_COVERAGE)
   set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Debug|Release|RelWithDebInfo|MinSizeRel" FORCE)
-endif (NOT CMAKE_BUILD_TYPE)
+endif ()
 
 # Setup compile options
 if (MSVC)

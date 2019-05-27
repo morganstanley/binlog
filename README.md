@@ -23,13 +23,26 @@ Building requires `cmake`. The build files are generated in a separate directory
     Sanitized/$ cmake .. -DBINLOG_USE_ASAN=On
     Sanitized/$ make VERBOSE=1
 
+## Debug Build with Code Coverage
+
+When building with `GCC`, requires: `gcov`, `lcov`, `genhtml`.
+When building with `Clang`, requires: `llvm-profdata`, `llvm-tools`.
+
+    $ mkdir Coverage
+    $ cd Coverage
+    Coverage/$ cmake .. -DCMAKE_BUILD_TYPE=Debug -DBINLOG_GEN_COVERAGE=On
+    Coverage/$ make
+    Coverage/$ make coverage_init
+    Coverage/$ make test
+    Coverage/$ make coverage
+
 ## Further Build Options
 
  - `BINLOG_USE_CLANG_TIDY`: runs clang-tidy on built sources.
 
 ## Clean
 
-    $ rm -rf Release/ Debug/ Sanitized/
+    $ rm -rf Release/ Debug/ Sanitized/ Coverage/
 
 ## Test
 
