@@ -16,9 +16,16 @@ Building requires `cmake`. The build files are generated in a separate directory
     Debug/$ cmake .. -DCMAKE_BUILD_TYPE=Debug
     Debug/$ make VERBOSE=1
 
+## Sanitized Build
+
+    $ mkdir Sanitized
+    $ cd Sanitized
+    Sanitized/$ cmake .. -DBINLOG_USE_ASAN=On
+    Sanitized/$ make VERBOSE=1
+
 ## Clean
 
-    $ rm -rf Release/ Debug/
+    $ rm -rf Release/ Debug/ Sanitized/
 
 ## Test
 

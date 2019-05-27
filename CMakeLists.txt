@@ -1,7 +1,9 @@
 cmake_minimum_required (VERSION 2.6)
 project (Binlog)
+LIST(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 include(CTest)
+include(AddressSanitizer)
 
 # Set default type to Release with debug symbols
 if (NOT CMAKE_BUILD_TYPE)
