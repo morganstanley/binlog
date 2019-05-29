@@ -5,6 +5,7 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 include(CTest)
 include(AddressSanitizer)
 include(Coverage)
+include(MarkdownToHtml)
 
 # Set default type to Release with debug symbols
 if (NOT CMAKE_BUILD_TYPE AND NOT BINLOG_GEN_COVERAGE)
@@ -32,3 +33,6 @@ add_executable(UnitTest test/unit/UnitTest.cpp)
 add_test(NAME UnitTest
          COMMAND UnitTest)
 target_compile_features(UnitTest PRIVATE cxx_std_14)
+
+# Documentation
+markdown_to_html_group(Documentation UserGuide)

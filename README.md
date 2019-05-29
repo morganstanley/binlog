@@ -36,6 +36,14 @@ When building with `Clang`, requires: `llvm-profdata`, `llvm-tools`.
     Coverage/$ make test
     Coverage/$ make coverage
 
+## Build the documentation
+
+The documentation is generated from markdown files, with code snippets
+automatically included from source files. To build the documentation,
+`python` and the `markdown` and `pygments` python packages are required.
+
+    Release/$ make Documentation
+
 ## Further Build Options
 
  - `BINLOG_USE_CLANG_TIDY`: runs clang-tidy on built sources.
