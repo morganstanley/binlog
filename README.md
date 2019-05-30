@@ -46,7 +46,8 @@ automatically included from source files. To build the documentation,
 
 ## Further Build Options
 
- - `BINLOG_USE_CLANG_TIDY`: runs clang-tidy on built sources.
+ - `-DBINLOG_USE_CLANG_TIDY`: runs clang-tidy on built sources.
+ - `-DBOOST_ROOT`: specifies the path to an alternate boost installation (tests depend on boost)
 
 ## Clean
 
