@@ -6,6 +6,7 @@ include(CTest)
 include(AddressSanitizer)
 include(Coverage)
 include(MarkdownToHtml)
+include(OptionalCompileOption)
 
 # Set default type to Release with debug symbols
 if (NOT CMAKE_BUILD_TYPE AND NOT BINLOG_GEN_COVERAGE)
@@ -16,10 +17,11 @@ endif ()
 if (MSVC)
   add_compile_options(/W4)
 else ()
-  add_compile_options(-Wall -Wextra -Werror -Wconversion -Wsign-conversion)
-
-  # TODO for gcc, add -Wlogical-op -Wold-style-cast -Wsuggest-override
-  # TODO for clang, add -Wno-missing-braces
+  add_compile_options(-Wall -Wextra -Werror -pedantic)
+  add_compile_options(-fno-rtti)
+  add_optional_compile_options(
+    -Wconversion -Wsign-conversion -Wold-style-cast -Wsuggest-override
+  )
 endif ()
 
 # Clang Tidy

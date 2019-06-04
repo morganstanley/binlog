@@ -1,0 +1,10 @@
+include(CheckCXXCompilerFlag)
+
+function(add_optional_compile_options)
+  foreach(opt ${ARGV})
+    check_cxx_compiler_flag(${opt} HAS_${opt})
+    if (HAS_${opt})
+      add_compile_options(${opt})
+    endif ()
+  endforeach()
+endfunction()
