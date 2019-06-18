@@ -25,7 +25,7 @@ namespace mserialize {
 template <typename T, typename OutputStream>
 void serialize(const T& in, OutputStream& ostream)
 {
-  detail::Serializer<T>::serialize(in, ostream);
+  detail::Serializer<T>::type::serialize(in, ostream);
 }
 
 } // namespace mserialize

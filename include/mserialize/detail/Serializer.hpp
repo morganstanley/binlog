@@ -8,22 +8,43 @@
 namespace mserialize {
 namespace detail {
 
-// Default case: Invalid serializer
+// Invalid serializer
 
-template <typename T, typename = void>
-struct BuiltinSerializer
+struct InvalidSerializer
 {
-  template <typename OutputStream>
+  template <typename T, typename OutputStream>
   static void serialize(const T& /* t */, OutputStream& /* ostream */)
   {
     static_assert(always_false<T>::value, "T is not serializable");
   }
 };
 
+// Forward declarations
+
+template <typename Arithmetic>
+struct ArithmeticSerializer;
+
+// Builtin serializer - one specialization for each category
+
+template <typename T, typename = void>
+struct BuiltinSerializer : InvalidSerializer {};
+
+template <typename T>
+struct BuiltinSerializer<T, enable_spec_if<std::is_arithmetic<T>>>
+  : ArithmeticSerializer<T> {};
+
+// Serializer - entry point
+
+template <typename T>
+struct  Serializer
+{
+  using type = BuiltinSerializer<T>;
+};
+
 // Arithmetic serializer
 
 template <typename Arithmetic>
-struct BuiltinSerializer<Arithmetic, enable_spec_if<std::is_arithmetic<Arithmetic>>>
+struct ArithmeticSerializer
 {
   template <typename OutputStream>
   static void serialize(const Arithmetic t, OutputStream& ostream)
@@ -31,9 +52,6 @@ struct BuiltinSerializer<Arithmetic, enable_spec_if<std::is_arithmetic<Arithmeti
     ostream.write(reinterpret_cast<const char*>(&t), sizeof(Arithmetic));
   }
 };
-
-template <typename T>
-using Serializer = BuiltinSerializer<T>;
 
 } // namespace detail
 } // namespace mserialize

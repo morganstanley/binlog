@@ -34,7 +34,7 @@ namespace mserialize {
 template <typename T, typename InputStream>
 void deserialize(T& out, InputStream& istream)
 {
-  detail::Deserializer<T>::deserialize(out, istream);
+  detail::Deserializer<T>::type::deserialize(out, istream);
 }
 
 } // namespace mserialize

@@ -8,22 +8,43 @@
 namespace mserialize {
 namespace detail {
 
-// Default case: Invalid deserializer
+// Invalid deserializer
 
-template <typename T, typename = void>
-struct BuiltinDeserializer
+struct InvalidDeserializer
 {
-  template <typename InputStream>
+  template <typename T, typename InputStream>
   static void serialize(const T& /* t */, InputStream& /* istream */)
   {
     static_assert(always_false<T>::value, "T is not deserializable");
   }
 };
 
+// Forward declarations
+
+template <typename Arithmetic>
+struct ArithmeticDeserializer;
+
+// Builtin deserializer - one specialization for each category
+
+template <typename T, typename = void>
+struct BuiltinDeserializer : InvalidDeserializer {};
+
+template <typename T>
+struct BuiltinDeserializer<T, enable_spec_if<std::is_arithmetic<T>>>
+  : ArithmeticDeserializer<T> {};
+
+// Deserializer - entry point
+
+template <typename T>
+struct Deserializer
+{
+  using type = BuiltinDeserializer<T>;
+};
+
 // Arithmetic deserializer
 
 template <typename Arithmetic>
-struct BuiltinDeserializer<Arithmetic, enable_spec_if<std::is_arithmetic<Arithmetic>>>
+struct ArithmeticDeserializer
 {
   template <typename InputStream>
   static void deserialize(Arithmetic& t, InputStream& istream)
@@ -31,9 +52,6 @@ struct BuiltinDeserializer<Arithmetic, enable_spec_if<std::is_arithmetic<Arithme
     istream.read(reinterpret_cast<char*>(&t), sizeof(Arithmetic));
   }
 };
-
-template <typename T>
-using Deserializer = BuiltinDeserializer<T>;
 
 } // namespace detail
 } // namespace mserialize
