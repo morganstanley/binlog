@@ -1,11 +1,18 @@
 #ifndef MSERIALIZE_DETAIL_SERIALIZER_HPP
 #define MSERIALIZE_DETAIL_SERIALIZER_HPP
 
+#include <mserialize/detail/sequence_traits.hpp>
 #include <mserialize/detail/type_traits.hpp>
 
+#include <cassert>
+#include <cstdint>
 #include <type_traits>
 
 namespace mserialize {
+
+template <typename T, typename OutputStream>
+void serialize(const T& in, OutputStream& ostream);
+
 namespace detail {
 
 // Invalid serializer
@@ -24,6 +31,9 @@ struct InvalidSerializer
 template <typename Arithmetic>
 struct ArithmeticSerializer;
 
+template <typename Sequence>
+struct SequenceSerializer;
+
 // Builtin serializer - one specialization for each category
 
 template <typename T, typename = void>
@@ -32,6 +42,11 @@ struct BuiltinSerializer : InvalidSerializer {};
 template <typename T>
 struct BuiltinSerializer<T, enable_spec_if<std::is_arithmetic<T>>>
   : ArithmeticSerializer<T> {};
+
+template <typename T>
+struct BuiltinSerializer<T, enable_spec_if<
+    is_serializable_iterator<sequence_iterator_t<T>>
+>> : SequenceSerializer<T> {};
 
 // Serializer - entry point
 
@@ -50,6 +65,26 @@ struct ArithmeticSerializer
   static void serialize(const Arithmetic t, OutputStream& ostream)
   {
     ostream.write(reinterpret_cast<const char*>(&t), sizeof(Arithmetic));
+  }
+};
+
+// Sequence serializer
+
+template <typename Sequence>
+struct SequenceSerializer
+{
+  template <typename OutputStream>
+  static void serialize(const Sequence& s, OutputStream& ostream)
+  {
+    const auto size = sequence_size(s);
+    const auto size32 = std::uint32_t(size);
+    assert(size32 == size && "sequence size must fit on 32 bits");
+
+    mserialize::serialize(size32, ostream);
+    for (auto&& elem : s)
+    {
+      mserialize::serialize(elem, ostream);
+    }
   }
 };
 

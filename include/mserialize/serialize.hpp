@@ -10,6 +10,7 @@ namespace mserialize {
  *
  * @requires `T` to be a serializable type, including:
  *  - Arithmetic types (std::is_arithmetic)
+ *  - Sequence containers (begin/end, serializable value_type)
  *
  * @requires `OutputStream` to model the following concept:
  *
