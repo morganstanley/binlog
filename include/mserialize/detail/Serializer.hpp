@@ -34,6 +34,9 @@ struct ArithmeticSerializer;
 template <typename Sequence>
 struct SequenceSerializer;
 
+template <typename Tuple>
+struct TupleSerializer;
+
 // Builtin serializer - one specialization for each category
 
 template <typename T, typename = void>
@@ -47,6 +50,10 @@ template <typename T>
 struct BuiltinSerializer<T, enable_spec_if<
     is_serializable_iterator<sequence_iterator_t<T>>
 >> : SequenceSerializer<T> {};
+
+template <typename T>
+struct BuiltinSerializer<T, enable_spec_if<is_tuple<T>>>
+  : TupleSerializer<T> {};
 
 // Serializer - entry point
 
@@ -105,6 +112,27 @@ private:
     const char* data = reinterpret_cast<const char*>(sequence_data(s));
     const size_t serialized_size = sizeof(sequence_data_t<const Sequence>) * size;
     ostream.write(data, std::streamsize(serialized_size));
+  }
+};
+
+// Tuple serializer
+
+template <typename... E, template <class...> class Tuple>
+struct TupleSerializer<Tuple<E...>>
+{
+  template <typename OutputStream>
+  static void serialize(const Tuple<E...>& t, OutputStream& ostream)
+  {
+    serialize_elems(t, ostream, std::index_sequence_for<E...>{});
+  }
+
+private:
+  template <typename OutputStream, std::size_t... I>
+  static void serialize_elems(const Tuple<E...>& t, OutputStream& ostream, std::index_sequence<I...>)
+  {
+    using swallow = int[];
+    using std::get;
+    (void)swallow{1, (mserialize::serialize(get<I>(t), ostream), int{})...};
   }
 };
 

@@ -36,6 +36,9 @@ struct ArithmeticDeserializer;
 template <typename Sequence>
 struct SequenceDeserializer;
 
+template <typename Tuple>
+struct TupleDeserializer;
+
 // Builtin deserializer - one specialization for each category
 
 template <typename T, typename = void>
@@ -49,6 +52,10 @@ template <typename T>
 struct BuiltinDeserializer<T, enable_spec_if<
     is_deserializable_iterator<sequence_iterator_t<T>>
 >> : SequenceDeserializer<T> {};
+
+template <typename T>
+struct BuiltinDeserializer<T, enable_spec_if<is_tuple<T>>>
+  : TupleDeserializer<T> {};
 
 // Deserializer - entry point
 
@@ -168,6 +175,27 @@ private:
       mserialize::deserialize(elem, istream);
       proxy = std::move(elem);
     }
+  }
+};
+
+// Tuple deserializer
+
+template <typename... E, template <class...> class Tuple>
+struct TupleDeserializer<Tuple<E...>>
+{
+  template <typename InputStream>
+  static void deserialize(Tuple<E...>& t, InputStream& istream)
+  {
+    deserialize_elems(t, istream, std::index_sequence_for<E...>{});
+  }
+
+private:
+  template <typename InputStream, std::size_t... I>
+  static void deserialize_elems(Tuple<E...>& t, InputStream& istream, std::index_sequence<I...>)
+  {
+    using swallow = int[];
+    using std::get;
+    (void)swallow{1, (mserialize::deserialize(get<I>(t), istream), int{})...};
   }
 };
 

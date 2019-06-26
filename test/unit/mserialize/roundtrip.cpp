@@ -18,6 +18,8 @@
 #include <deque>
 #include <forward_list>
 #include <list>
+#include <tuple>
+#include <utility> // pair
 #include <vector>
 
 namespace {
@@ -259,6 +261,19 @@ BOOST_AUTO_TEST_CASE(sequence_cross)
   ));
 }
 
+// Can't pass argument to BOOST macro with commas inside
+using CharIntTuple = std::tuple<char, int>;
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(sequence_of_tuples, T, sequence_types<CharIntTuple>)
+{
+  const T in{
+    CharIntTuple{'1',2}, {'3',4}, {'5',6}, {'7',8}, {'9',10},
+    {'A',12}, {'C',14}, {'E',15}, {'G',17}, {'I',19}
+  };
+  T out;
+  roundtrip_into(in, out);
+  BOOST_TEST(std::equal(begin(in), end(in), begin(out), end(out)));
+}
 
 BOOST_AUTO_TEST_CASE(vector_of_bool)
 {
@@ -292,6 +307,91 @@ BOOST_AUTO_TEST_CASE(string)
     const std::string in = "foobar";
     const std::string out = roundtrip(in);
     BOOST_TEST(in == out);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(tuples)
+{
+  // empty
+  {
+    const std::tuple<> in;
+    const std::tuple<> out = roundtrip(in);
+    BOOST_TEST((in == out));
+  }
+
+  // single
+  {
+    const std::tuple<int> in{123};
+    const std::tuple<int> out = roundtrip(in);
+    BOOST_TEST((in == out));
+  }
+
+  // two, one of a kind
+  {
+    const std::tuple<std::int16_t, std::int16_t> in{456, 789};
+    const std::tuple<std::int16_t, std::int16_t> out = roundtrip(in);
+    BOOST_TEST((in == out));
+  }
+
+  // two nested
+  {
+    const std::tuple<
+      std::tuple<int, int>,
+      std::tuple<int, int>
+    > in{{1,2}, {3,4}};
+    const auto out = roundtrip(in);
+    BOOST_TEST((in == out));
+  }
+
+  // more, mixed
+  {
+    const std::tuple<
+      int, std::vector<int>, std::pair<std::int16_t, std::int16_t>,
+      std::deque<char>
+    > in{1, {2,3,4}, {5,6}, {'7','8','9'}};
+    const auto out = roundtrip(in);
+    BOOST_TEST((in == out));
+  }
+}
+
+BOOST_AUTO_TEST_CASE(pairs)
+{
+  // two, one of a kind
+  {
+    const std::pair<int, int> in{1,2};
+    const std::pair<int, int> out = roundtrip(in);
+    BOOST_TEST((in == out));
+  }
+
+  // nested
+  {
+    const std::pair<
+      std::pair<char, std::int16_t>,
+      std::pair<int, std::int64_t>
+    > in{{'1',2}, {3,4}};
+    const auto out = roundtrip(in);
+    BOOST_TEST((in == out));
+  }
+}
+
+BOOST_AUTO_TEST_CASE(tuple_pair_cross)
+{
+  // tuple -> pair
+  {
+    const std::tuple<int, float> in{1,1.0f};
+    std::pair<int, float> out;
+    roundtrip_into(in, out);
+    BOOST_TEST(std::get<0>(in) == std::get<0>(out));
+    BOOST_TEST(std::get<1>(in) == std::get<1>(out));
+  }
+
+  // pair -> tuple
+  {
+    const std::pair<int, char> in{1,'2'};
+    std::tuple<int, char> out;
+    roundtrip_into(in, out);
+    BOOST_TEST(std::get<0>(in) == std::get<0>(out));
+    BOOST_TEST(std::get<1>(in) == std::get<1>(out));
   }
 }
 

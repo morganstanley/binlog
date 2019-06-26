@@ -11,6 +11,7 @@ namespace mserialize {
  * @requires `T` to be a deserializable type, including:
  *  - Arithmetic types (std::is_arithmetic)
  *  - Sequence containers (begin/end, deserializable value_type)
+ *  - Tuples (std::pair, std::tuple, is_tuple)
  *
  * @requires `InputStream` to model the following concept:
  *

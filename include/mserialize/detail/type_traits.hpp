@@ -1,7 +1,9 @@
 #ifndef MSERIALIZE_DETAIL_TYPE_TRAITS_HPP
 #define MSERIALIZE_DETAIL_TYPE_TRAITS_HPP
 
+#include <tuple>
 #include <type_traits>
+#include <utility> // pair
 
 namespace mserialize {
 namespace detail {
@@ -67,6 +69,17 @@ template <typename T>
 using is_deserializable = negation<
   std::is_base_of<InvalidDeserializer, typename Deserializer<T>::type>
 >;
+
+// is_tuple
+
+template <typename T>
+struct is_tuple : std::false_type {};
+
+template <typename... T>
+struct is_tuple<std::tuple<T...>> : std::true_type {};
+
+template <typename T, typename U>
+struct is_tuple<std::pair<T, U>> : std::true_type {};
 
 } // namespace detail
 } // namespace mserialize
