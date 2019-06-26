@@ -81,10 +81,30 @@ struct SequenceSerializer
     assert(size32 == size && "sequence size must fit on 32 bits");
 
     mserialize::serialize(size32, ostream);
+    serialize_elems(is_sequence_batch_serializable<const Sequence>{}, s, size32, ostream);
+  }
+
+private:
+  template <typename OutputStream>
+  static void serialize_elems(
+    std::false_type /* no batch copy */,
+    const Sequence& s, std::uint32_t /* size */, OutputStream& ostream
+  )
+  {
     for (auto&& elem : s)
     {
       mserialize::serialize(elem, ostream);
     }
+  }
+
+  template <typename OutputStream>
+  static void serialize_elems(
+    std::true_type /* batch copy */,
+    const Sequence& s, std::uint32_t size, OutputStream& ostream)
+  {
+    const char* data = reinterpret_cast<const char*>(sequence_data(s));
+    const size_t serialized_size = sizeof(sequence_data_t<const Sequence>) * size;
+    ostream.write(data, std::streamsize(serialized_size));
   }
 };
 

@@ -82,7 +82,7 @@ struct SequenceDeserializer
     mserialize::deserialize(size, istream);
 
     resize(s, size);
-    deserialize_elems(is_proxy_sequence<Sequence>{}, s, istream);
+    deserialize_elems(is_proxy_sequence<Sequence>{}, s, size, istream);
   }
 
 private:
@@ -120,7 +120,18 @@ private:
   }
 
   template <typename InputStream>
-  static void deserialize_elems(std::false_type /* no proxy */, Sequence& s, InputStream& istream)
+  static void deserialize_elems(
+    std::false_type /* no proxy */,
+    Sequence& s, std::uint32_t size, InputStream& istream
+  )
+  {
+    deserialize_elems_noproxy(is_sequence_batch_deserializable<Sequence>{}, s, size, istream);
+  }
+
+  template <typename InputStream>
+  static void deserialize_elems_noproxy(
+    std::false_type /* no batch copy */,
+    Sequence& s, std::uint32_t /* size*/, InputStream& istream)
   {
     for (auto&& elem : s)
     {
@@ -129,7 +140,21 @@ private:
   }
 
   template <typename InputStream>
-  static void deserialize_elems(std::true_type /* proxy */, Sequence& s, InputStream& istream)
+  static void deserialize_elems_noproxy(
+    std::true_type /* batch copy */,
+    Sequence& s, std::uint32_t size, InputStream& istream
+  )
+  {
+    char* data = reinterpret_cast<char*>(sequence_data(s));
+    const size_t serialized_size = sizeof(sequence_data_t<Sequence>) * size;
+    istream.read(data, std::streamsize(serialized_size));
+  }
+
+  template <typename InputStream>
+  static void deserialize_elems(
+    std::true_type /* proxy */,
+    Sequence& s, std::uint32_t /* size */, InputStream& istream
+  )
   {
     // For some sequences (e.g: std::vector<bool>)
     // S::reference != S::value_type &

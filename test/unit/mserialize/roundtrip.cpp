@@ -186,6 +186,27 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(float_spec, T, float_types)
   }
 }
 
+// is_sequence_batch_serializable
+
+static_assert(mserialize::detail::is_sequence_batch_serializable<std::vector<int>>::value, "");
+static_assert(mserialize::detail::is_sequence_batch_serializable<std::string>::value, "");
+static_assert(mserialize::detail::is_sequence_batch_serializable<std::array<bool, 16>>::value, "");
+static_assert(mserialize::detail::is_sequence_batch_serializable<int(&)[8]>::value, "");
+
+static_assert(! mserialize::detail::is_sequence_batch_serializable<std::vector<std::vector<int>>>::value, "");
+static_assert(! mserialize::detail::is_sequence_batch_serializable<std::array<std::string, 16>>::value, "");
+static_assert(! mserialize::detail::is_sequence_batch_serializable<std::vector<int>(&)[8]>::value, "");
+
+// is_sequence_batch_deserializable
+
+static_assert(mserialize::detail::is_sequence_batch_deserializable<std::vector<int>>::value, "");
+static_assert(mserialize::detail::is_sequence_batch_deserializable<std::array<bool, 16>>::value, "");
+static_assert(mserialize::detail::is_sequence_batch_deserializable<int(&)[8]>::value, "");
+
+static_assert(! mserialize::detail::is_sequence_batch_deserializable<std::vector<std::vector<int>>>::value, "");
+static_assert(! mserialize::detail::is_sequence_batch_deserializable<std::array<std::string, 16>>::value, "");
+static_assert(! mserialize::detail::is_sequence_batch_deserializable<std::vector<int>(&)[8]>::value, "");
+
 BOOST_AUTO_TEST_CASE_TEMPLATE(sequence_of_int, T, sequence_types<int>)
 {
   /*const*/ T in{0,1,2,3,4,5,6,7,8,9};

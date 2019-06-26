@@ -78,6 +78,53 @@ auto sequence_size(const Sequence& s)
   return SequenceSize<Sequence>::value(s);
 }
 
+// Sequence data
+
+template <typename Sequence>
+auto sequence_data(Sequence& s, int = 0) -> decltype(s.data())
+{
+  return s.data();
+}
+
+template <typename T, size_t N>
+T* sequence_data(T (&array)[N], int = 0) noexcept
+{
+  return std::begin(array);
+}
+
+template <typename T>
+void sequence_data(T&, char);
+
+template <typename Sequence>
+using sequence_data_ptr_t = decltype(sequence_data(std::declval<Sequence&>(), 0));
+
+template <typename Sequence>
+using sequence_data_t = std::remove_pointer_t<sequence_data_ptr_t<Sequence>>;
+
+// Sequence has contiguous data
+
+template <typename Sequence>
+using sequence_has_contiguous_data = std::is_pointer<
+  sequence_data_ptr_t<Sequence>
+>;
+
+// Is sequence batch serializable
+
+template <typename Sequence>
+using is_sequence_batch_serializable = conjunction<
+  sequence_has_contiguous_data<Sequence>,
+  std::is_arithmetic<sequence_data_t<Sequence>>
+>;
+
+// Is sequence batch deserializable
+
+template <typename Sequence>
+using is_sequence_batch_deserializable = conjunction<
+  sequence_has_contiguous_data<Sequence>,
+  std::is_arithmetic<sequence_data_t<Sequence>>,
+  negation<std::is_const<sequence_data_t<Sequence>>>
+>;
+
 // Is proxy sequence
 
 template <typename Sequence>
