@@ -37,6 +37,9 @@ struct SequenceSerializer;
 template <typename Tuple>
 struct TupleSerializer;
 
+template <typename Optional>
+struct OptionalSerializer;
+
 // Builtin serializer - one specialization for each category
 
 template <typename T, typename = void>
@@ -54,6 +57,10 @@ struct BuiltinSerializer<T, enable_spec_if<
 template <typename T>
 struct BuiltinSerializer<T, enable_spec_if<is_tuple<T>>>
   : TupleSerializer<T> {};
+
+template <typename T>
+struct BuiltinSerializer<T, enable_spec_if<is_optional<T>>>
+  : OptionalSerializer<T> {};
 
 // Serializer - entry point
 
@@ -133,6 +140,26 @@ private:
     using swallow = int[];
     using std::get;
     (void)swallow{1, (mserialize::serialize(get<I>(t), ostream), int{})...};
+  }
+};
+
+// Optional serializer
+
+template <typename Optional>
+struct OptionalSerializer
+{
+  template <typename OutputStream>
+  static void serialize(const Optional& opt, OutputStream& ostream)
+  {
+    if (opt)
+    {
+      mserialize::serialize(std::uint8_t{1}, ostream);
+      mserialize::serialize(*opt, ostream);
+    }
+    else
+    {
+      mserialize::serialize(std::uint8_t{0}, ostream);
+    }
   }
 };
 

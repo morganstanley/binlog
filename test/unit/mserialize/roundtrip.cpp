@@ -4,6 +4,7 @@
 #include <mserialize/serialize.hpp>
 
 #include <boost/mpl/list.hpp>
+#include <boost/optional/optional.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include <algorithm> // equal
@@ -18,6 +19,7 @@
 #include <deque>
 #include <forward_list>
 #include <list>
+#include <memory>
 #include <tuple>
 #include <utility> // pair
 #include <vector>
@@ -47,6 +49,12 @@ template <typename T>
 using var_size_sequence_types = boost::mpl::list<
   std::deque<T>, std::forward_list<T>,
   std::list<T>, std::vector<T>
+>;
+
+template <typename T>
+using smart_pointers = boost::mpl::list<
+  std::unique_ptr<T>,
+  std::shared_ptr<T>
 >;
 
 // In tests, do not use stringstream directly,
@@ -119,6 +127,17 @@ auto container_equal()
 }
 
 } // namespace
+
+// specialization required by the optional tests
+
+namespace mserialize {
+namespace detail {
+
+template <typename T>
+struct is_optional<boost::optional<T>> : std::true_type {};
+
+} // namespace detail
+} // namespace mserialize
 
 BOOST_AUTO_TEST_SUITE(MserializeRoundtrip)
 
@@ -392,6 +411,93 @@ BOOST_AUTO_TEST_CASE(tuple_pair_cross)
     roundtrip_into(in, out);
     BOOST_TEST(std::get<0>(in) == std::get<0>(out));
     BOOST_TEST(std::get<1>(in) == std::get<1>(out));
+  }
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(smart_pointer, T, smart_pointers<int>)
+{
+  // empty
+  {
+    const T in;
+    const T out = roundtrip(in);
+    BOOST_TEST(!out);
+  }
+
+  // not empty
+  {
+    const T in(new int(123));
+    const T out = roundtrip(in);
+    BOOST_TEST_REQUIRE(!!out);
+    BOOST_TEST(*in == *out);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(pointers)
+{
+  const int value = 456;
+  const int* in = &value;
+  std::unique_ptr<int> out;
+  roundtrip_into(in, out);
+  BOOST_TEST_REQUIRE(!!out);
+  BOOST_TEST(*in == *out);
+
+  static_assert(
+    mserialize::detail::negation<
+      mserialize::detail::is_deserializable<int*>
+    >::value, "Deserialization into raw pointers is not supported to avoid leaks"
+  );
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(nested_smart_pointers, T, smart_pointers<std::unique_ptr<int>>)
+{
+  const T in(new std::unique_ptr<int>(new int(123)));
+  const T out = roundtrip(in);
+
+  BOOST_TEST_REQUIRE(!!out);
+  BOOST_TEST_REQUIRE(!!*out);
+  BOOST_TEST(**out == 123);
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(mixed_smart_pointers, T, smart_pointers<std::vector<std::tuple<int>>>)
+{
+  const std::vector<std::tuple<int>> value{
+    std::tuple<int>{1}, std::tuple<int>{2},
+    std::tuple<int>{3}, std::tuple<int>{4},
+  };
+  const T in(new std::vector<std::tuple<int>>(value));
+  const T out = roundtrip(in);
+  BOOST_TEST_REQUIRE(!!out);
+  BOOST_TEST((*out == value));
+}
+
+BOOST_AUTO_TEST_CASE(optional)
+{
+  // empty
+  {
+    const boost::optional<int> in;
+    boost::optional<int> out(123);
+    roundtrip_into(in, out);
+    BOOST_TEST(!out);
+  }
+
+  // not empty
+  {
+    const boost::optional<int> in(123);
+    const boost::optional<int> out = roundtrip(in);
+    BOOST_TEST_REQUIRE(!!out);
+    BOOST_TEST(*out == *in);
+  }
+
+  // mixed
+  {
+    using Value = std::vector<std::tuple<int>>;
+    const boost::optional<Value> in(Value{
+      std::tuple<int>{1}, std::tuple<int>{2},
+      std::tuple<int>{3}, std::tuple<int>{4},
+    });
+    const boost::optional<Value> out = roundtrip(in);
+    BOOST_TEST_REQUIRE(!!out);
+    BOOST_TEST((*out == *in));
   }
 }
 

@@ -4,7 +4,9 @@
 #include <mserialize/detail/sequence_traits.hpp>
 #include <mserialize/detail/type_traits.hpp>
 
+#include <cassert>
 #include <cstdint>
+#include <memory>
 #include <stdexcept>
 #include <string> // to_string
 #include <type_traits>
@@ -39,6 +41,9 @@ struct SequenceDeserializer;
 template <typename Tuple>
 struct TupleDeserializer;
 
+template <typename Optional>
+struct OptionalDeserializer;
+
 // Builtin deserializer - one specialization for each category
 
 template <typename T, typename = void>
@@ -56,6 +61,13 @@ struct BuiltinDeserializer<T, enable_spec_if<
 template <typename T>
 struct BuiltinDeserializer<T, enable_spec_if<is_tuple<T>>>
   : TupleDeserializer<T> {};
+
+template <typename T>
+struct BuiltinDeserializer<T, enable_spec_if<conjunction<
+  is_optional<T>,
+  negation<std::is_pointer<T>>
+>>>
+  : OptionalDeserializer<T> {};
 
 // Deserializer - entry point
 
@@ -196,6 +208,44 @@ private:
     using swallow = int[];
     using std::get;
     (void)swallow{1, (mserialize::deserialize(get<I>(t), istream), int{})...};
+  }
+};
+
+// Optional deserializer
+
+template <typename Optional>
+struct OptionalDeserializer
+{
+  template <typename InputStream>
+  static void deserialize(Optional& opt, InputStream& istream)
+  {
+    std::uint8_t discriminator;
+    mserialize::deserialize(discriminator, istream);
+    if (discriminator)
+    {
+      assert(discriminator == 1 && "Discriminator of non-empty optional must be 1");
+      make_nonempty(opt);
+      mserialize::deserialize(*opt, istream);
+    }
+    else
+    {
+      opt = {};
+    }
+  }
+
+private:
+  template <typename Opt>
+  static void_t<typename Opt::value_type> make_nonempty(Opt& opt)
+  {
+    using T = typename Opt::value_type;
+    opt = T{};
+  }
+
+  template <typename SmartPtr>
+  static void_t<typename SmartPtr::element_type> make_nonempty(SmartPtr& ptr)
+  {
+    using T = typename SmartPtr::element_type;
+    ptr.reset(new T{}); // NOLINT(cppcoreguidelines-owning-memory)
   }
 };
 

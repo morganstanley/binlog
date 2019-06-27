@@ -81,6 +81,18 @@ struct is_tuple<std::tuple<T...>> : std::true_type {};
 template <typename T, typename U>
 struct is_tuple<std::pair<T, U>> : std::true_type {};
 
+// is_optional
+
+template <typename T, typename = void>
+struct is_optional : std::is_pointer<T> {};
+
+template <typename T>
+struct is_optional<T, void_t<
+  typename T::element_type,
+  decltype(bool(std::declval<T>())), // can't use is_convertible, explicit conversion is enough
+  decltype(*std::declval<T>())
+>> : std::true_type {};
+
 } // namespace detail
 } // namespace mserialize
 

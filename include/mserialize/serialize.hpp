@@ -12,6 +12,7 @@ namespace mserialize {
  *  - Arithmetic types (std::is_arithmetic)
  *  - Sequence containers (begin/end, serializable value_type)
  *  - Tuples (std::pair, std::tuple, is_tuple)
+ *  - Pointers (T*, std::shared_ptr, std::unique_ptr)
  *
  * @requires `OutputStream` to model the following concept:
  *
