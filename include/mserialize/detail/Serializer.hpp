@@ -26,41 +26,10 @@ struct InvalidSerializer
   }
 };
 
-// Forward declarations
-
-template <typename Arithmetic>
-struct ArithmeticSerializer;
-
-template <typename Sequence>
-struct SequenceSerializer;
-
-template <typename Tuple>
-struct TupleSerializer;
-
-template <typename Optional>
-struct OptionalSerializer;
-
-// Builtin serializer - one specialization for each category
+// Builtin serializer - must be specialized for each supported type
 
 template <typename T, typename = void>
 struct BuiltinSerializer : InvalidSerializer {};
-
-template <typename T>
-struct BuiltinSerializer<T, enable_spec_if<std::is_arithmetic<T>>>
-  : ArithmeticSerializer<T> {};
-
-template <typename T>
-struct BuiltinSerializer<T, enable_spec_if<
-    is_serializable_iterator<sequence_iterator_t<T>>
->> : SequenceSerializer<T> {};
-
-template <typename T>
-struct BuiltinSerializer<T, enable_spec_if<is_tuple<T>>>
-  : TupleSerializer<T> {};
-
-template <typename T>
-struct BuiltinSerializer<T, enable_spec_if<is_optional<T>>>
-  : OptionalSerializer<T> {};
 
 // Serializer - entry point
 
@@ -73,7 +42,7 @@ struct  Serializer
 // Arithmetic serializer
 
 template <typename Arithmetic>
-struct ArithmeticSerializer
+struct BuiltinSerializer<Arithmetic, enable_spec_if<std::is_arithmetic<Arithmetic>>>
 {
   template <typename OutputStream>
   static void serialize(const Arithmetic t, OutputStream& ostream)
@@ -85,7 +54,9 @@ struct ArithmeticSerializer
 // Sequence serializer
 
 template <typename Sequence>
-struct SequenceSerializer
+struct BuiltinSerializer<Sequence, enable_spec_if<
+  is_serializable_iterator<sequence_iterator_t<Sequence>>
+>>
 {
   template <typename OutputStream>
   static void serialize(const Sequence& s, OutputStream& ostream)
@@ -125,7 +96,7 @@ private:
 // Tuple serializer
 
 template <typename... E, template <class...> class Tuple>
-struct TupleSerializer<Tuple<E...>>
+struct BuiltinSerializer<Tuple<E...>, enable_spec_if<is_tuple<Tuple<E...>>>>
 {
   template <typename OutputStream>
   static void serialize(const Tuple<E...>& t, OutputStream& ostream)
@@ -146,7 +117,7 @@ private:
 // Optional serializer
 
 template <typename Optional>
-struct OptionalSerializer
+struct BuiltinSerializer<Optional, enable_spec_if<is_optional<Optional>>>
 {
   template <typename OutputStream>
   static void serialize(const Optional& opt, OutputStream& ostream)

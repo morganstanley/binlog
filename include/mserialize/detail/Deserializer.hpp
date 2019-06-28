@@ -30,44 +30,10 @@ struct InvalidDeserializer
   }
 };
 
-// Forward declarations
-
-template <typename Arithmetic>
-struct ArithmeticDeserializer;
-
-template <typename Sequence>
-struct SequenceDeserializer;
-
-template <typename Tuple>
-struct TupleDeserializer;
-
-template <typename Optional>
-struct OptionalDeserializer;
-
-// Builtin deserializer - one specialization for each category
+// Builtin deserializer - must be specialized for each supported type
 
 template <typename T, typename = void>
 struct BuiltinDeserializer : InvalidDeserializer {};
-
-template <typename T>
-struct BuiltinDeserializer<T, enable_spec_if<std::is_arithmetic<T>>>
-  : ArithmeticDeserializer<T> {};
-
-template <typename T>
-struct BuiltinDeserializer<T, enable_spec_if<
-    is_deserializable_iterator<sequence_iterator_t<T>>
->> : SequenceDeserializer<T> {};
-
-template <typename T>
-struct BuiltinDeserializer<T, enable_spec_if<is_tuple<T>>>
-  : TupleDeserializer<T> {};
-
-template <typename T>
-struct BuiltinDeserializer<T, enable_spec_if<conjunction<
-  is_optional<T>,
-  negation<std::is_pointer<T>>
->>>
-  : OptionalDeserializer<T> {};
 
 // Deserializer - entry point
 
@@ -80,7 +46,7 @@ struct Deserializer
 // Arithmetic deserializer
 
 template <typename Arithmetic>
-struct ArithmeticDeserializer
+struct BuiltinDeserializer<Arithmetic, enable_spec_if<std::is_arithmetic<Arithmetic>>>
 {
   template <typename InputStream>
   static void deserialize(Arithmetic& t, InputStream& istream)
@@ -92,7 +58,9 @@ struct ArithmeticDeserializer
 // Sequence deserializer
 
 template <typename Sequence>
-struct SequenceDeserializer
+struct BuiltinDeserializer<Sequence, enable_spec_if<
+  is_deserializable_iterator<sequence_iterator_t<Sequence>>
+>>
 {
   template <typename InputStream>
   static void deserialize(Sequence& s, InputStream& istream)
@@ -193,7 +161,7 @@ private:
 // Tuple deserializer
 
 template <typename... E, template <class...> class Tuple>
-struct TupleDeserializer<Tuple<E...>>
+struct BuiltinDeserializer<Tuple<E...>, enable_spec_if<is_tuple<Tuple<E...>>>>
 {
   template <typename InputStream>
   static void deserialize(Tuple<E...>& t, InputStream& istream)
@@ -214,7 +182,10 @@ private:
 // Optional deserializer
 
 template <typename Optional>
-struct OptionalDeserializer
+struct BuiltinDeserializer<Optional, enable_spec_if<conjunction<
+  is_optional<Optional>,
+  negation<std::is_pointer<Optional>>
+>>>
 {
   template <typename InputStream>
   static void deserialize(Optional& opt, InputStream& istream)
