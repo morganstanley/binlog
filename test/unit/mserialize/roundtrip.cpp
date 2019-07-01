@@ -20,6 +20,7 @@
 #include <forward_list>
 #include <list>
 #include <memory>
+#include <string>
 #include <tuple>
 #include <utility> // pair
 #include <vector>
@@ -523,6 +524,67 @@ BOOST_AUTO_TEST_CASE(errorOnIncomplete)
     mserialize::deserialize(out, stream),
     std::exception
   );
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+struct Person
+{
+  int age = 0;
+  std::string name;
+};
+
+bool operator==(const Person& a, const Person& b)
+{
+  return a.age == b.age && a.name == b.name;
+}
+
+std::ostream& operator<<(std::ostream& out, const Person& p)
+{
+  return out << "Person{ age: " << p.age << ", name: " << p.name << " }";
+}
+
+namespace mserialize {
+
+template <>
+struct CustomSerializer<Person>
+{
+  static void serialize(const Person& p, OutputStream& ostream)
+  {
+    // make sure custom serializers can use their own schema
+    ostream.write("foobar", 6);
+    mserialize::serialize(p.age, ostream);
+    mserialize::serialize(p.name, ostream);
+  }
+};
+
+template <>
+struct CustomDeserializer<Person>
+{
+  static void deserialize(Person& p, InputStream& istream)
+  {
+    char buffer[6] = {0};
+    istream.read(buffer, 6);
+    const std::string foobar(buffer, 6);
+    if (foobar != "foobar")
+    {
+      throw std::runtime_error("Invalid magic: " + foobar);
+    }
+
+    mserialize::deserialize(p.age, istream);
+    mserialize::deserialize(p.name, istream);
+  }
+};
+
+} // namespace mserialize
+
+BOOST_AUTO_TEST_SUITE(MserializeRoundtripCustom)
+
+BOOST_AUTO_TEST_CASE(manualSpecialization)
+{
+  const Person in{33, "John"};
+  const Person out = roundtrip(in);
+  BOOST_TEST(in == out);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

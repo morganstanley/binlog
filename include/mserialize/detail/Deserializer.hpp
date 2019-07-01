@@ -30,6 +30,15 @@ struct InvalidDeserializer
   }
 };
 
+} // namespace detail
+
+// Custom deserializer - can be specialized for any type, takes precedence over BuiltinDeserializer
+
+template <typename T, typename = void>
+struct CustomDeserializer;
+
+namespace detail {
+
 // Builtin deserializer - must be specialized for each supported type
 
 template <typename T, typename = void>
@@ -40,7 +49,11 @@ struct BuiltinDeserializer : InvalidDeserializer {};
 template <typename T>
 struct Deserializer
 {
-  using type = BuiltinDeserializer<T>;
+  using type = std::conditional_t<
+    std::is_constructible<CustomDeserializer<T>>::value,
+    CustomDeserializer<T>,
+    BuiltinDeserializer<T>
+  >;
 };
 
 // Arithmetic deserializer

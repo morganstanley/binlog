@@ -26,6 +26,15 @@ struct InvalidSerializer
   }
 };
 
+} // namespace detail
+
+// Custom serializer - can be specialized for any type, takes precedence over BuiltinSerializer
+
+template <typename T, typename = void>
+struct CustomSerializer;
+
+namespace detail {
+
 // Builtin serializer - must be specialized for each supported type
 
 template <typename T, typename = void>
@@ -34,9 +43,13 @@ struct BuiltinSerializer : InvalidSerializer {};
 // Serializer - entry point
 
 template <typename T>
-struct  Serializer
+struct Serializer
 {
-  using type = BuiltinSerializer<T>;
+  using type = std::conditional_t<
+    std::is_constructible<CustomSerializer<T>>::value,
+    CustomSerializer<T>,
+    BuiltinSerializer<T>
+  >;
 };
 
 // Arithmetic serializer
