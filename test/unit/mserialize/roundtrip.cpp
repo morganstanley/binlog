@@ -12,6 +12,7 @@
 
 #include <algorithm> // equal
 #include <cmath> // isnan
+#include <cstddef> // size_t
 #include <cstdint>
 #include <iterator>
 #include <limits>
@@ -96,6 +97,9 @@ void roundtrip_into(const In& in, Out& out)
   // serialize
   OutputStream ostream{stream};
   mserialize::serialize(in, ostream);
+
+  // make sure computed serialized size is correct
+  BOOST_TEST(std::size_t(stream.tellp()) == mserialize::serialized_size(in));
 
   // deserialize
   InputStream istream{stream};
@@ -608,6 +612,11 @@ struct CustomSerializer<Person>
     ostream.write("foobar", 6);
     mserialize::serialize(p.age, ostream);
     mserialize::serialize(p.name, ostream);
+  }
+
+  static std::size_t serialized_size(const Person& p)
+  {
+    return 6 + mserialize::serialized_size(p.age) + mserialize::serialized_size(p.name);
   }
 };
 

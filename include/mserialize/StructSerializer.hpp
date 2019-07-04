@@ -75,17 +75,39 @@ struct StructSerializer
     (void)swallow{1, (serialize_member(t, Members::value, ostream), int{})...};
   }
 
+  template <typename T>
+  static std::size_t serialized_size(const T& t)
+  {
+    const std::size_t field_sizes[] = {0, serialized_size_member(t, Members::value)...};
+
+    std::size_t result = 0;
+    for (auto s : field_sizes) { result += s; }
+    return result;
+  }
+
 private:
   template <typename T, typename Field, typename OutputStream>
   static void serialize_member(const T& t, Field T::*field, OutputStream& ostream)
   {
-    mserialize::serialize(t.*(field), ostream);
+    mserialize::serialize(t.*field, ostream);
   }
 
   template <typename T, typename Field, typename OutputStream>
   static void serialize_member(const T& t, Field (T::*getter)() const, OutputStream& ostream)
   {
-    mserialize::serialize((t.*(getter))(), ostream);
+    mserialize::serialize((t.*getter)(), ostream);
+  }
+
+  template <typename T, typename Field>
+  static std::size_t serialized_size_member(const T& t, Field T::*field)
+  {
+    return mserialize::serialized_size(t.*field);
+  }
+
+  template <typename T, typename Field>
+  static std::size_t serialized_size_member(const T& t, Field (T::*getter)() const)
+  {
+    return mserialize::serialized_size((t.*getter)());
   }
 };
 

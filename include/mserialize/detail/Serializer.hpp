@@ -13,6 +13,9 @@ namespace mserialize {
 template <typename T, typename OutputStream>
 void serialize(const T& in, OutputStream& ostream);
 
+template <typename T>
+std::size_t serialized_size(const T& in);
+
 namespace detail {
 
 // Invalid serializer
@@ -23,6 +26,13 @@ struct InvalidSerializer
   static void serialize(const T& /* t */, OutputStream& /* ostream */)
   {
     static_assert(always_false<T>::value, "T is not serializable");
+  }
+
+  template <typename T>
+  static std::size_t serialized_size(const T& /* t */)
+  {
+    static_assert(always_false<T>::value, "T is not serializable");
+    return 0; // reduce the number of errors on static assert fail
   }
 };
 
@@ -62,6 +72,11 @@ struct BuiltinSerializer<Arithmetic, enable_spec_if<std::is_arithmetic<Arithmeti
   {
     ostream.write(reinterpret_cast<const char*>(&t), sizeof(Arithmetic));
   }
+
+  static std::size_t serialized_size(const Arithmetic)
+  {
+    return sizeof(Arithmetic);
+  }
 };
 
 // Sequence serializer
@@ -82,6 +97,18 @@ struct BuiltinSerializer<Sequence, enable_spec_if<
     serialize_elems(is_sequence_batch_serializable<const Sequence>{}, s, size32, ostream);
   }
 
+  static std::size_t serialized_size(const Sequence& s)
+  {
+    // Note: we are using is_arithmetic to fast-path some types.
+    // The correct trait would be has_fixed_size, which could
+    // include tuples of fixed size objects and fixed size
+    // sequences (std::array, C array) of fixed size objects.
+    // However, that would need a lot of code, so we just
+    // let the optimizer do the job.
+    return sizeof(std::uint32_t)
+         + sizeof_elems(std::is_arithmetic<sequence_data_t<const Sequence>>{}, s);
+  }
+
 private:
   template <typename OutputStream>
   static void serialize_elems(
@@ -98,11 +125,33 @@ private:
   template <typename OutputStream>
   static void serialize_elems(
     std::true_type /* batch copy */,
-    const Sequence& s, std::uint32_t size, OutputStream& ostream)
+    const Sequence& s, std::uint32_t size, OutputStream& ostream
+  )
   {
     const char* data = reinterpret_cast<const char*>(sequence_data(s));
     const size_t serialized_size = sizeof(sequence_data_t<const Sequence>) * size;
     ostream.write(data, std::streamsize(serialized_size));
+  }
+
+  static std::size_t sizeof_elems(
+    std::false_type /* value_type is not arithmetic */,
+    const Sequence& s
+  )
+  {
+    std::size_t result = 0;
+    for (auto&& elem : s)
+    {
+      result += mserialize::serialized_size(elem);
+    }
+    return result;
+  }
+
+  static std::size_t sizeof_elems(
+    std::true_type /* value_type is arithmetic */,
+    const Sequence& s
+  )
+  {
+    return std::size_t(sequence_size(s)) * sizeof(sequence_data_t<const Sequence>);
   }
 };
 
@@ -117,6 +166,11 @@ struct BuiltinSerializer<Tuple<E...>, enable_spec_if<is_tuple<Tuple<E...>>>>
     serialize_elems(t, ostream, std::index_sequence_for<E...>{});
   }
 
+  static std::size_t serialized_size(const Tuple<E...>& t)
+  {
+    return serialized_size_impl(t, std::index_sequence_for<E...>{});
+  }
+
 private:
   template <typename OutputStream, std::size_t... I>
   static void serialize_elems(const Tuple<E...>& t, OutputStream& ostream, std::index_sequence<I...>)
@@ -124,6 +178,17 @@ private:
     using swallow = int[];
     using std::get;
     (void)swallow{1, (mserialize::serialize(get<I>(t), ostream), int{})...};
+  }
+
+  template <std::size_t... I>
+  static std::size_t serialized_size_impl(const Tuple<E...>& t, std::index_sequence<I...>)
+  {
+    using std::get;
+    const std::size_t elem_sizes[] = {0, mserialize::serialized_size(get<I>(t))...};
+
+    std::size_t result = 0;
+    for (auto s : elem_sizes) { result += s; }
+    return result;
   }
 };
 
@@ -144,6 +209,13 @@ struct BuiltinSerializer<Optional, enable_spec_if<is_optional<Optional>>>
     {
       mserialize::serialize(std::uint8_t{0}, ostream);
     }
+  }
+
+  static std::size_t serialized_size(const Optional& opt)
+  {
+    return (opt)
+      ? sizeof(std::uint8_t) + mserialize::serialized_size(*opt)
+      : sizeof(std::uint8_t);
   }
 };
 

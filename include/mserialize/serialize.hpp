@@ -3,6 +3,8 @@
 
 #include <mserialize/detail/Serializer.hpp>
 
+#include <cstddef> // size_t
+
 namespace mserialize {
 
 /**
@@ -29,6 +31,18 @@ template <typename T, typename OutputStream>
 void serialize(const T& in, OutputStream& ostream)
 {
   detail::Serializer<T>::type::serialize(in, ostream);
+}
+
+/**
+ * Get the serialized size of `in`.
+ *
+ * @requires `T` to be a serializable type
+ * @returns The number of bytes `in` would occupy when serialized.
+ */
+template <typename T>
+std::size_t serialized_size(const T& in)
+{
+  return detail::Serializer<T>::type::serialized_size(in);
 }
 
 } // namespace mserialize

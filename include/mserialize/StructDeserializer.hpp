@@ -82,7 +82,7 @@ private:
   template <typename T, typename Field, typename InputStream>
   static void deserialize_member(T& t, Field T::*field, InputStream& istream)
   {
-    mserialize::deserialize(t.*(field), istream);
+    mserialize::deserialize(t.*field, istream);
   }
 
   template <typename T, typename Ret, typename Arg, typename InputStream>
@@ -90,7 +90,7 @@ private:
   {
     detail::remove_cvref_t<Arg> arg;
     mserialize::deserialize(arg, istream);
-    (t.*(setter))(std::move(arg));
+    (t.*setter)(std::move(arg));
   }
 };
 
