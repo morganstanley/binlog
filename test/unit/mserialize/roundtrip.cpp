@@ -3,6 +3,9 @@
 #include <mserialize/deserialize.hpp>
 #include <mserialize/serialize.hpp>
 
+#include <mserialize/StructDeserializer.hpp>
+#include <mserialize/StructSerializer.hpp>
+
 #include <boost/mpl/list.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/test/unit_test.hpp>
@@ -125,6 +128,12 @@ auto container_equal()
     BOOST_TEST(a == b, boost::test_tools::per_element());
     return std::equal(begin(a), end(a), begin(b), end(b));
   };
+}
+
+template <typename T>
+bool pointee_equal(const T* a, const T* b)
+{
+  return (a && b) ? *a == *b : !a && !b;
 }
 
 } // namespace
@@ -544,6 +553,50 @@ std::ostream& operator<<(std::ostream& out, const Person& p)
   return out << "Person{ age: " << p.age << ", name: " << p.name << " }";
 }
 
+struct Vehicle
+{
+  int type = 0;
+  int _age = 0;
+  std::string _name;
+  std::unique_ptr<Person> _owner;
+
+  int age() const { return _age; }
+  int age(const int i) { return _age = i; }
+
+  std::string name() const { return _name; }
+  void name(const std::string& n) { _name = n; }
+
+private:
+  const std::unique_ptr<Person>& owner() const { return _owner; }
+  bool owner(std::unique_ptr<Person> o) { _owner = std::move(o); return !!_owner; }
+
+  template <typename, typename>
+  friend struct mserialize::CustomSerializer;
+
+  template <typename, typename>
+  friend struct mserialize::CustomDeserializer;
+
+  friend bool operator==(const Vehicle& a, const Vehicle& b)
+  {
+    return a.type == b.type
+      &&   a.age() == b.age()
+      &&   a.name() == b.name()
+      &&   pointee_equal(a.owner().get(), b.owner().get());
+  }
+
+  friend std::ostream& operator<<(std::ostream& out, const Vehicle& v)
+  {
+    out << "Vehicle{"
+        << " type: " << v.type
+        << ", age: " << v.age()
+        << ", name: " << v.name()
+        << ", owner: ";
+    if (v.owner()) { out << *v.owner(); }
+    else { out << "{null}"; }
+    return out << " }";
+  }
+};
+
 namespace mserialize {
 
 template <>
@@ -576,14 +629,41 @@ struct CustomDeserializer<Person>
   }
 };
 
+template <>
+struct CustomSerializer<Vehicle, void>
+  : StructSerializer<
+      std::integral_constant<decltype(serializable_member(&Vehicle::type)),&Vehicle::type>,
+      std::integral_constant<decltype(serializable_member(&Vehicle::age)),&Vehicle::age>,
+      std::integral_constant<decltype(serializable_member(&Vehicle::name)),&Vehicle::name>,
+      std::integral_constant<decltype(serializable_member(&Vehicle::owner)),&Vehicle::owner>
+  >
+{};
+
+template <>
+struct CustomDeserializer<Vehicle, void>
+  : StructDeserializer<
+      std::integral_constant<decltype(deserializable_member(&Vehicle::type)),&Vehicle::type>,
+      std::integral_constant<decltype(deserializable_member(&Vehicle::age)),&Vehicle::age>,
+      std::integral_constant<decltype(deserializable_member(&Vehicle::name)),&Vehicle::name>,
+      std::integral_constant<decltype(deserializable_member(&Vehicle::owner)),&Vehicle::owner>
+  >
+{};
+
 } // namespace mserialize
 
 BOOST_AUTO_TEST_SUITE(MserializeRoundtripCustom)
 
-BOOST_AUTO_TEST_CASE(manualSpecialization)
+BOOST_AUTO_TEST_CASE(manual_specialization)
 {
   const Person in{33, "John"};
   const Person out = roundtrip(in);
+  BOOST_TEST(in == out);
+}
+
+BOOST_AUTO_TEST_CASE(derived_specialization)
+{
+  const Vehicle in{1964, 55, "Car", std::make_unique<Person>(Person{35, "Ferdinand"})};
+  const Vehicle out = roundtrip(in);
   BOOST_TEST(in == out);
 }
 

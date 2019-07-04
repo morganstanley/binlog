@@ -46,6 +46,11 @@ template <typename B, typename... Bn>
 struct conjunction<B, Bn...>
   : std::conditional_t<B::value, conjunction<Bn...>, B> {};
 
+// remove_cvref_t (C++20)
+
+template <typename T>
+using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
+
 // Is serializable
 
 template <typename T>

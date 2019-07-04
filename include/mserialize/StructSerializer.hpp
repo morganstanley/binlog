@@ -1,0 +1,94 @@
+#ifndef MSERIALIZE_STRUCT_SERIALIZER_HPP
+#define MSERIALIZE_STRUCT_SERIALIZER_HPP
+
+#include <type_traits>
+
+namespace mserialize {
+
+/**
+ * Resolve a (possibly overloaded) member pointer
+ * to a serializable member.
+ *
+ * This function is declared (but not defined)
+ * for a member pointer (&T::m), if:
+ *
+ *  - `m` is non-static, non-reference, non-bitfield data member, or
+ *  - `m` is a const qualified, nullary member function.
+ *
+ * Usage: decltype(mserialize::serializable_member(&T::m))
+ *
+ * This can be used together with StructSerializer, when
+ * the actual type of the member is not known, e.g:
+ * the StructSerializer is instantiated by a generic macro.
+ */
+
+template <typename T, typename Field>
+auto serializable_member(Field T::*field) -> decltype(field);
+
+template <typename T, typename Ret>
+auto serializable_member(Ret (T::*getter)() const) -> decltype(getter);
+
+/**
+ * Serialize the given members of a custom type.
+ *
+ * `Members...` is a pack of std::integral_constant<M, m>,
+ * where each `M` is a member pointer type of a single `T` type,
+ * and `m` is a member pointer of type `M` and:
+ *
+ *  - `m` points to a non-static, serializable data member, or
+ *  - `m` points to a const qualified, nullary member function, which returns
+ *    a serializable object.
+ *
+ * This helper class can be used to define a CustomSerializer for user defined structures:
+ *
+ *     namespace mserialize {
+ *     template <>
+ *     struct CustomSerializer<T, void>
+ *       : StructSerializer<
+ *           std::integral_constant<decltype(&T::field), &T::field>,
+ *           std::integral_constant<decltype(&T::getter), &T::getter>,
+ *       >
+ *     {};
+ *     } // namespace mserialize
+ *
+ * If `getter` is (possibly) overloaded, `serializable_member` can be used to resolve it
+ * in a generic way (as it does the right thing for data members as well):
+ *
+ *     std::integral_constant<decltype(serializable_member(&T::overloaded_getter)), &T::overloaded_getter>
+ *
+ * If a private or protected member of `T` needs to be serialized,
+ * the following friend declaration can be added to the declaration of `T`:
+ *
+ *     template <typename, typename>
+ *     friend struct mserialize::CustomSerializer;
+ *
+ * Note: C++ does not allow taking the address of reference members or bitfields,
+ * therefore those cannot be serialized directly: a getter must be used instead.
+ */
+template <typename... Members>
+struct StructSerializer
+{
+  template <typename T, typename OutputStream>
+  static void serialize(const T& t, OutputStream& ostream)
+  {
+    using swallow = int[];
+    (void)swallow{1, (serialize_member(t, Members::value, ostream), int{})...};
+  }
+
+private:
+  template <typename T, typename Field, typename OutputStream>
+  static void serialize_member(const T& t, Field T::*field, OutputStream& ostream)
+  {
+    mserialize::serialize(t.*(field), ostream);
+  }
+
+  template <typename T, typename Field, typename OutputStream>
+  static void serialize_member(const T& t, Field (T::*getter)() const, OutputStream& ostream)
+  {
+    mserialize::serialize((t.*(getter))(), ostream);
+  }
+};
+
+} // namespace mserialize
+
+#endif // MSERIALIZE_STRUCT_SERIALIZER_HPP
