@@ -32,7 +32,7 @@ endif ()
 # llvm-header-guard derives the macro name from the absolute path sometimes
 if (BINLOG_USE_CLANG_TIDY)
   set(CMAKE_CXX_CLANG_TIDY clang-tidy
-    -checks=*,-fuchsia-*,-cppcoreguidelines-pro-type-vararg,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-hicpp-*,-cert-err58-cpp,-cert-err60-cpp,-readability-named-parameter,-modernize-use-auto,-llvm-header-guard,-google-runtime-references
+    -checks=*,-fuchsia-*,-cppcoreguidelines-pro-type-vararg,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-cppcoreguidelines-pro-bounds-constant-array-index,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-hicpp-*,-cert-err58-cpp,-cert-err60-cpp,-readability-named-parameter,-modernize-use-auto,-llvm-header-guard,-google-runtime-references
     -warnings-as-errors=*
     -header-filter=.*
   )
@@ -49,6 +49,7 @@ target_include_directories(mserialize INTERFACE include)
 # UnitTest
 add_executable(UnitTest test/unit/UnitTest.cpp
   test/unit/mserialize/roundtrip.cpp
+  test/unit/mserialize/cx_string.cpp
 )
   target_compile_definitions(UnitTest PRIVATE
     BOOST_TEST_DYN_LINK
