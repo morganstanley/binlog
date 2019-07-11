@@ -20,6 +20,13 @@ auto sequence_iterator(Sequence& s, int) -> decltype(std::begin(s));
 template <typename Sequence>
 using sequence_iterator_t = decltype(sequence_iterator(std::declval<Sequence&>(), 0));
 
+// Sequence value type via iterator
+
+template <typename Sequence>
+using sequence_value_t = typename std::iterator_traits<
+  sequence_iterator_t<Sequence>
+>::value_type;
+
 // Is forward iterator
 
 template <typename Iterator>
