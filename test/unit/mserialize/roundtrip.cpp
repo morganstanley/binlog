@@ -570,6 +570,11 @@ struct Vehicle
   std::string name() const { return _name; }
   void name(const std::string& n) { _name = n; }
 
+  // Limitation: [de]serializable_member is unable
+  // to remove this from the overload set.
+  //template <typename T>
+  //std::string name(T = 0) const { return _name; }
+
 private:
   const std::unique_ptr<Person>& owner() const { return _owner; }
   bool owner(std::unique_ptr<Person> o) { _owner = std::move(o); return !!_owner; }

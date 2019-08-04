@@ -14,12 +14,24 @@ namespace mserialize {
  *
  *  - `m` is non-static, non-reference, non-bitfield data member, or
  *  - `m` is a const qualified, nullary member function.
+ *    (also see Limitation below)
  *
  * Usage: decltype(mserialize::serializable_member(&T::m))
  *
  * This can be used together with StructSerializer, when
  * the actual type of the member is not known, e.g:
  * the StructSerializer is instantiated by a generic macro.
+ *
+ * Limitation: if `m` is a member function, it cannot be overloaded
+ * with a member function template, which has its arguments defaulted,
+ * e.g, the following will not compile:
+ *
+ * struct T {
+ *   int m() const;
+ *   template <typename U> int m(U = 0) const;
+ * };
+ *
+ * using M = decltype(mserialize::serializable_member(&T::m)); // fails to compile
  */
 
 template <typename T, typename Field>
