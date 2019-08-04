@@ -16,28 +16,6 @@ void serialize(const T& in, OutputStream& ostream);
 template <typename T>
 std::size_t serialized_size(const T& in);
 
-namespace detail {
-
-// Invalid serializer
-
-struct InvalidSerializer
-{
-  template <typename T, typename OutputStream>
-  static void serialize(const T& /* t */, OutputStream& /* ostream */)
-  {
-    static_assert(always_false<T>::value, "T is not serializable");
-  }
-
-  template <typename T>
-  static std::size_t serialized_size(const T& /* t */)
-  {
-    static_assert(always_false<T>::value, "T is not serializable");
-    return 0; // reduce the number of errors on static assert fail
-  }
-};
-
-} // namespace detail
-
 // Custom serializer - can be specialized for any type, takes precedence over BuiltinSerializer
 
 template <typename T, typename = void>
@@ -48,7 +26,22 @@ namespace detail {
 // Builtin serializer - must be specialized for each supported type
 
 template <typename T, typename = void>
-struct BuiltinSerializer : InvalidSerializer {};
+struct BuiltinSerializer
+{
+  BuiltinSerializer() = delete; // used by is_serializable
+
+  template <typename OutputStream>
+  static void serialize(const T& /* t */, OutputStream& /* ostream */)
+  {
+    static_assert(always_false<T>::value, "T is not serializable");
+  }
+
+  static std::size_t serialized_size(const T& /* t */)
+  {
+    static_assert(always_false<T>::value, "T is not serializable");
+    return 0; // reduce the number of errors on static assert fail
+  }
+};
 
 // Serializer - entry point
 

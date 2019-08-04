@@ -56,24 +56,16 @@ using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 template <typename T>
 struct Serializer;
 
-struct InvalidSerializer;
-
 template <typename T>
-using is_serializable = negation<
-  std::is_base_of<InvalidSerializer, typename Serializer<T>::type>
->;
+using is_serializable = std::is_constructible<typename Serializer<T>::type>;
 
 // Is deserializable
 
 template <typename T>
 struct Deserializer;
 
-struct InvalidDeserializer;
-
 template <typename T>
-using is_deserializable = negation<
-  std::is_base_of<InvalidDeserializer, typename Deserializer<T>::type>
->;
+using is_deserializable = std::is_constructible<typename Deserializer<T>::type>;
 
 // is_tuple
 

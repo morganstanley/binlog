@@ -17,21 +17,6 @@ namespace mserialize {
 template <typename T, typename InputStream>
 void deserialize(T& out, InputStream& istream);
 
-namespace detail {
-
-// Invalid deserializer
-
-struct InvalidDeserializer
-{
-  template <typename T, typename InputStream>
-  static void deserialize(const T& /* t */, InputStream& /* istream */)
-  {
-    static_assert(always_false<T>::value, "T is not deserializable");
-  }
-};
-
-} // namespace detail
-
 // Custom deserializer - can be specialized for any type, takes precedence over BuiltinDeserializer
 
 template <typename T, typename = void>
@@ -42,7 +27,16 @@ namespace detail {
 // Builtin deserializer - must be specialized for each supported type
 
 template <typename T, typename = void>
-struct BuiltinDeserializer : InvalidDeserializer {};
+struct BuiltinDeserializer
+{
+  BuiltinDeserializer() = delete; // used by is_deserializable
+
+  template <typename InputStream>
+  static void deserialize(const T& /* t */, InputStream& /* istream */)
+  {
+    static_assert(always_false<T>::value, "T is not deserializable");
+  }
+};
 
 // Deserializer - entry point
 
