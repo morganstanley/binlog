@@ -50,17 +50,33 @@ struct Deserializer
   >;
 };
 
+// Trivial deserializer
+
+template <typename T>
+struct TrivialDeserializer
+{
+  static_assert(std::is_trivially_copyable<T>::value, "");
+
+  template <typename InputStream>
+  static void deserialize(T& t, InputStream& istream)
+  {
+    istream.read(reinterpret_cast<char*>(&t), sizeof(T));
+  }
+};
+
 // Arithmetic deserializer
 
 template <typename Arithmetic>
 struct BuiltinDeserializer<Arithmetic, enable_spec_if<std::is_arithmetic<Arithmetic>>>
-{
-  template <typename InputStream>
-  static void deserialize(Arithmetic& t, InputStream& istream)
-  {
-    istream.read(reinterpret_cast<char*>(&t), sizeof(Arithmetic));
-  }
-};
+  :TrivialDeserializer<Arithmetic>
+{};
+
+// Enum deserializer
+
+template <typename Enum>
+struct BuiltinDeserializer<Enum, enable_spec_if<std::is_enum<Enum>>>
+  :TrivialDeserializer<Enum>
+{};
 
 // Sequence deserializer
 

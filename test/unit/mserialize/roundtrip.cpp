@@ -1,4 +1,5 @@
 #include "custom_array.hpp"
+#include "test_enums.hpp"
 
 #include <mserialize/deserialize.hpp>
 #include <mserialize/serialize.hpp>
@@ -513,6 +514,27 @@ BOOST_AUTO_TEST_CASE(optional)
     BOOST_TEST_REQUIRE(!!out);
     BOOST_TEST((*out == *in));
   }
+}
+
+BOOST_AUTO_TEST_CASE(cenum)
+{
+  const test::CEnum in{test::Alpha};
+  const test::CEnum out = roundtrip(in);
+  BOOST_TEST(in == out);
+}
+
+BOOST_AUTO_TEST_CASE(enumClass)
+{
+  const test::EnumClass in{test::EnumClass::Echo};
+  const test::EnumClass out = roundtrip(in);
+  BOOST_TEST((in == out));
+}
+
+BOOST_AUTO_TEST_CASE(largeEnumClass)
+{
+  const test::LargeEnumClass in{test::LargeEnumClass::Golf};
+  const test::LargeEnumClass out = roundtrip(in);
+  BOOST_TEST((in == out));
 }
 
 BOOST_AUTO_TEST_CASE(errorOnEof)

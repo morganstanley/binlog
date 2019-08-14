@@ -55,22 +55,38 @@ struct Serializer
   >;
 };
 
+// Trivial serializer
+
+template <typename T>
+struct TrivialSerializer
+{
+  static_assert(std::is_trivially_copyable<T>::value, "");
+
+  template <typename OutputStream>
+  static void serialize(const T t, OutputStream& ostream)
+  {
+    ostream.write(reinterpret_cast<const char*>(&t), sizeof(T));
+  }
+
+  static std::size_t serialized_size(const T)
+  {
+    return sizeof(T);
+  }
+};
+
 // Arithmetic serializer
 
 template <typename Arithmetic>
 struct BuiltinSerializer<Arithmetic, enable_spec_if<std::is_arithmetic<Arithmetic>>>
-{
-  template <typename OutputStream>
-  static void serialize(const Arithmetic t, OutputStream& ostream)
-  {
-    ostream.write(reinterpret_cast<const char*>(&t), sizeof(Arithmetic));
-  }
+  :TrivialSerializer<Arithmetic>
+{};
 
-  static std::size_t serialized_size(const Arithmetic)
-  {
-    return sizeof(Arithmetic);
-  }
-};
+// Enum serializer
+
+template <typename Enum>
+struct BuiltinSerializer<Enum, enable_spec_if<std::is_enum<Enum>>>
+  :TrivialSerializer<Enum>
+{};
 
 // Sequence serializer
 
