@@ -24,17 +24,9 @@ else ()
 endif ()
 
 # Clang Tidy
-# BOOST_TEST triggers C vararg warnings
-# BOOST_AUTO_TEST_CASE triggers exception in global var ctor warning (cert-err58-cpp)
-# [i,o]stream read/write usage requires reinterpret_cast
-# std::runtime_error is not nothrow copy constructible (cert-err60-cpp)
-# Aliases are not useful (hicpp)
-# llvm-header-guard derives the macro name from the absolute path sometimes
 if (BINLOG_USE_CLANG_TIDY)
   set(CMAKE_CXX_CLANG_TIDY clang-tidy
-    -checks=*,-fuchsia-*,-cppcoreguidelines-pro-type-vararg,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-cppcoreguidelines-pro-bounds-constant-array-index,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-hicpp-*,-cert-err58-cpp,-cert-err60-cpp,-readability-named-parameter,-modernize-use-auto,-llvm-header-guard,-google-runtime-references
     -warnings-as-errors=*
-    -header-filter=.*
   )
 endif ()
 
