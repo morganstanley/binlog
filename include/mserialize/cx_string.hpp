@@ -3,6 +3,8 @@
 
 #include <cstddef> // size_t
 
+#include <mserialize/string_view.hpp>
+
 namespace mserialize {
 
 /**
@@ -56,6 +58,9 @@ public:
 
   /** @return iterator pointing to the closing zero */
   constexpr const char* end() const { return _data+N; }
+
+  /** @return a string_view of the underlying character array */
+  operator string_view() const { return {_data, N}; } // NOLINT(google-explicit-constructor)
 
 private:
   char _data[N+1]; // +1: closing zero

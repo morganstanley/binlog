@@ -22,8 +22,18 @@ enum class EnumClass
 enum class LargeEnumClass : std::int64_t
 {
   Golf = INT64_MIN,
-  Hotel = 0,
-  India = INT64_MAX
+  Hotel = -1024,
+  India = 0,
+  Juliet = 2048,
+  Kilo = INT64_MAX
+};
+
+enum class UnsignedLargeEnumClass : std::uint64_t
+{
+  Lima = 0,
+  Mike = 1024,
+  November = 16384,
+  Oscar = UINT64_MAX
 };
 
 } // namespace test

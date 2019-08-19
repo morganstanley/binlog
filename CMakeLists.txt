@@ -43,6 +43,7 @@ add_executable(UnitTest test/unit/UnitTest.cpp
   test/unit/mserialize/roundtrip.cpp
   test/unit/mserialize/cx_string.cpp
   test/unit/mserialize/tag.cpp
+  test/unit/mserialize/visit.cpp
 )
   target_compile_definitions(UnitTest PRIVATE
     BOOST_TEST_DYN_LINK

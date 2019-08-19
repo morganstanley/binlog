@@ -18,7 +18,12 @@ Checks: "\
   -cert-err60-cpp,\
   -readability-named-parameter,\
   -modernize-use-auto,\
+  -modernize-return-braced-init-list,\
   -llvm-header-guard,\
   -google-runtime-references"
 
 HeaderFilterRegex: '.*'
+
+CheckOptions:
+  - key: cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
+    value: 1
