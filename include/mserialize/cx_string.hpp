@@ -85,7 +85,7 @@ constexpr auto cx_strcat(const cx_string<N>&&... strings)
   char* out = buffer;
   for (std::size_t i = 1; i <= sizeof...(N); ++i)
   {
-    for (std::size_t s = 0; s < size[i]; ++s) { *out++ = data[i][s]; }
+    for (std::size_t s = 0; s < size[i]; ++s) { *out++ = data[i][s]; } // NOLINT
   }
 
   return cx_string<sizeof(buffer)-1>(buffer);
