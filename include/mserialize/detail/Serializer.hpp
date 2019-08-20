@@ -19,7 +19,10 @@ std::size_t serialized_size(const T& in);
 // Custom serializer - can be specialized for any type, takes precedence over BuiltinSerializer
 
 template <typename T, typename = void>
-struct CustomSerializer;
+struct CustomSerializer
+{
+  CustomSerializer() = delete; // used by is_serializable
+};
 
 namespace detail {
 

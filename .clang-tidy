@@ -8,6 +8,9 @@
 Checks: "\
   *,
   -fuchsia-*,\
+  -cppcoreguidelines-avoid-c-arrays,\
+  -cppcoreguidelines-avoid-magic-numbers,\
+  -cppcoreguidelines-macro-usage,\
   -cppcoreguidelines-pro-type-vararg,\
   -cppcoreguidelines-pro-type-reinterpret-cast,\
   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,\
@@ -16,7 +19,11 @@ Checks: "\
   -hicpp-*,\
   -cert-err58-cpp,\
   -cert-err60-cpp,\
+  -readability-magic-numbers,\
   -readability-named-parameter,\
+  -readability-uppercase-literal-suffix,\
+  -misc-non-private-member-variables-in-classes,\
+  -modernize-avoid-c-arrays,\
   -modernize-use-auto,\
   -modernize-return-braced-init-list,\
   -llvm-header-guard,\

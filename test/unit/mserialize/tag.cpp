@@ -72,7 +72,7 @@ struct CustomTag<Custom>
 {
   static constexpr auto tag_string()
   {
-    return cx_string<8>("{Custom}");
+    return make_cx_string("{Custom}");
   }
 };
 

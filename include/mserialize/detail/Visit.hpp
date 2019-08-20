@@ -1,9 +1,9 @@
 #ifndef MSERIALIZE_DETAIL_VISIT_HPP
 #define MSERIALIZE_DETAIL_VISIT_HPP
 
+#include <mserialize/Visitor.hpp>
 #include <mserialize/deserialize.hpp>
 #include <mserialize/detail/tag_util.hpp>
-#include <mserialize/Visitor.hpp>
 
 #include <type_traits>
 

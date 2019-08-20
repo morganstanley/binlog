@@ -11,8 +11,11 @@ namespace mserialize {
 
 // Custom tag - can be specialized for any type, takes precedence over BuiltinTag
 
-template <typename T>
-struct CustomTag;
+template <typename T, typename = void>
+struct CustomTag
+{
+  CustomTag() = delete; // used by has_tag
+};
 
 namespace detail {
 
@@ -26,7 +29,7 @@ struct BuiltinTag
   static constexpr cx_string<1> tag_string()
   {
     static_assert(always_false<T>::value, "T has no associated tag");
-    return cx_string<1>("?"); // reduce the number of errors on static assert fail
+    return make_cx_string("?"); // reduce the number of errors on static assert fail
   }
 };
 
@@ -51,24 +54,25 @@ using has_tag = std::is_constructible<typename Tag<T>::type>;
 template <typename Arithmetic>
 struct BuiltinTag<Arithmetic, enable_spec_if<std::is_arithmetic<Arithmetic>>>
 {
-  static constexpr bool sign = std::is_signed<Arithmetic>::value;
-  static constexpr bool integral = std::is_integral<Arithmetic>::value;
-  static constexpr std::size_t size = sizeof(Arithmetic);
-
   static constexpr cx_string<1> tag_string()
   {
     using S = cx_string<1>;
+
+    constexpr bool sign = std::is_signed<Arithmetic>::value;
+    constexpr bool integral = std::is_integral<Arithmetic>::value;
+    constexpr std::size_t size = sizeof(Arithmetic);
+
     return
       (std::is_same<Arithmetic, bool>::value) ? S("y")
     : (std::is_same<Arithmetic, char>::value) ? S("c")
-    : (integral &&  sign && size == 1) ? S("b")
-    : (integral &&  sign && size == 2) ? S("s")
-    : (integral &&  sign && size == 4) ? S("i")
-    : (integral &&  sign && size == 8) ? S("l")
-    : (integral && !sign && size == 1) ? S("B")
-    : (integral && !sign && size == 2) ? S("S")
-    : (integral && !sign && size == 4) ? S("I")
-    : (integral && !sign && size == 8) ? S("L")
+    : (integral &&  sign && size == sizeof(std::int8_t))  ? S("b")
+    : (integral &&  sign && size == sizeof(std::int16_t)) ? S("s")
+    : (integral &&  sign && size == sizeof(std::int32_t)) ? S("i")
+    : (integral &&  sign && size == sizeof(std::int64_t)) ? S("l")
+    : (integral && !sign && size == sizeof(std::uint8_t))  ? S("B")
+    : (integral && !sign && size == sizeof(std::uint16_t)) ? S("S")
+    : (integral && !sign && size == sizeof(std::uint32_t)) ? S("I")
+    : (integral && !sign && size == sizeof(std::uint64_t)) ? S("L")
     : (std::is_same<Arithmetic, float>::value) ? S("f")
     : (std::is_same<Arithmetic, double>::value) ? S("d")
     : (std::is_same<Arithmetic, long double>::value) ? S("D")
@@ -86,7 +90,7 @@ struct BuiltinTag<Sequence, enable_spec_if<
   static constexpr auto tag_string()
   {
     return cx_strcat(
-      cx_string<1>("["),
+      make_cx_string("["),
       Tag<sequence_value_t<Sequence>>::type::tag_string()
     );
   }
@@ -100,9 +104,9 @@ struct BuiltinTag<Tuple<E...>, enable_spec_if<is_tuple<Tuple<E...>>>>
   static constexpr auto tag_string()
   {
     return cx_strcat(
-      cx_string<1>("("),
+      make_cx_string("("),
       Tag<E>::type::tag_string()...,
-      cx_string<1>(")")
+      make_cx_string(")")
     );
   }
 };
@@ -116,9 +120,9 @@ struct BuiltinTag<Optional, enable_spec_if<is_optional<Optional>>>
   {
     using value_type = decltype(*std::declval<Optional>());
     return cx_strcat(
-      cx_string<2>("<0"),
+      make_cx_string("<0"),
       Tag<value_type>::type::tag_string(),
-      cx_string<1>(">")
+      make_cx_string(">")
     );
   }
 };

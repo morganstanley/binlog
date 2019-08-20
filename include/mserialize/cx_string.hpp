@@ -96,6 +96,13 @@ constexpr auto cx_strcat(const cx_string<N>&&... strings)
   return cx_string<sizeof(buffer)-1>(buffer);
 }
 
+/** Create a cx_string from a string literal */
+template <std::size_t N>
+constexpr cx_string<N-1> make_cx_string(const char (&str)[N])
+{
+  return cx_string<N-1>(str);
+}
+
 } // namespace mserialize
 
 #endif // MSERIALIZE_CX_STRING_HPP

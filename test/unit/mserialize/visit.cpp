@@ -141,7 +141,7 @@ struct CustomTag<OpaqueEnum>
 {
   static constexpr auto tag_string()
   {
-    return cx_string<15>("/i`OpaqueEnum'\\");
+    return make_cx_string("/i`OpaqueEnum'\\");
   }
 };
 
@@ -150,7 +150,7 @@ struct CustomTag<test::LargeEnumClass>
 {
   static constexpr auto tag_string()
   {
-    return cx_string<100>("/l`test::LargeEnumClass'-8000000000000000`Golf'-400`Hotel'0`India'800`Juliet'7FFFFFFFFFFFFFFF`Kilo'\\");
+    return make_cx_string("/l`test::LargeEnumClass'-8000000000000000`Golf'-400`Hotel'0`India'800`Juliet'7FFFFFFFFFFFFFFF`Kilo'\\");
   }
 };
 
@@ -159,7 +159,7 @@ struct CustomTag<test::UnsignedLargeEnumClass>
 {
   static constexpr auto tag_string()
   {
-    return cx_string<86>("/L`test::UnsignedLargeEnumClass'0`Lima'400`Mike'4000`November'FFFFFFFFFFFFFFFF`Oscar'\\");
+    return make_cx_string("/L`test::UnsignedLargeEnumClass'0`Lima'400`Mike'4000`November'FFFFFFFFFFFFFFFF`Oscar'\\");
   }
 };
 
@@ -168,7 +168,7 @@ struct CustomTag<Empty>
 {
   static constexpr auto tag_string()
   {
-    return cx_string<7>("{Empty}");
+    return make_cx_string("{Empty}");
   }
 };
 
@@ -177,7 +177,7 @@ struct CustomTag<Element>
 {
   static constexpr auto tag_string()
   {
-    return cx_string<26>("{Element`name'[c`number'i}");
+    return make_cx_string("{Element`name'[c`number'i}");
   }
 };
 
@@ -186,7 +186,7 @@ struct CustomTag<Tree>
 {
   static constexpr auto tag_string()
   {
-    return cx_string<45>("{Tree`value'i`left'<0{Tree}>`right'<0{Tree}>}");
+    return make_cx_string("{Tree`value'i`left'<0{Tree}>`right'<0{Tree}>}");
   }
 };
 
@@ -402,7 +402,7 @@ BOOST_AUTO_TEST_CASE(recursive_struct)
            " , right(<0{Tree}>): VB(0,0)< {null} > , } ";
   };
 
-  auto node = [](int v, std::string l, std::string r)
+  auto node = [](int v, const std::string& l, const std::string& r)
   {
     return "StB(Tree,`value'i`left'<0{Tree}>`right'<0{Tree}>) "
            "{ value(i): " + std::to_string(v) +

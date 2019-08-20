@@ -20,7 +20,10 @@ void deserialize(T& out, InputStream& istream);
 // Custom deserializer - can be specialized for any type, takes precedence over BuiltinDeserializer
 
 template <typename T, typename = void>
-struct CustomDeserializer;
+struct CustomDeserializer
+{
+  CustomDeserializer() = delete; // used by is_deserializable
+};
 
 namespace detail {
 
