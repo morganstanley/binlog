@@ -1,3 +1,6 @@
+#include "test_enums.hpp"
+
+#include <mserialize/make_enum_tag.hpp>
 #include <mserialize/tag.hpp>
 
 #include <cstdint>
@@ -16,6 +19,8 @@ constexpr bool operator==(const mserialize::cx_string<N>& a, const char (&b)[N+1
   }
   return true;
 }
+
+} // namespace
 
 static_assert(mserialize::tag<bool>() == "y", "");
 static_assert(mserialize::tag<char>() == "c", "");
@@ -52,8 +57,6 @@ static_assert(mserialize::tag<std::unique_ptr<
   >
 >>() == "<0([i(yc)<0D>)>", "");
 
-} // namespace
-
 // const/ref qualifier does not change the result
 
 static_assert(mserialize::tag<const std::int32_t>() == "i", "");
@@ -79,3 +82,17 @@ struct CustomTag<Custom>
 } // namespace mserialize
 
 static_assert(mserialize::tag<Custom>() == "{Custom}", "");
+
+// test MSERIALIZE_MAKE_ENUM_TAG
+
+MSERIALIZE_MAKE_ENUM_TAG(test::CEnum, Alpha, Bravo, Charlie)
+static_assert(mserialize::tag<test::CEnum>() == "/I`test::CEnum'0`Alpha'1`Bravo'2`Charlie'\\", "");
+
+MSERIALIZE_MAKE_ENUM_TAG(test::EnumClass, Delta, Echo, Foxtrot)
+static_assert(mserialize::tag<test::EnumClass>() == "/i`test::EnumClass'0`Delta'1`Echo'2`Foxtrot'\\", "");
+
+MSERIALIZE_MAKE_ENUM_TAG(test::LargeEnumClass, Golf, Hotel, India, Juliet, Kilo)
+static_assert(mserialize::tag<test::LargeEnumClass>() == "/l`test::LargeEnumClass'-8000000000000000`Golf'-400`Hotel'0`India'800`Juliet'7FFFFFFFFFFFFFFF`Kilo'\\", "");
+
+MSERIALIZE_MAKE_ENUM_TAG(test::UnsignedLargeEnumClass, Lima, Mike, November, Oscar)
+static_assert(mserialize::tag<test::UnsignedLargeEnumClass>() == "/L`test::UnsignedLargeEnumClass'0`Lima'400`Mike'4000`November'FFFFFFFFFFFFFFFF`Oscar'\\", "");

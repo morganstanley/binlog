@@ -2,6 +2,7 @@
 #include "test_streams.hpp"
 #include "test_type_lists.hpp"
 
+#include <mserialize/make_enum_tag.hpp>
 #include <mserialize/serialize.hpp>
 #include <mserialize/tag.hpp>
 #include <mserialize/visit.hpp>
@@ -114,6 +115,10 @@ struct Tree { int value; Tree* left; Tree* right; };
 
 } // namespace
 
+MSERIALIZE_MAKE_ENUM_TAG(OpaqueEnum)
+MSERIALIZE_MAKE_ENUM_TAG(test::LargeEnumClass, Golf, Hotel, India, Juliet, Kilo)
+MSERIALIZE_MAKE_ENUM_TAG(test::UnsignedLargeEnumClass, Lima, Mike, November, Oscar)
+
 namespace mserialize {
 
 template <>
@@ -136,32 +141,6 @@ struct CustomSerializer<Tree, void>
   >
 {};
 
-template <>
-struct CustomTag<OpaqueEnum>
-{
-  static constexpr auto tag_string()
-  {
-    return make_cx_string("/i`OpaqueEnum'\\");
-  }
-};
-
-template <>
-struct CustomTag<test::LargeEnumClass>
-{
-  static constexpr auto tag_string()
-  {
-    return make_cx_string("/l`test::LargeEnumClass'-8000000000000000`Golf'-400`Hotel'0`India'800`Juliet'7FFFFFFFFFFFFFFF`Kilo'\\");
-  }
-};
-
-template <>
-struct CustomTag<test::UnsignedLargeEnumClass>
-{
-  static constexpr auto tag_string()
-  {
-    return make_cx_string("/L`test::UnsignedLargeEnumClass'0`Lima'400`Mike'4000`November'FFFFFFFFFFFFFFFF`Oscar'\\");
-  }
-};
 
 template <>
 struct CustomTag<Empty>

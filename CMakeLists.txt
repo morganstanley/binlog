@@ -59,5 +59,8 @@ add_test(NAME UnitTest
          COMMAND UnitTest --log_level=test_suite --color_output=true)
 target_compile_features(UnitTest PRIVATE cxx_std_14)
 
+# Tools
+add_executable(GenerateForeachMacro tools/generate_foreach_macro.cpp)
+
 # Documentation
 markdown_to_html_group(Documentation UserGuide)

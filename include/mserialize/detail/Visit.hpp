@@ -3,6 +3,7 @@
 
 #include <mserialize/Visitor.hpp>
 #include <mserialize/deserialize.hpp>
+#include <mserialize/detail/integer_to_hex.hpp>
 #include <mserialize/detail/tag_util.hpp>
 
 #include <type_traits>
@@ -14,36 +15,14 @@ namespace detail {
 class IntegerToHex // NOLINT(cppcoreguidelines-pro-type-member-init)
 {
   char _buffer[20];
-  char* _p = &_buffer[18];
+  char* _p = &_buffer[19];
 
 public:
   template <typename Integer>
   std::enable_if_t<std::is_integral<Integer>::value>
   visit(Integer v)
   {
-    const char digits[] = "0123456789ABCDEF";
-
-    if (v == 0)
-    {
-      *_p-- = '0';
-    }
-    else if (v > 0)
-    {
-      while (v != 0)
-      {
-        *_p-- = digits[v % 16];
-        v /= 16;
-      }
-    }
-    else
-    {
-      while (v != 0)
-      {
-        *_p-- = digits[-(v % 16)];
-        v /= 16;
-      }
-      *_p-- = '-';
-    }
+    _p = write_integer_as_hex(v, _p) - 1;
   }
 
   template <typename T>

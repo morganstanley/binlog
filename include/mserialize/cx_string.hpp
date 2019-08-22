@@ -25,13 +25,12 @@ public:
   using data_ref = const char(&)[N+1];
 
   /**
-   * Construct a cx_string from the null terminated `str`.
+   * Construct a cx_string from `str`.
    *
-   * @pre size() == strlen(str)
-   * @pre str[N] == 0
+   * @pre str[0,N) must be valid
    * @post strncmp(data(), str, N) == 0
    */
-  explicit constexpr cx_string(const char (&str)[N+1])
+  explicit constexpr cx_string(const char* str)
     :_data{0}
   {
     for (std::size_t i = 0; i < N; ++i)
