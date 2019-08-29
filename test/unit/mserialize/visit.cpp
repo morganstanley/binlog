@@ -122,11 +122,12 @@ MSERIALIZE_MAKE_ENUM_TAG(test::UnsignedLargeEnumClass, Lima, Mike, November, Osc
 namespace mserialize {
 
 template <>
-struct CustomSerializer<Empty, void> : StructSerializer<> {};
+struct CustomSerializer<Empty, void> : StructSerializer<Empty> {};
 
 template <>
 struct CustomSerializer<Element, void>
   : StructSerializer<
+      Element,
       std::integral_constant<decltype(serializable_member(&Element::name)),&Element::name>,
       std::integral_constant<decltype(serializable_member(&Element::number)),&Element::number>
   >
@@ -135,6 +136,7 @@ struct CustomSerializer<Element, void>
 template <>
 struct CustomSerializer<Tree, void>
   : StructSerializer<
+      Tree,
       std::integral_constant<decltype(serializable_member(&Tree::value)),&Tree::value>,
       std::integral_constant<decltype(serializable_member(&Tree::left)),&Tree::left>,
       std::integral_constant<decltype(serializable_member(&Tree::right)),&Tree::right>

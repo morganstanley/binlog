@@ -44,7 +44,7 @@ template <typename T, typename Arg, typename Ret>
 auto deserializable_member(Ret (T::*setter)(Arg)) -> decltype(setter);
 
 /**
- * Deserialize the given members of a custom type.
+ * Deserialize the given members of a custom type `T`.
  *
  * `Members...` is a pack of std::integral_constant<M, m>,
  * where each `M` is a member pointer type of a single `T` type,
@@ -60,6 +60,7 @@ auto deserializable_member(Ret (T::*setter)(Arg)) -> decltype(setter);
  *     template <>
  *     struct CustomDeserializer<T, void>
  *       : StructDeserializer<
+ *           T,
  *           std::integral_constant<decltype(&T::field), &T::field>,
  *           std::integral_constant<decltype(&T::setter), &T::setter>,
  *       >
@@ -80,10 +81,10 @@ auto deserializable_member(Ret (T::*setter)(Arg)) -> decltype(setter);
  * Note: C++ does not allow taking the address of reference members or bitfields,
  * therefore those cannot be deserialized directly: a setter must be used instead.
  */
-template <typename... Members>
+template <typename T, typename... Members>
 struct StructDeserializer
 {
-  template <typename T, typename InputStream>
+  template <typename InputStream>
   static void deserialize(T& t, InputStream& istream)
   {
     using swallow = int[];
@@ -91,13 +92,13 @@ struct StructDeserializer
   }
 
 private:
-  template <typename T, typename Field, typename InputStream>
+  template <typename Field, typename InputStream>
   static void deserialize_member(T& t, Field T::*field, InputStream& istream)
   {
     mserialize::deserialize(t.*field, istream);
   }
 
-  template <typename T, typename Ret, typename Arg, typename InputStream>
+  template <typename Ret, typename Arg, typename InputStream>
   static void deserialize_member(T& t, Ret (T::*setter)(Arg), InputStream& istream)
   {
     detail::remove_cvref_t<Arg> arg;

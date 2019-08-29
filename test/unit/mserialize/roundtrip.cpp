@@ -611,6 +611,7 @@ struct CustomDeserializer<Person>
 template <>
 struct CustomSerializer<Vehicle, void>
   : StructSerializer<
+      Vehicle,
       std::integral_constant<decltype(serializable_member(&Vehicle::type)),&Vehicle::type>,
       std::integral_constant<decltype(serializable_member(&Vehicle::age)),&Vehicle::age>,
       std::integral_constant<decltype(serializable_member(&Vehicle::name)),&Vehicle::name>,
@@ -621,6 +622,7 @@ struct CustomSerializer<Vehicle, void>
 template <>
 struct CustomDeserializer<Vehicle, void>
   : StructDeserializer<
+      Vehicle,
       std::integral_constant<decltype(deserializable_member(&Vehicle::type)),&Vehicle::type>,
       std::integral_constant<decltype(deserializable_member(&Vehicle::age)),&Vehicle::age>,
       std::integral_constant<decltype(deserializable_member(&Vehicle::name)),&Vehicle::name>,

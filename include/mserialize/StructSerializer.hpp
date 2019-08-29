@@ -41,7 +41,7 @@ template <typename T, typename Ret>
 auto serializable_member(Ret (T::*getter)() const) -> decltype(getter);
 
 /**
- * Serialize the given members of a custom type.
+ * Serialize the given members of a custom type `T`.
  *
  * `Members...` is a pack of std::integral_constant<M, m>,
  * where each `M` is a member pointer type of a single `T` type,
@@ -57,6 +57,7 @@ auto serializable_member(Ret (T::*getter)() const) -> decltype(getter);
  *     template <>
  *     struct CustomSerializer<T, void>
  *       : StructSerializer<
+ *           T,
  *           std::integral_constant<decltype(&T::field), &T::field>,
  *           std::integral_constant<decltype(&T::getter), &T::getter>,
  *       >
@@ -77,17 +78,16 @@ auto serializable_member(Ret (T::*getter)() const) -> decltype(getter);
  * Note: C++ does not allow taking the address of reference members or bitfields,
  * therefore those cannot be serialized directly: a getter must be used instead.
  */
-template <typename... Members>
+template <typename T, typename... Members>
 struct StructSerializer
 {
-  template <typename T, typename OutputStream>
+  template <typename OutputStream>
   static void serialize(const T& t, OutputStream& ostream)
   {
     using swallow = int[];
     (void)swallow{1, (serialize_member(t, Members::value, ostream), int{})...};
   }
 
-  template <typename T>
   static std::size_t serialized_size(const T& t)
   {
     const std::size_t field_sizes[] = {0, serialized_size_member(t, Members::value)...};
@@ -98,25 +98,25 @@ struct StructSerializer
   }
 
 private:
-  template <typename T, typename Field, typename OutputStream>
+  template <typename Field, typename OutputStream>
   static void serialize_member(const T& t, Field T::*field, OutputStream& ostream)
   {
     mserialize::serialize(t.*field, ostream);
   }
 
-  template <typename T, typename Field, typename OutputStream>
+  template <typename Field, typename OutputStream>
   static void serialize_member(const T& t, Field (T::*getter)() const, OutputStream& ostream)
   {
     mserialize::serialize((t.*getter)(), ostream);
   }
 
-  template <typename T, typename Field>
+  template <typename Field>
   static std::size_t serialized_size_member(const T& t, Field T::*field)
   {
     return mserialize::serialized_size(t.*field);
   }
 
-  template <typename T, typename Field>
+  template <typename Field>
   static std::size_t serialized_size_member(const T& t, Field (T::*getter)() const)
   {
     return mserialize::serialized_size((t.*getter)());
