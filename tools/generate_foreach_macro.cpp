@@ -54,14 +54,14 @@ void write_count(std::ostream& out, int max_count)
 
 void write_foreach(std::ostream& out, int max_iteration)
 {
-  out << "\n/** For each elem `e`, *except the first* in __VA_ARGS__, call F(e) */\n"
-      << "#define " << prefix << "FOREACH(F, ...) \\\n  "
-      << prefix << "CAT(" << prefix << "FOREACH_, " << prefix << "COUNT(__VA_ARGS__)) (F, __VA_ARGS__)\n";
+  out << "\n/** For each elem `e`, *except the first* in __VA_ARGS__, call F(d,e) */\n"
+      << "#define " << prefix << "FOREACH(F, d, ...) \\\n  "
+      << prefix << "CAT(" << prefix << "FOREACH_, " << prefix << "COUNT(__VA_ARGS__)) (F, d, __VA_ARGS__)\n";
 
   out << "\n/** FOREACH_n ignores the first argument, and calls F n-1 times */\n";
   for (int i = 1; i <= max_iteration+1; ++i)
   {
-    out << "#define " << prefix << "FOREACH_" << i << "(F,_";
+    out << "#define " << prefix << "FOREACH_" << i << "(F,d,_";
     for (int j = 1; j < i; ++j)
     {
       out << ",a" << j;
@@ -69,7 +69,7 @@ void write_foreach(std::ostream& out, int max_iteration)
     out << ')';
     for (int j = 1; j < i; ++j)
     {
-      out << " F(a" << j << ")";
+      out << " F(d,a" << j << ")";
     }
     out << "\n";
   }

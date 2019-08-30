@@ -46,7 +46,7 @@
         make_cx_string("/"),                                   \
         tag<underlying_t>(),                                   \
         make_cx_string("`" MSERIALIZE_STRINGIZE(MSERIALIZE_FIRST(__VA_ARGS__)) "'"), \
-        MSERIALIZE_FOREACH(MSERIALIZE_ENUMERATOR, __VA_ARGS__) \
+        MSERIALIZE_FOREACH(MSERIALIZE_ENUMERATOR, _, __VA_ARGS__)                    \
         make_cx_string("\\")                                   \
       );                                                       \
     }                                                          \
@@ -54,7 +54,7 @@
   } /* namespace mserialize */                                 \
   /**/
 
-#define MSERIALIZE_ENUMERATOR(enumerator)                      \
+#define MSERIALIZE_ENUMERATOR(_, enumerator)                   \
   mserialize::detail::integer_to_hex<underlying_t, static_cast<underlying_t>(Enum::enumerator)>(), \
   make_cx_string("`" MSERIALIZE_STRINGIZE(enumerator) "'"),    \
   /**/
