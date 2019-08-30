@@ -5,8 +5,8 @@
 #include <mserialize/deserialize.hpp>
 #include <mserialize/serialize.hpp>
 
-#include <mserialize/StructDeserializer.hpp>
-#include <mserialize/StructSerializer.hpp>
+#include <mserialize/make_struct_deserializable.hpp>
+#include <mserialize/make_struct_serializable.hpp>
 
 #include <boost/optional/optional.hpp>
 #include <boost/test/unit_test.hpp>
@@ -608,29 +608,10 @@ struct CustomDeserializer<Person>
   }
 };
 
-template <>
-struct CustomSerializer<Vehicle, void>
-  : StructSerializer<
-      Vehicle,
-      std::integral_constant<decltype(serializable_member(&Vehicle::type)),&Vehicle::type>,
-      std::integral_constant<decltype(serializable_member(&Vehicle::age)),&Vehicle::age>,
-      std::integral_constant<decltype(serializable_member(&Vehicle::name)),&Vehicle::name>,
-      std::integral_constant<decltype(serializable_member(&Vehicle::owner)),&Vehicle::owner>
-  >
-{};
-
-template <>
-struct CustomDeserializer<Vehicle, void>
-  : StructDeserializer<
-      Vehicle,
-      std::integral_constant<decltype(deserializable_member(&Vehicle::type)),&Vehicle::type>,
-      std::integral_constant<decltype(deserializable_member(&Vehicle::age)),&Vehicle::age>,
-      std::integral_constant<decltype(deserializable_member(&Vehicle::name)),&Vehicle::name>,
-      std::integral_constant<decltype(deserializable_member(&Vehicle::owner)),&Vehicle::owner>
-  >
-{};
-
 } // namespace mserialize
+
+MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(Vehicle, type, age, name, owner)
+MSERIALIZE_MAKE_STRUCT_DESERIALIZABLE(Vehicle, type, age, name, owner)
 
 BOOST_AUTO_TEST_SUITE(MserializeRoundtripCustom)
 

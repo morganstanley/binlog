@@ -7,7 +7,7 @@
 #include <mserialize/tag.hpp>
 #include <mserialize/visit.hpp>
 
-#include <mserialize/StructSerializer.hpp>
+#include <mserialize/make_struct_serializable.hpp>
 
 #include <boost/test/unit_test.hpp>
 
@@ -119,29 +119,11 @@ MSERIALIZE_MAKE_ENUM_TAG(OpaqueEnum)
 MSERIALIZE_MAKE_ENUM_TAG(test::LargeEnumClass, Golf, Hotel, India, Juliet, Kilo)
 MSERIALIZE_MAKE_ENUM_TAG(test::UnsignedLargeEnumClass, Lima, Mike, November, Oscar)
 
+MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(Empty)
+MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(Element, name, number)
+MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(Tree, value, left, right)
+
 namespace mserialize {
-
-template <>
-struct CustomSerializer<Empty, void> : StructSerializer<Empty> {};
-
-template <>
-struct CustomSerializer<Element, void>
-  : StructSerializer<
-      Element,
-      std::integral_constant<decltype(serializable_member(&Element::name)),&Element::name>,
-      std::integral_constant<decltype(serializable_member(&Element::number)),&Element::number>
-  >
-{};
-
-template <>
-struct CustomSerializer<Tree, void>
-  : StructSerializer<
-      Tree,
-      std::integral_constant<decltype(serializable_member(&Tree::value)),&Tree::value>,
-      std::integral_constant<decltype(serializable_member(&Tree::left)),&Tree::left>,
-      std::integral_constant<decltype(serializable_member(&Tree::right)),&Tree::right>
-  >
-{};
 
 
 template <>
