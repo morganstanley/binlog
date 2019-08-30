@@ -7,6 +7,8 @@
 
 #include <mserialize/make_struct_deserializable.hpp>
 #include <mserialize/make_struct_serializable.hpp>
+#include <mserialize/make_template_deserializable.hpp>
+#include <mserialize/make_template_serializable.hpp>
 
 #include <boost/optional/optional.hpp>
 #include <boost/test/unit_test.hpp>
@@ -522,6 +524,21 @@ std::ostream& operator<<(std::ostream& out, const Person& p)
   return out << "Person{ age: " << p.age << ", name: " << p.name << " }";
 }
 
+namespace test {
+
+struct NsPerson
+{
+  int age = 0;
+  std::string name;
+
+  friend bool operator==(const NsPerson& a, const NsPerson& b)
+  {
+    return a.age == b.age && a.name == b.name;
+  }
+};
+
+} // namespace test
+
 struct Vehicle
 {
   int type = 0;
@@ -571,6 +588,62 @@ private:
   }
 };
 
+template <typename A, typename B>
+struct Pair
+{
+  A a; // NOLINT(cppcoreguidelines-non-private-member-variables-in-classes)
+
+  B b() const { return _b; }
+  void b(B b) { _b = b; }
+
+  Pair() = default; // NOLINT(cppcoreguidelines-pro-type-member-init)
+  Pair(A a, B b) :a(std::move(a)), _b(std::move(b)) {}
+
+private:
+  B _b;
+
+  friend bool operator==(const Pair& a, const Pair& b)
+  {
+    return a.a == b.a && a._b == b._b;
+  }
+
+  friend std::ostream& operator<<(std::ostream& out, const Pair& p)
+  {
+    return out << "Pair{"
+               << " a: " << p.a
+               << ", b: " << p.b()
+               << " }";
+  }
+};
+
+namespace test {
+
+template <typename A, typename B>
+struct NsPair
+{
+  A a{};
+  B b{};
+
+  friend bool operator==(const NsPair& a, const NsPair& b)
+  {
+    return a.a == b.a && a.b == b.b;
+  }
+};
+
+} // namespace test
+
+template <typename T, std::size_t N>
+struct Array
+{
+  std::array<T, N> a;
+
+private:
+  friend bool operator==(const Array& a, const Array& b)
+  {
+    return a.a == b.a;
+  }
+};
+
 namespace mserialize {
 
 template <>
@@ -613,6 +686,18 @@ struct CustomDeserializer<Person>
 MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(Vehicle, type, age, name, owner)
 MSERIALIZE_MAKE_STRUCT_DESERIALIZABLE(Vehicle, type, age, name, owner)
 
+MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(test::NsPerson, age, name)
+MSERIALIZE_MAKE_STRUCT_DESERIALIZABLE(test::NsPerson, age, name)
+
+MSERIALIZE_MAKE_TEMPLATE_SERIALIZABLE((typename A, typename B), (Pair<A,B>), a, b)
+MSERIALIZE_MAKE_TEMPLATE_DESERIALIZABLE((typename A, typename B), (Pair<A,B>), a, b)
+
+MSERIALIZE_MAKE_TEMPLATE_SERIALIZABLE((typename A, typename B), (test::NsPair<A,B>), a, b)
+MSERIALIZE_MAKE_TEMPLATE_DESERIALIZABLE((typename A, typename B), (test::NsPair<A,B>), a, b)
+
+MSERIALIZE_MAKE_TEMPLATE_SERIALIZABLE((typename T, std::size_t N), (Array<T,N>), a)
+MSERIALIZE_MAKE_TEMPLATE_DESERIALIZABLE((typename T, std::size_t N), (Array<T,N>), a)
+
 BOOST_AUTO_TEST_SUITE(MserializeRoundtripCustom)
 
 BOOST_AUTO_TEST_CASE(manual_specialization)
@@ -627,6 +712,35 @@ BOOST_AUTO_TEST_CASE(derived_specialization)
   const Vehicle in{1964, 55, "Car", std::make_unique<Person>(Person{35, "Ferdinand"})};
   const Vehicle out = roundtrip(in);
   BOOST_TEST(in == out);
+}
+
+BOOST_AUTO_TEST_CASE(namespaced_specialization)
+{
+  const test::NsPerson in{27, "Juliet"};
+  const test::NsPerson out = roundtrip(in);
+  BOOST_TEST((in == out));
+}
+
+BOOST_AUTO_TEST_CASE(template_specialization)
+{
+  const Pair<int, std::string> in{123, "foobar"};
+  const Pair<int, std::string> out = roundtrip(in);
+  BOOST_TEST(in == out);
+}
+
+BOOST_AUTO_TEST_CASE(namespaced_template_specialization)
+{
+  const test::NsPair<int, std::string> in{456, "barbaz"};
+  const test::NsPair<int, std::string> out = roundtrip(in);
+  BOOST_TEST((in == out));
+}
+
+BOOST_AUTO_TEST_CASE(template_with_value_args)
+{
+  const Array<int, 3> in{{1,2,3}};
+  Array<int, 3> out{{0,0,0}};
+  roundtrip_into(in, out);
+  BOOST_TEST((in == out));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

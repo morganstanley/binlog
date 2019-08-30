@@ -13,4 +13,8 @@
 #define MSERIALIZE_CAT(a, b) MSERIALIZE_CAT_I(a, b)
 #define MSERIALIZE_CAT_I(a, b) a ## b
 
+/** Remove the parens around the argument: (x) -> x */
+#define MSERIALIZE_UNTUPLE(a) MSERIALIZE_UNTUPLE_I a
+#define MSERIALIZE_UNTUPLE_I(...) __VA_ARGS__
+
 #endif // MSERIALIZE_DETAIL_PREPROCESSOR_HPP
