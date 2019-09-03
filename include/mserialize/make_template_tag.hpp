@@ -1,0 +1,111 @@
+#ifndef MSERIALIZE_MAKE_TEMPLATE_TAG_HPP
+#define MSERIALIZE_MAKE_TEMPLATE_TAG_HPP
+
+#include <mserialize/cx_string.hpp>
+#include <mserialize/detail/foreach.hpp>
+#include <mserialize/detail/preprocessor.hpp>
+#include <mserialize/make_struct_tag.hpp>
+
+/**
+ * MSERIALIZE_MAKE_TEMPLATE_TAG(TemplateArgs, TypenameWithTemplateArgs, members...)
+ *
+ * Define a CustomTag specialization for the given
+ * struct or class template, allowing serialized objects
+ * of it to be visited using mserialize::visit.
+ *
+ * The first argument of the macro must be the arguments
+ * of the template, with the necessary typename prefix,
+ * where needed, as they appear after the template keyword
+ * in the definition, wrapped by parentheses.
+ * (The parentheses are required to avoid the preprocessor
+ * splitting the arguments at the commas)
+ *
+ * The second argument is the template name with
+ * the template arguments, as it should appear in a specialization,
+ * wrapped by parentheses.
+ *
+ * Following the second argument come the members,
+ * which are either accessible fields or getters.
+ *
+ * Example:
+ *
+ *     template <typename A, typename B>
+ *     struct Pair {
+ *       A a;
+ *       B b;
+ *     };
+ *     MSERIALIZE_MAKE_TEMPLATE_TAG((typename A, typename B), (Pair<A,B>), a, b)
+ *
+ * The macro has to be called in global scope
+ * (outside of any namespace).
+ *
+ * The member list can be empty.
+ * The member list does not have to enumerate every member
+ * of the given type, but it must be sync with
+ * the specialization of CustomSerializer,
+ * if visitation of objects serialized that way
+ * is desired.
+ *
+ * The maximum number of members and template arguments
+ * is limited by mserialize/detail/foreach.hpp, currently 1024.
+ *
+ * Limitation: it is not possible to generate
+ * a tag for a recursive types with this macro.
+ * CustomTag for recursive types need to be manually
+ * specialized.
+ *
+ * If some of the members are private, the following friend
+ * declaration can be added to the type declaration:
+ *
+ *     template <typename, typename>
+ *     friend struct mserialize::CustomTag;
+ */
+//
+// The macros below deserve a bit of an explanation.
+//
+// Given the following example call:
+//
+// MSERIALIZE_MAKE_TEMPLATE_TAG((typename A, typename B, typename C), (Tuple<A,B,C>), a, b, c)
+//
+// Then the below macros expand to:
+//
+// TemplateArgs = (typename A, typename B, typename C)
+// __VA_ARGS__ = (Tuple<A,B,C>), a, b, c
+//               ^-- this is here to avoid empty pack if there are no members,
+//                   as until C++20 the pack cannot be empty
+//
+// MSERIALIZE_FIRST(__VA_ARGS__) = (Tuple<A,B,C>)
+// MSERIALIZE_UNTUPLE((Tuple<A,B,C>)) = Tuple<A,B,C>
+// MSERIALIZE_STRINGIZE_LIST(Tuple<A,B,C>) ~= "Tuple<A,B,C>"
+//
+#define MSERIALIZE_MAKE_TEMPLATE_TAG(TemplateArgs, ...)           \
+  namespace mserialize {                                          \
+  template <MSERIALIZE_UNTUPLE(TemplateArgs)>                     \
+  struct CustomTag<MSERIALIZE_UNTUPLE(MSERIALIZE_FIRST(__VA_ARGS__)), void> \
+  {                                                               \
+    using T = MSERIALIZE_UNTUPLE(MSERIALIZE_FIRST(__VA_ARGS__));  \
+    static constexpr auto tag_string()                            \
+    {                                                             \
+      return cx_strcat(                                           \
+        make_cx_string(                                           \
+          "{" MSERIALIZE_STRINGIZE_LIST(MSERIALIZE_UNTUPLE(MSERIALIZE_FIRST(__VA_ARGS__))) \
+        ),                                                        \
+        MSERIALIZE_FOREACH(                                       \
+          MSERIALIZE_STRUCT_MEMBER_TAG, _, __VA_ARGS__            \
+        )                                                         \
+        make_cx_string("}")                                       \
+      );                                                          \
+    }                                                             \
+  };                                                              \
+  } /* namespace mserialize */                                    \
+  /**/
+
+/** MSERIALIZE_STRINGIZE_LIST(a,b,c) -> "a" "," "b" "," "c" */
+#define MSERIALIZE_STRINGIZE_LIST(...)                            \
+  MSERIALIZE_STRINGIZE(MSERIALIZE_FIRST(__VA_ARGS__))             \
+  MSERIALIZE_FOREACH(MSERIALIZE_STRINGIZE_LIST_I, _, __VA_ARGS__) \
+  /**/
+
+#define MSERIALIZE_STRINGIZE_LIST_I(_, a) "," #a
+
+#endif // MSERIALIZE_MAKE_TEMPLATE_TAG_HPP

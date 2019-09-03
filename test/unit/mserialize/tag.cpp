@@ -1,6 +1,8 @@
 #include "test_enums.hpp"
 
 #include <mserialize/make_enum_tag.hpp>
+#include <mserialize/make_struct_tag.hpp>
+#include <mserialize/make_template_tag.hpp>
 #include <mserialize/tag.hpp>
 
 #include <cstdint>
@@ -96,3 +98,42 @@ static_assert(mserialize::tag<test::LargeEnumClass>() == "/l`test::LargeEnumClas
 
 MSERIALIZE_MAKE_ENUM_TAG(test::UnsignedLargeEnumClass, Lima, Mike, November, Oscar)
 static_assert(mserialize::tag<test::UnsignedLargeEnumClass>() == "/L`test::UnsignedLargeEnumClass'0`Lima'400`Mike'4000`November'FFFFFFFFFFFFFFFF`Oscar'\\", "");
+
+// test MSERIALIZE_MAKE_STRUCT_TAG
+
+struct Empty {};
+
+MSERIALIZE_MAKE_STRUCT_TAG(Empty)
+
+static_assert(mserialize::tag<Empty>() == "{Empty}", "");
+
+struct Foo
+{
+  int alpha; // NOLINT(cppcoreguidelines-non-private-member-variables-in-classes)
+
+  void bravo(std::string);
+
+private:
+  const std::string& bravo() const;
+  float* charlie;
+
+  template <typename, typename>
+  friend struct mserialize::CustomTag;
+};
+
+MSERIALIZE_MAKE_STRUCT_TAG(Foo, alpha, bravo, charlie)
+
+static_assert(mserialize::tag<Foo>() == "{Foo`alpha'i`bravo'[c`charlie'<0f>}", "");
+
+// test MSERIALIZE_MAKE_TEMPLATE_TAG
+
+template <typename A, typename B>
+struct Pair
+{
+  A a;
+  B b;
+};
+
+MSERIALIZE_MAKE_TEMPLATE_TAG((typename A, typename B), (Pair<A,B>), a, b)
+
+static_assert(mserialize::tag<Pair<std::tuple<int,bool>, std::vector<char>>>() == "{Pair<A,B>`a'(iy)`b'[c}", "");

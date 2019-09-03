@@ -8,6 +8,7 @@
 #include <mserialize/visit.hpp>
 
 #include <mserialize/make_struct_serializable.hpp>
+#include <mserialize/make_struct_tag.hpp>
 
 #include <boost/test/unit_test.hpp>
 
@@ -123,26 +124,10 @@ MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(Empty)
 MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(Element, name, number)
 MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(Tree, value, left, right)
 
+MSERIALIZE_MAKE_STRUCT_TAG(Empty)
+MSERIALIZE_MAKE_STRUCT_TAG(Element, name, number)
+
 namespace mserialize {
-
-
-template <>
-struct CustomTag<Empty>
-{
-  static constexpr auto tag_string()
-  {
-    return make_cx_string("{Empty}");
-  }
-};
-
-template <>
-struct CustomTag<Element>
-{
-  static constexpr auto tag_string()
-  {
-    return make_cx_string("{Element`name'[c`number'i}");
-  }
-};
 
 template <>
 struct CustomTag<Tree>
