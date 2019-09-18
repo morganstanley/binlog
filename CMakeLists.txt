@@ -44,6 +44,7 @@ add_executable(UnitTest test/unit/UnitTest.cpp
   test/unit/mserialize/cx_string.cpp
   test/unit/mserialize/tag.cpp
   test/unit/mserialize/visit.cpp
+  test/unit/mserialize/documentation.cpp
 )
   target_compile_definitions(UnitTest PRIVATE
     BOOST_TEST_DYN_LINK
@@ -63,4 +64,4 @@ target_compile_features(UnitTest PRIVATE cxx_std_14)
 add_executable(GenerateForeachMacro tools/generate_foreach_macro.cpp)
 
 # Documentation
-markdown_to_html_group(Documentation UserGuide)
+markdown_to_html_group(Documentation UserGuide Mserialize)
