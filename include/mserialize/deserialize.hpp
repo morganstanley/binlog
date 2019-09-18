@@ -10,7 +10,8 @@ namespace mserialize {
  *
  * @requires `T` to be a deserializable type, including:
  *  - Arithmetic types (std::is_arithmetic)
- *  - Sequence containers (begin/end, deserializable value_type)
+ *  - Enums (std::is_enum)
+ *  - Containers (begin/end, deserializable value_type)
  *  - Tuples (std::pair, std::tuple, is_tuple)
  *  - Smart pointers (std::shared_ptr, std::unique_ptr)
  *
