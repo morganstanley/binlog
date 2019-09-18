@@ -82,7 +82,6 @@ class CatchfilePreprocessor(Preprocessor):
                     result += self._unprefix(line, prefix)
         if len(result) == 0:
             raise KeyError("Marker not found: '%s' in file: '%s'" % (marker,fullpath))
-        result = self._get_snippet_header(path) + result
         return result
 
     def _get_marker_prefix(self, marker_line):
@@ -98,18 +97,4 @@ class CatchfilePreprocessor(Preprocessor):
     def _get_file(self, path):
         with open(os.path.join(self.base_dir, path), 'r') as f:
             result = f.read()
-        return self._get_snippet_header(path) + result
-
-    def _get_snippet_header(self, path):
-        ext = os.path.splitext(path)[1]
-        ft = 'text'
-        if ext in ['.c', '.h']: ft = 'C'
-        elif ext in ['.C', '.H', '.cpp', '.hpp', '.hxx', '.ipp', '.cc']: ft = 'C++'
-        elif ext in ['.js', '.json']: ft = 'javascript'
-        elif ext == '.sh': ft = 'bash'
-        elif ext == '.py': ft = 'python'
-
-        return ':::' + ft + '\n'
-
-def makeExtension(*args, **kwargs):
-    return CatchfileExtension(*args, **kwargs)
+        return result

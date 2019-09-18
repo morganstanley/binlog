@@ -40,7 +40,7 @@ When building with `Clang`, requires: `llvm-profdata`, `llvm-tools`.
 
 The documentation is generated from markdown files, with code snippets
 automatically included from source files. To build the documentation,
-`python` and the `markdown` and `pygments` python packages are required.
+`python` and the `markdown` python package are required.
 
     Release/$ make Documentation
 

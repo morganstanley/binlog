@@ -3,7 +3,6 @@ import os
 import argparse
 import time
 import markdown
-import pygments
 
 from catchfile import CatchfileExtension
 
@@ -15,7 +14,7 @@ def main():
 
   catchfile = CatchfileExtension(base_dir = args.catchfile_dir)
 
-  extensions = ['toc', 'codehilite', 'meta', catchfile]
+  extensions = ['toc', 'meta', catchfile]
   extension_configs = {
       'toc' : [('anchorlink', True)],
   }
