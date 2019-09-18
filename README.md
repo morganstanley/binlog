@@ -48,6 +48,7 @@ automatically included from source files. To build the documentation,
 
  - `-DBINLOG_USE_CLANG_TIDY`: runs clang-tidy on built sources.
  - `-DBOOST_ROOT`: specifies the path to an alternate boost installation (tests depend on boost)
+ - `-DBINLOG_SOURCE_BROWSER_URL`: if specified, code snippets in documentation will use this link prefix
 
 ## Clean
 

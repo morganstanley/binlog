@@ -1,9 +1,15 @@
+if (DEFINED BINLOG_SOURCE_BROWSER_URL)
+  set(SOURCE_BROWSER_SWITCH --source-browser-base-url)
+endif()
+
 # Creates a target which converts doc/`doc_name`.md to HTML
 function(markdown_to_html doc_name)
   add_custom_command(
     OUTPUT "${doc_name}.html"
     COMMENT "Generate ${doc_name}.html"
     COMMAND "python" "gendoc.py"
+                     "--catchfile-dir" "${PROJECT_SOURCE_DIR}"
+                     "${SOURCE_BROWSER_SWITCH}" "${BINLOG_SOURCE_BROWSER_URL}"
                      "<" "${doc_name}.md"
                      ">" "${CMAKE_CURRENT_BINARY_DIR}/${doc_name}.html"
     DEPENDS "doc/${doc_name}.md" "doc/gendoc.py" "doc/body.html"
