@@ -2,6 +2,7 @@
 #define MSERIALIZE_MAKE_STRUCT_DESERIALIZABLE_HPP
 
 #include <mserialize/StructDeserializer.hpp>
+#include <mserialize/detail/Deserializer.hpp>
 #include <mserialize/detail/foreach.hpp>
 #include <mserialize/detail/preprocessor.hpp>
 

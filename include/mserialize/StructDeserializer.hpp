@@ -1,6 +1,7 @@
 #ifndef MSERIALIZE_STRUCT_DESERIALIZER_HPP
 #define MSERIALIZE_STRUCT_DESERIALIZER_HPP
 
+#include <mserialize/deserialize.hpp>
 #include <mserialize/detail/type_traits.hpp>
 
 #include <type_traits>

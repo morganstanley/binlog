@@ -2,6 +2,7 @@
 #define MSERIALIZE_MAKE_TEMPLATE_SERIALIZABLE_HPP
 
 #include <mserialize/StructSerializer.hpp>
+#include <mserialize/detail/Serializer.hpp>
 #include <mserialize/detail/foreach.hpp>
 #include <mserialize/detail/preprocessor.hpp>
 

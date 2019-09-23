@@ -1,6 +1,8 @@
 #ifndef MSERIALIZE_STRUCT_SERIALIZER_HPP
 #define MSERIALIZE_STRUCT_SERIALIZER_HPP
 
+#include <mserialize/serialize.hpp>
+
 #include <type_traits>
 
 namespace mserialize {
