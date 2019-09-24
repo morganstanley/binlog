@@ -34,9 +34,15 @@ endif ()
 find_package(Boost 1.59.0 REQUIRED COMPONENTS unit_test_framework)
 
 # Mserialize
-
 add_library(mserialize INTERFACE)
 target_include_directories(mserialize INTERFACE include)
+
+# Binlog
+add_library(binlog OBJECT
+  include/binlog/EventStream.cpp
+)
+  target_compile_features(binlog PRIVATE cxx_std_14)
+  target_include_directories(binlog PUBLIC include)
 
 # UnitTest
 add_executable(UnitTest test/unit/UnitTest.cpp
@@ -45,7 +51,11 @@ add_executable(UnitTest test/unit/UnitTest.cpp
   test/unit/mserialize/tag.cpp
   test/unit/mserialize/visit.cpp
   test/unit/mserialize/documentation.cpp
+
+  $<TARGET_OBJECTS:binlog>
+  test/unit/binlog/TestEventStream.cpp
 )
+  target_compile_features(UnitTest PRIVATE cxx_std_14)
   target_compile_definitions(UnitTest PRIVATE
     BOOST_TEST_DYN_LINK
     BOOST_TEST_NO_MAIN
@@ -58,7 +68,6 @@ add_executable(UnitTest test/unit/UnitTest.cpp
 
 add_test(NAME UnitTest
          COMMAND UnitTest --log_level=test_suite --color_output=true)
-target_compile_features(UnitTest PRIVATE cxx_std_14)
 
 # Tools
 add_executable(GenerateForeachMacro tools/generate_foreach_macro.cpp)
