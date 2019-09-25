@@ -47,6 +47,13 @@ public:
    */
   const Actor& actor() const { return _actor; }
 
+  /**
+   * @return the most recent clock sync consumed
+   *         from the stream, or a default constructed
+   *         object if no such clock sync was found.
+   */
+  const ClockSync& clockSync() const { return _clockSync; }
+
 private:
   Range nextSizePrefixedRange();
 
@@ -54,12 +61,15 @@ private:
 
   void readActor(Range range);
 
+  void readClockSync(Range range);
+
   void readEvent(std::uint64_t eventSourceId, Range range);
 
   std::istream& _input;
   std::vector<char> _buffer; // TODO(benedek) perf: use input buffer directly
   std::map<std::uint64_t, EventSource> _eventSources; // TODO(benedek) perf: use SegmentedMap
   Actor _actor;
+  ClockSync _clockSync;
   Event _event;
 };
 

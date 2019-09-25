@@ -53,6 +53,7 @@ template <typename... Args>
 struct TestEvent
 {
   std::uint64_t eventSourceId;
+  std::uint64_t clockValue;
   std::tuple<Args...> args;
 };
 
@@ -145,10 +146,30 @@ std::ostream& operator<<(std::ostream& out, const Actor& a)
       << " batchSize: " << a.batchSize << " }";
 }
 
+bool operator==(const ClockSync& a, const ClockSync& b)
+{
+  return a.clockValue == b.clockValue
+    &&   a.clockFrequency == b.clockFrequency
+    &&   a.nsSinceEpoch == b.nsSinceEpoch
+    &&   a.tzOffset == b.tzOffset
+    &&   a.tzName == b.tzName;
+}
+
+std::ostream& operator<<(std::ostream& out, const ClockSync& a)
+{
+  return
+  out << "ClockSync{"
+      << "clockValue: " << a.clockValue
+      << "clockFrequency: " << a.clockFrequency
+      << "nsSinceEpoch: " << a.nsSinceEpoch
+      << "tzOffset: " << a.tzOffset
+      << "tzName: " << a.tzName << " }";
+}
+
 } // namespace binlog
 
 MSERIALIZE_MAKE_TEMPLATE_SERIALIZABLE(
-  (typename... Args), (TestEvent<Args...>), eventSourceId, args
+  (typename... Args), (TestEvent<Args...>), eventSourceId, clockValue, args
 )
 
 BOOST_AUTO_TEST_SUITE(EventStream)
@@ -156,7 +177,7 @@ BOOST_AUTO_TEST_SUITE(EventStream)
 BOOST_AUTO_TEST_CASE(read_event)
 {
   const binlog::EventSource eventSource = testEventSource(123);
-  const TestEvent<> event{123, {}};
+  const TestEvent<> event{123, 0, {}};
 
   std::stringstream stream;
   serializeSizePrefixedTagged(eventSource, stream);
@@ -177,7 +198,7 @@ BOOST_AUTO_TEST_CASE(read_event)
 BOOST_AUTO_TEST_CASE(read_event_with_args)
 {
   const binlog::EventSource eventSource = testEventSource(123, "foobar", "(iy[c)");
-  const TestEvent<int, bool, std::string> event{123, {789, true, "foo"}};
+  const TestEvent<int, bool, std::string> event{123, 0, {789, true, "foo"}};
 
   std::stringstream stream;
   serializeSizePrefixedTagged(eventSource, stream);
@@ -204,10 +225,10 @@ BOOST_AUTO_TEST_CASE(multiple_sources)
   const binlog::EventSource eventSource1 = testEventSource(123, "foo");
   const binlog::EventSource eventSource2 = testEventSource(0, "bar");
   const binlog::EventSource eventSource3 = testEventSource(124, "baz");
-  const TestEvent<> event1{123, {}};
-  const TestEvent<> event2{124, {}};
-  const TestEvent<> event3{0, {}};
-  const TestEvent<> event4{123, {}};
+  const TestEvent<> event1{123, 0, {}};
+  const TestEvent<> event2{124, 0, {}};
+  const TestEvent<> event3{0, 0, {}};
+  const TestEvent<> event4{123, 0, {}};
 
   std::stringstream stream;
   serializeSizePrefixedTagged(eventSource1, stream);
@@ -236,7 +257,7 @@ BOOST_AUTO_TEST_CASE(override_event_source)
 {
   const binlog::EventSource eventSource1 = testEventSource(123, "foo");
   const binlog::EventSource eventSource2 = testEventSource(123, "bar");
-  const TestEvent<> event{123, {}};
+  const TestEvent<> event{123, 0, {}};
 
   std::stringstream stream;
   serializeSizePrefixedTagged(eventSource1, stream);
@@ -254,7 +275,7 @@ BOOST_AUTO_TEST_CASE(override_event_source)
 BOOST_AUTO_TEST_CASE(read_event_invalid_source)
 {
   const binlog::EventSource eventSource = testEventSource(123);
-  const TestEvent<> event{124, {}};
+  const TestEvent<> event{124, 0, {}};
 
   std::stringstream stream;
   serializeSizePrefixedTagged(eventSource, stream);
@@ -268,8 +289,8 @@ BOOST_AUTO_TEST_CASE(read_event_invalid_source)
 BOOST_AUTO_TEST_CASE(continue_after_event_invalid_source)
 {
   const binlog::EventSource eventSource = testEventSource(123);
-  const TestEvent<> event1{124, {}};
-  const TestEvent<> event2{123, {}};
+  const TestEvent<> event1{124, 0, {}};
+  const TestEvent<> event2{123, 0, {}};
 
   std::stringstream stream;
   serializeSizePrefixedTagged(eventSource, stream);
@@ -331,7 +352,7 @@ BOOST_AUTO_TEST_CASE(multiple_actors)
   const binlog::EventSource eventSource = testEventSource(123);
   const binlog::Actor actor1{1, "foo", 0};
   const binlog::Actor actor2{1, "bar", 0};
-  const TestEvent<> event{123, {}};
+  const TestEvent<> event{123, 0, {}};
 
   std::stringstream stream;
   serializeSizePrefixedTagged(eventSource, stream);
@@ -362,8 +383,8 @@ BOOST_AUTO_TEST_CASE(continue_after_event_invalid_actor)
   const binlog::EventSource eventSource2 = testEventSource(124);
   const binlog::Actor actor1{1, "foo", 0};
   const binlog::Actor actor2{1, "bar", 0};
-  const TestEvent<> event1{123, {}};
-  const TestEvent<> event2{124, {}};
+  const TestEvent<> event1{123, 0, {}};
+  const TestEvent<> event2{124, 0, {}};
 
   std::stringstream stream;
   serializeSizePrefixedTagged(eventSource1, stream);
@@ -387,6 +408,69 @@ BOOST_AUTO_TEST_CASE(continue_after_event_invalid_actor)
 
   // and the old actor is not corrupted
   BOOST_TEST(eventStream.actor() == actor1);
+}
+
+BOOST_AUTO_TEST_CASE(default_clockSync)
+{
+  std::stringstream stream;
+  binlog::EventStream eventStream(stream);
+
+  BOOST_TEST(eventStream.clockSync() == binlog::ClockSync{});
+}
+
+BOOST_AUTO_TEST_CASE(multiple_clockSyncs)
+{
+  const binlog::EventSource eventSource = testEventSource(123);
+  const binlog::ClockSync clockSync1{1, 2, 3, 4, "foo"};
+  const binlog::ClockSync clockSync2{5, 6, 7, 8, "bar"};
+  const TestEvent<> event{123, 0, {}};
+
+  std::stringstream stream;
+  serializeSizePrefixedTagged(eventSource, stream);
+  serializeSizePrefixedTagged(clockSync1, stream);
+  serializeSizePrefixed(event, stream);
+  serializeSizePrefixedTagged(clockSync2, stream);
+  serializeSizePrefixed(event, stream);
+
+  binlog::EventStream eventStream(stream);
+
+  BOOST_TEST(eventStream.nextEvent() != nullptr);
+  BOOST_TEST(eventStream.clockSync() == clockSync1);
+  BOOST_TEST(eventStream.nextEvent() != nullptr);
+  BOOST_TEST(eventStream.clockSync() == clockSync2);
+}
+
+BOOST_AUTO_TEST_CASE(continue_after_event_invalid_clockSync)
+{
+  const binlog::EventSource eventSource1 = testEventSource(123);
+  const binlog::EventSource eventSource2 = testEventSource(124);
+  const binlog::ClockSync clockSync1{1, 2, 3, 4, "foo"};
+  const binlog::ClockSync clockSync2{5, 6, 7, 8, "bar"};
+  const TestEvent<> event1{123, 0, {}};
+  const TestEvent<> event2{124, 0, {}};
+
+  std::stringstream stream;
+  serializeSizePrefixedTagged(eventSource1, stream);
+  serializeSizePrefixedTagged(eventSource2, stream);
+  serializeSizePrefixedTagged(clockSync1, stream);
+  serializeSizePrefixed(event1, stream);
+  corruptSerializeSizePrefixedTagged(clockSync2, stream);
+  serializeSizePrefixed(event2, stream);
+
+  binlog::EventStream eventStream(stream);
+
+  BOOST_TEST(eventStream.nextEvent() != nullptr);
+  BOOST_TEST(eventStream.clockSync() == clockSync1);
+  BOOST_CHECK_THROW(eventStream.nextEvent(), std::runtime_error);
+
+  // after corrupt clockSync entry, progress can be made:
+  const binlog::Event* e = eventStream.nextEvent();
+  BOOST_TEST_REQUIRE(e != nullptr);
+  BOOST_TEST_REQUIRE(e->source != nullptr);
+  BOOST_TEST(*e->source == eventSource2);
+
+  // and the old clockSync is not corrupted
+  BOOST_TEST(eventStream.clockSync() == clockSync1);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -40,6 +40,9 @@ const Event* EventStream::nextEvent()
       case Actor::Tag:
         readActor(range);
         break;
+      case ClockSync::Tag:
+        readClockSync(range);
+        break;
       default:
         readEvent(tag, range);
         return &_event;
@@ -93,6 +96,14 @@ void EventStream::readActor(Range range)
   _actor = std::move(actor);
 }
 
+void EventStream::readClockSync(Range range)
+{
+  // Make sure _clockSync is updated only if deserialize does not throw
+  ClockSync clockSync;
+  mserialize::deserialize(clockSync, range);
+  _clockSync = std::move(clockSync);
+}
+
 void EventStream::readEvent(std::uint64_t eventSourceId, Range range)
 {
   auto it = _eventSources.find(eventSourceId);
@@ -102,6 +113,7 @@ void EventStream::readEvent(std::uint64_t eventSourceId, Range range)
   }
 
   _event.source = &it->second;
+  _event.clockValue = range.read<std::uint64_t>();
   _event.arguments = range;
 }
 
