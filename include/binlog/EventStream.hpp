@@ -40,16 +40,26 @@ public:
    */
   const Event* nextEvent();
 
+  /**
+   * @return the most recent actor consumed from
+   *         the stream or a default constructed
+   *         object if no such actor was found.
+   */
+  const Actor& actor() const { return _actor; }
+
 private:
   Range nextSizePrefixedRange();
 
   void readEventSource(Range range);
+
+  void readActor(Range range);
 
   void readEvent(std::uint64_t eventSourceId, Range range);
 
   std::istream& _input;
   std::vector<char> _buffer; // TODO(benedek) perf: use input buffer directly
   std::map<std::uint64_t, EventSource> _eventSources; // TODO(benedek) perf: use SegmentedMap
+  Actor _actor;
   Event _event;
 };
 

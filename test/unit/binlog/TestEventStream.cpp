@@ -34,6 +34,21 @@ void serializeSizePrefixedTagged(const Entry& entry, std::ostream& out)
   mserialize::serialize(entry, out);
 }
 
+template <typename Entry>
+void corruptSerializeSizePrefixedTagged(const Entry& entry, std::ostream& out)
+{
+  const auto tag = Entry::Tag;
+  const std::uint32_t size = std::uint32_t(mserialize::serialized_size(entry) + sizeof(tag) - 1);
+  mserialize::serialize(size, out);
+  mserialize::serialize(tag, out);
+
+  // drop the last byte
+  std::ostringstream out2;
+  mserialize::serialize(entry, out2);
+  const std::string entryStr = out2.str();
+  out.write(entryStr.data(), std::streamsize(entryStr.size() - 1));
+}
+
 template <typename... Args>
 struct TestEvent
 {
@@ -112,6 +127,22 @@ std::ostream& operator<<(std::ostream& out, const EventSource& a)
       << " line: " << a.line
       << " formatString: " << a.formatString
       << " argumentTags: " << a.argumentTags << " }";
+}
+
+bool operator==(const Actor& a, const Actor& b)
+{
+  return a.id == b.id
+    &&   a.name == b.name
+    &&   a.batchSize == b.batchSize;
+}
+
+std::ostream& operator<<(std::ostream& out, const Actor& a)
+{
+  return
+  out << "Actor{"
+      << " id: " << a.id
+      << " name: " << a.name
+      << " batchSize: " << a.batchSize << " }";
 }
 
 } // namespace binlog
@@ -285,6 +316,77 @@ BOOST_AUTO_TEST_CASE(incomplete_event)
 
   BOOST_CHECK_THROW(eventStream.nextEvent(), std::runtime_error);
   BOOST_TEST(stream.tellg() == 3);
+}
+
+BOOST_AUTO_TEST_CASE(default_actor)
+{
+  std::stringstream stream;
+  binlog::EventStream eventStream(stream);
+
+  BOOST_TEST(eventStream.actor() == binlog::Actor{});
+}
+
+BOOST_AUTO_TEST_CASE(multiple_actors)
+{
+  const binlog::EventSource eventSource = testEventSource(123);
+  const binlog::Actor actor1{1, "foo", 0};
+  const binlog::Actor actor2{1, "bar", 0};
+  const TestEvent<> event{123, {}};
+
+  std::stringstream stream;
+  serializeSizePrefixedTagged(eventSource, stream);
+  serializeSizePrefixedTagged(actor2, stream);
+  serializeSizePrefixedTagged(actor1, stream);
+  serializeSizePrefixed(event, stream);
+  serializeSizePrefixedTagged(actor2, stream);
+  serializeSizePrefixed(event, stream);
+  serializeSizePrefixed(event, stream);
+  serializeSizePrefixedTagged(actor1, stream);
+  serializeSizePrefixed(event, stream);
+
+  binlog::EventStream eventStream(stream);
+
+  BOOST_TEST(eventStream.nextEvent() != nullptr);
+  BOOST_TEST(eventStream.actor() == actor1);
+  BOOST_TEST(eventStream.nextEvent() != nullptr);
+  BOOST_TEST(eventStream.actor() == actor2);
+  BOOST_TEST(eventStream.nextEvent() != nullptr);
+  BOOST_TEST(eventStream.actor() == actor2);
+  BOOST_TEST(eventStream.nextEvent() != nullptr);
+  BOOST_TEST(eventStream.actor() == actor1);
+}
+
+BOOST_AUTO_TEST_CASE(continue_after_event_invalid_actor)
+{
+  const binlog::EventSource eventSource1 = testEventSource(123);
+  const binlog::EventSource eventSource2 = testEventSource(124);
+  const binlog::Actor actor1{1, "foo", 0};
+  const binlog::Actor actor2{1, "bar", 0};
+  const TestEvent<> event1{123, {}};
+  const TestEvent<> event2{124, {}};
+
+  std::stringstream stream;
+  serializeSizePrefixedTagged(eventSource1, stream);
+  serializeSizePrefixedTagged(eventSource2, stream);
+  serializeSizePrefixedTagged(actor1, stream);
+  serializeSizePrefixed(event1, stream);
+  corruptSerializeSizePrefixedTagged(actor2, stream);
+  serializeSizePrefixed(event2, stream);
+
+  binlog::EventStream eventStream(stream);
+
+  BOOST_TEST(eventStream.nextEvent() != nullptr);
+  BOOST_TEST(eventStream.actor() == actor1);
+  BOOST_CHECK_THROW(eventStream.nextEvent(), std::runtime_error);
+
+  // after corrupt actor entry, progress can be made:
+  const binlog::Event* e = eventStream.nextEvent();
+  BOOST_TEST_REQUIRE(e != nullptr);
+  BOOST_TEST_REQUIRE(e->source != nullptr);
+  BOOST_TEST(*e->source == eventSource2);
+
+  // and the old actor is not corrupted
+  BOOST_TEST(eventStream.actor() == actor1);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

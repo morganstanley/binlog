@@ -37,6 +37,9 @@ const Event* EventStream::nextEvent()
       case EventSource::Tag:
         readEventSource(range);
         break;
+      case Actor::Tag:
+        readActor(range);
+        break;
       default:
         readEvent(tag, range);
         return &_event;
@@ -80,6 +83,14 @@ void EventStream::readEventSource(Range range)
   EventSource eventSource;
   mserialize::deserialize(eventSource, range);
   _eventSources[eventSource.id] = std::move(eventSource);
+}
+
+void EventStream::readActor(Range range)
+{
+  // Make sure _actor is updated only if deserialize does not throw
+  Actor actor;
+  mserialize::deserialize(actor, range);
+  _actor = std::move(actor);
 }
 
 void EventStream::readEvent(std::uint64_t eventSourceId, Range range)

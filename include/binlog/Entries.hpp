@@ -46,6 +46,28 @@ struct EventSource
 };
 
 /**
+ * Represents an actor (thread, fiber, coroutine, task)
+ * which triggers EventSources to produce events.
+ *
+ * `id` and `name` are free-form, can be anything
+ * which helps the user to identify the actor.
+ *
+ * `batchSize` is a hint, equal to the size
+ * of the events following this entry.
+ * If specified, must be a valid offset to a later entry,
+ * useful for fast forward seeking in the stream.
+ * Can be zero if unknown.
+ */
+struct Actor
+{
+  static constexpr std::uint64_t Tag = std::uint64_t(-2);
+
+  std::uint64_t id = {};
+  std::string name;
+  std::uint64_t batchSize = {};
+};
+
+/**
  * Represents a log event (one line in a logfile).
  *
  * The event arguments can be visited by:
@@ -61,5 +83,8 @@ struct Event
 
 MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(  binlog::EventSource, id, severity, category, function, file, line, formatString, argumentTags)
 MSERIALIZE_MAKE_STRUCT_DESERIALIZABLE(binlog::EventSource, id, severity, category, function, file, line, formatString, argumentTags)
+
+MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(  binlog::Actor, id, name, batchSize)
+MSERIALIZE_MAKE_STRUCT_DESERIALIZABLE(binlog::Actor, id, name, batchSize)
 
 #endif // BINLOG_ENTRIES_HPP
