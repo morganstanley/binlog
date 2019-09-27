@@ -1,6 +1,7 @@
 #include <binlog/EventStream.hpp>
 
 #include <binlog/Entries.hpp>
+#include <binlog/ToStringVisitor.hpp>
 
 #include <mserialize/make_template_serializable.hpp>
 #include <mserialize/serialize.hpp>
@@ -63,42 +64,6 @@ binlog::EventSource testEventSource(std::uint64_t id, const std::string& seed = 
     id, binlog::Severity::info, seed, seed, seed, seed.size(), seed, std::move(argumentTags)
   };
 }
-
-class ArgumentsToString
-{
-  std::stringstream _str;
-
-public:
-  ArgumentsToString() { _str << std::boolalpha; }
-
-  // catch all for arithmetic types
-  template <typename T>
-  void visit(T v) { _str << v << ' '; }
-
-  // avoid displaying int8_t and uint8_t as a character
-  void visit(std::int8_t v)    { _str << int(v) << ' '; }
-  void visit(std::uint8_t v)   { _str << unsigned(v) << ' '; }
-
-  void visit(mserialize::Visitor::SequenceBegin)  { _str << "[ "; }
-  void visit(mserialize::Visitor::SequenceEnd)    { _str << "] "; }
-
-  void visit(mserialize::Visitor::TupleBegin)     { _str << "( "; }
-  void visit(mserialize::Visitor::TupleEnd)       { _str << ") "; }
-
-  void visit(mserialize::Visitor::VariantBegin)   {}
-  void visit(mserialize::Visitor::VariantEnd)     {}
-  void visit(mserialize::Visitor::Null)           { _str << "{null} "; }
-
-  void visit(mserialize::Visitor::Enum e)         { _str << e.enumerator << " "; }
-
-  void visit(mserialize::Visitor::StructBegin sb) { _str << sb.name << "{ "; }
-  void visit(mserialize::Visitor::StructEnd)      { _str << "} "; }
-
-  void visit(mserialize::Visitor::FieldBegin fb)  { _str << fb.name << ": "; }
-  void visit(mserialize::Visitor::FieldEnd)       {}
-
-  std::string value() const { return _str.str(); }
-};
 
 } // namespace
 
@@ -211,10 +176,11 @@ BOOST_AUTO_TEST_CASE(read_event_with_args)
   BOOST_TEST_REQUIRE(e1->source != nullptr);
   BOOST_TEST(*e1->source == eventSource);
 
-  ArgumentsToString visitor;
+  std::stringstream argStr;
+  binlog::ToStringVisitor visitor(argStr);
   binlog::Range arguments(e1->arguments);
   mserialize::visit(e1->source->argumentTags, visitor, arguments);
-  BOOST_TEST(visitor.value() == "( 789 true [ f o o ] ) ");
+  BOOST_TEST(argStr.str() == "(789, true, foo)");
 
   const binlog::Event* e2 = eventStream.nextEvent();
   BOOST_TEST(e2 == nullptr);
