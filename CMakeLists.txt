@@ -40,6 +40,7 @@ target_include_directories(mserialize INTERFACE include)
 # Binlog
 add_library(binlog OBJECT
   include/binlog/EventStream.cpp
+  include/binlog/Time.cpp
 )
   target_compile_features(binlog PRIVATE cxx_std_14)
   target_include_directories(binlog PUBLIC include)
@@ -54,6 +55,7 @@ add_executable(UnitTest test/unit/UnitTest.cpp
 
   $<TARGET_OBJECTS:binlog>
   test/unit/binlog/TestEventStream.cpp
+  test/unit/binlog/TestTime.cpp
 )
   target_compile_features(UnitTest PRIVATE cxx_std_14)
   target_compile_definitions(UnitTest PRIVATE
