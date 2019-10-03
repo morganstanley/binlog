@@ -115,7 +115,7 @@ struct ClockSync
  */
 struct Event
 {
-  EventSource* source = nullptr;
+  const EventSource* source = nullptr;
   std::uint64_t clockValue = {};
   Range arguments;
 };
