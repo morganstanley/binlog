@@ -30,6 +30,10 @@ if (BINLOG_USE_CLANG_TIDY)
   )
 endif ()
 
+# Threads (e.g: -pthread)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 # Boost
 find_package(Boost 1.59.0 REQUIRED COMPONENTS unit_test_framework)
 
@@ -60,6 +64,7 @@ add_executable(UnitTest test/unit/UnitTest.cpp
   test/unit/binlog/TestTime.cpp
   test/unit/binlog/TestToStringVisitor.cpp
   test/unit/binlog/TestPrettyPrinter.cpp
+  test/unit/binlog/TestQueue.cpp
 )
   target_compile_features(UnitTest PRIVATE cxx_std_14)
   target_compile_definitions(UnitTest PRIVATE
@@ -71,6 +76,7 @@ add_executable(UnitTest test/unit/UnitTest.cpp
   )
   target_link_libraries(UnitTest Boost::unit_test_framework)
   target_link_libraries(UnitTest mserialize)
+  target_link_libraries(UnitTest Threads::Threads) # used by: TestQueue
 
 add_test(NAME UnitTest
          COMMAND UnitTest --log_level=test_suite --color_output=true)
