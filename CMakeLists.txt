@@ -4,6 +4,7 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 include(CTest)
 include(AddressSanitizer)
+include(ThreadSanitizer)
 include(Coverage)
 include(MarkdownToHtml)
 include(OptionalCompileOption)

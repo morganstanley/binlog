@@ -16,11 +16,18 @@ Building requires `cmake`. The build files are generated in a separate directory
     Debug/$ cmake .. -DCMAKE_BUILD_TYPE=Debug
     Debug/$ make VERBOSE=1
 
-## Sanitized Build
+## Address Sanitized Build
 
-    $ mkdir Sanitized
-    $ cd Sanitized
+    $ mkdir AddressSanitized
+    $ cd AddressSanitized
     Sanitized/$ cmake .. -DBINLOG_USE_ASAN=On
+    Sanitized/$ make VERBOSE=1
+
+## Thread Sanitized Build
+
+    $ mkdir ThreadSanitized
+    $ cd ThreadSanitized
+    Sanitized/$ cmake .. -DBINLOG_USE_TSAN=On
     Sanitized/$ make VERBOSE=1
 
 ## Debug Build with Code Coverage
@@ -52,7 +59,7 @@ automatically included from source files. To build the documentation,
 
 ## Clean
 
-    $ rm -rf Release/ Debug/ Sanitized/ Coverage/
+    $ rm -rf Release/ Debug/ AddressSanitized/ ThreadSanitized/ Coverage/
 
 ## Test
 
