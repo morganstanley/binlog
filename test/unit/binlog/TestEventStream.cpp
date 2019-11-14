@@ -26,16 +26,6 @@ void serializeSizePrefixed(const Entry& entry, std::ostream& out)
 }
 
 template <typename Entry>
-void serializeSizePrefixedTagged(const Entry& entry, std::ostream& out)
-{
-  const auto tag = Entry::Tag;
-  const std::uint32_t size = std::uint32_t(mserialize::serialized_size(entry) + sizeof(tag));
-  mserialize::serialize(size, out);
-  mserialize::serialize(tag, out);
-  mserialize::serialize(entry, out);
-}
-
-template <typename Entry>
 void corruptSerializeSizePrefixedTagged(const Entry& entry, std::ostream& out)
 {
   const auto tag = Entry::Tag;

@@ -6,6 +6,7 @@
 
 #include <mserialize/make_struct_deserializable.hpp>
 #include <mserialize/make_struct_serializable.hpp>
+#include <mserialize/serialize.hpp>
 
 #include <cstdint>
 #include <string>
@@ -119,6 +120,29 @@ struct Event
   std::uint64_t clockValue = {};
   Range arguments;
 };
+
+/**
+ * Serialize `entry` to `out`, prefixed with size and tag.
+ *
+ * @see documentation top of this file
+ *
+ * @requires Entry must be serializable
+ * @requires Entry::Tag must be uint64_t
+ * @requires OutputStream to model the mserialize::OutputStream concept
+ *
+ * @returns total number of bytes written to `out`
+ */
+template <typename Entry, typename OutputStream>
+std::size_t serializeSizePrefixedTagged(const Entry& entry, OutputStream& out)
+{
+  const std::uint64_t tag = Entry::Tag;
+  const std::uint32_t size = std::uint32_t(mserialize::serialized_size(entry) + sizeof(tag));
+  mserialize::serialize(size, out);
+  mserialize::serialize(tag, out);
+  mserialize::serialize(entry, out);
+
+  return size + sizeof(size);
+}
 
 } // namespace binlog
 
