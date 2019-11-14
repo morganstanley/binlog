@@ -28,11 +28,8 @@ void nsSinceEpochToBrokenDownTimeUTC(std::chrono::nanoseconds sinceEpoch, Broken
   const clock::time_point tp{sinceEpoch};
   const std::time_t tt = clock::to_time_t(tp);
 
-  // TODO(benedek) platform: use gmtime_r/gmtime_s where available
-  const std::tm* result = std::gmtime(&tt);
-  if (result == nullptr) { return; }
-
-  static_cast<std::tm&>(dst) = *result;
+  // TODO(benedek) platform: use gmtime_r/gmtime_s/gmtime based on availability
+  gmtime_r(&tt, &dst);
 
   // set the sub-second part
   const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(sinceEpoch);

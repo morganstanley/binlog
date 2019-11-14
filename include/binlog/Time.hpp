@@ -7,6 +7,8 @@
 #include <cstdint>
 #include <ctime>
 
+#include <time.h> // NOLINT localtime_r, gmtime_r
+
 namespace binlog {
 
 struct BrokenDownTime : std::tm
@@ -54,6 +56,53 @@ std::chrono::nanoseconds clockToNsSinceEpoch(const ClockSync& clockSync, std::ui
  * @param dst result is written to this variable
  */
 void nsSinceEpochToBrokenDownTimeUTC(std::chrono::nanoseconds sinceEpoch, BrokenDownTime& dst);
+
+/**
+ * Create a ClockSync corresponding to std::system_clock.
+ *
+ * Time zone is set according to std::localtime.
+ *
+ * This function is inline to make the log producer use-case header-only.
+ */
+inline ClockSync systemClockSync()
+{
+  using Clock = std::chrono::system_clock;
+  static_assert(Clock::period::num == 1, "Clock measures integer fractions of a second");
+
+  const auto now = Clock::now();
+  const auto since_epoch = now.time_since_epoch();
+  const std::time_t now_tt = Clock::to_time_t(now);
+
+  // TODO(benedek) platform: use localtime_r/localtime_s/localtime based on availability
+  std::tm now_tm{};
+  localtime_r(&now_tt, &now_tm);
+
+  // TODO(benedek) platform: access TZ related tm fields, where available
+  int offset = 0;
+  char offset_str[6] = {0};
+  if (strftime(offset_str, sizeof(offset_str), "%z", &now_tm) == 5)
+  {
+    // offset_str is +HHMM or -HHMM
+    offset = (
+      ((offset_str[1]-'0') * 10 + (offset_str[2]-'0')) * 3600 +
+      ((offset_str[3]-'0') * 10 + (offset_str[4]-'0')) * 60
+    ) * ((offset_str[0] == '-') ? -1 : 1);
+  }
+
+  char tzName[128] = {0};
+  if (strftime(tzName, sizeof(tzName), "%Z", &now_tm) == 0)
+  {
+    tzName[0] = 0;
+  }
+
+  return ClockSync{
+    std::uint64_t(since_epoch.count()),
+    std::uint64_t(Clock::period::den),
+    std::uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(since_epoch).count()),
+    offset,
+    tzName
+  };
+}
 
 } // namespace binlog
 
