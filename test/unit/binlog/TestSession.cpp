@@ -61,6 +61,15 @@ BOOST_AUTO_TEST_CASE(set_channel_name)
   BOOST_TEST(ch.actor.name == "Sio");
 }
 
+BOOST_AUTO_TEST_CASE(min_severity)
+{
+  binlog::Session session;
+  BOOST_TEST((session.minSeverity() == binlog::Severity::trace));
+
+  session.setMinSeverity(binlog::Severity::info);
+  BOOST_TEST((session.minSeverity() == binlog::Severity::info));
+}
+
 // addEventSource and consume are tested in TestSessionWriter.cpp
 
 BOOST_AUTO_TEST_SUITE_END()

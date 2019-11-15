@@ -2,10 +2,12 @@
 #define BINLOG_SESSION_HPP
 
 #include <binlog/Entries.hpp>
+#include <binlog/Severity.hpp>
 #include <binlog/Time.hpp>
 #include <binlog/detail/Queue.hpp>
 #include <binlog/detail/QueueReader.hpp>
 
+#include <atomic>
 #include <cstdint>
 #include <deque>
 #include <list>
@@ -108,6 +110,18 @@ public:
    */
   std::uint64_t addEventSource(EventSource eventSource);
 
+  /** @returns Severity below writers should not add events */
+  Severity minSeverity() const;
+
+  /**
+   * Set minimum severity new added events.
+   *
+   * This is advisory only: writers are encouraged
+   * not to add new events with severity below the given limit,
+   * but not required to.
+   */
+  void setMinSeverity(Severity severity);
+
   /**
    * Move metadata and data from the session to `out`.
    *
@@ -142,6 +156,8 @@ private:
   std::uint64_t _nextSourceId = 1;
 
   std::size_t _totalConsumedBytes = 0;
+
+  std::atomic<Severity> _minSeverity = {Severity::trace};
 };
 
 inline Session::Channel& Session::createChannel(std::size_t queueCapacity, Actor actor)
@@ -173,6 +189,17 @@ inline std::uint64_t Session::addEventSource(EventSource eventSource)
   eventSource.id = _nextSourceId;
   _sources.emplace_back(std::move(eventSource));
   return _nextSourceId++;
+}
+
+inline Severity Session::minSeverity() const
+{
+  return _minSeverity.load(std::memory_order_acquire);
+}
+
+inline void Session::setMinSeverity(Severity severity)
+{
+  // TODO(benedek) perf: replicate _minSeverity in writers to save one cache-line access
+  _minSeverity.store(severity, std::memory_order_release);
 }
 
 template <typename OutputStream>
