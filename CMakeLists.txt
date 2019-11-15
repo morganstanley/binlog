@@ -68,6 +68,8 @@ add_executable(UnitTest test/unit/UnitTest.cpp
   test/unit/binlog/TestQueue.cpp
   test/unit/binlog/TestSession.cpp
   test/unit/binlog/TestSessionWriter.cpp
+
+  test/unit/binlog/test_utils.cpp
 )
   target_compile_features(UnitTest PRIVATE cxx_std_14)
   target_compile_definitions(UnitTest PRIVATE
