@@ -68,6 +68,7 @@ add_executable(UnitTest test/unit/UnitTest.cpp
   test/unit/binlog/TestQueue.cpp
   test/unit/binlog/TestSession.cpp
   test/unit/binlog/TestSessionWriter.cpp
+  test/unit/binlog/TestCreateSourceAndEvent.cpp
 
   test/unit/binlog/test_utils.cpp
 )
@@ -81,7 +82,7 @@ add_executable(UnitTest test/unit/UnitTest.cpp
   )
   target_link_libraries(UnitTest Boost::unit_test_framework)
   target_link_libraries(UnitTest mserialize)
-  target_link_libraries(UnitTest Threads::Threads) # used by: TestQueue, TestSessionWriter
+  target_link_libraries(UnitTest Threads::Threads) # used by: TestQueue, TestSessionWriter, TestCreateSourceAndEvent
 
 add_test(NAME UnitTest
          COMMAND UnitTest --log_level=test_suite --color_output=true)

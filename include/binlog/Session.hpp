@@ -139,7 +139,7 @@ private:
 
   std::list<Channel> _channels;
   std::deque<EventSource> _sources;
-  std::uint64_t _nextSourceId = 0;
+  std::uint64_t _nextSourceId = 1;
 
   std::size_t _totalConsumedBytes = 0;
 };
