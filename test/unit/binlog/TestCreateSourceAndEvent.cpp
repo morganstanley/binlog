@@ -166,4 +166,21 @@ BOOST_AUTO_TEST_CASE(two_threads)
   BOOST_TEST(streamToEvents(stream, "%m") == expectedEvents, boost::test_tools::per_element());
 }
 
+static_assert(binlog::detail::count_placeholders("") == 0, "");
+static_assert(binlog::detail::count_placeholders("foo") == 0, "");
+static_assert(binlog::detail::count_placeholders("foo {") == 0, "");
+static_assert(binlog::detail::count_placeholders("foo { bar") == 0, "");
+static_assert(binlog::detail::count_placeholders("foo { bar }") == 0, "");
+static_assert(binlog::detail::count_placeholders("{}") == 1, "");
+static_assert(binlog::detail::count_placeholders("{} foo") == 1, "");
+static_assert(binlog::detail::count_placeholders("foo {}") == 1, "");
+static_assert(binlog::detail::count_placeholders("foo {} bar") == 1, "");
+static_assert(binlog::detail::count_placeholders("{{}") == 1, "");
+static_assert(binlog::detail::count_placeholders("{}}") == 1, "");
+static_assert(binlog::detail::count_placeholders("foo {} bar {}") == 2, "");
+static_assert(binlog::detail::count_placeholders("{} foo {} bar {}") == 3, "");
+static_assert(binlog::detail::count_placeholders("{}{}{}") == 3, "");
+static_assert(binlog::detail::count_placeholders("{{}{}{}}") == 3, "");
+static_assert(binlog::detail::count_placeholders("{}{}{}{}{}{}{}{}{}{}") == 10, "");
+
 BOOST_AUTO_TEST_SUITE_END()

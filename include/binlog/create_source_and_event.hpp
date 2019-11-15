@@ -10,6 +10,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <type_traits> // integral_constant
 
 /**
  * BINLOG_CREATE_SOURCE_AND_EVENT(writer, severity, category, format, clock, args...)
@@ -30,12 +31,16 @@
  * @param args... any number of serializable, tagged, log arguments. Can be empty
  *
  * The number of arguments must match the number of {} placeholders in `format`.
- * TODO(benedek) check num placeholders == num args compile time
  *
  * TODO(benedek) perf: do not instantiate a full EventSource
  */
 #define BINLOG_CREATE_SOURCE_AND_EVENT(writer, severity, category, format, /* clock, */ ...) \
   do {                                                                                       \
+    static_assert(                                                                           \
+      binlog::detail::count_placeholders(format)+1 ==                                        \
+      decltype(binlog::detail::count_arguments(__VA_ARGS__))::value,                         \
+      "Number of {} placeholders in format string must match number of arugments"            \
+    );                                                                                       \
     static std::atomic<std::uint64_t> _binlog_sid{0};                                        \
     std::uint64_t _binlog_sid_v = _binlog_sid.load(std::memory_order_relaxed);               \
     if (_binlog_sid_v == 0)                                                                  \
@@ -60,6 +65,26 @@ constexpr auto concatenated_tags(Unused&&, T&&...)
 {
   return mserialize::cx_strcat(mserialize::tag<T>()...);
 }
+
+/** @return the number of "{}" substrings in `str` */
+constexpr std::size_t count_placeholders(const char* str)
+{
+  std::size_t result = 0;
+  for (std::size_t i = 0; str[i] != 0; ++i)
+  {
+    if (str[i] == '{' && str[i+1] == '}')
+    {
+      ++result;
+      ++i;
+    }
+  }
+
+  return result;
+}
+
+template <typename... T>
+constexpr std::integral_constant<std::size_t, sizeof...(T)>
+count_arguments(T&&...); // Implementation is missing by design
 
 } // namespace detail
 } // namespace binlog
