@@ -241,25 +241,39 @@ BOOST_AUTO_TEST_CASE(queue_is_full)
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
 
+  writer.setId(7);
+  writer.setName("Seven");
+
   binlog::EventSource eventSource{
     0, binlog::Severity::info, "cat", "fun", "file", 123, "a={}", "[i"
   };
   eventSource.id = session.addEventSource(eventSource);
 
-  BOOST_TEST(writer.addEvent(eventSource.id, 0, std::vector<int>{1,2,3}));
+  // add more data that would otherwise fit in the queue
+  for (int i = 0; i < 256; ++i)
+  {
+    // even if the queue is full, writer allocates a new queue, returns true
+    BOOST_TEST(writer.addEvent(eventSource.id, 0, std::vector<int>{i,i+1,i+2}));
+  }
 
-  // if there's not enough space in the queue, addEvent returns false, no effect
-  const std::vector<int> largeVec(1000);
-  BOOST_TEST(false == writer.addEvent(eventSource.id, 0, largeVec));
+  std::vector<std::string> expectedEvents;
+  expectedEvents.reserve(256);
+  for (int i = 0; i < 256; ++i)
+  {
+    std::ostringstream s;
+    s << "7 Seven a=[" << i << ", " << i+1 << ", " << i+2 << "]";
+    expectedEvents.push_back(s.str());
+  }
 
-  // a smaller event still can be added
-  BOOST_TEST(writer.addEvent(eventSource.id, 0, std::vector<int>{4,5,6}));
+  std::stringstream stream;
+  const binlog::Session::ConsumeResult cr = session.consume(stream);
 
-  const std::vector<std::string> expectedEvents{
-    "a=[1, 2, 3]",
-    "a=[4, 5, 6]"
-  };
-  BOOST_TEST(getEvents(session, "%m") == expectedEvents, boost::test_tools::per_element());
+  // make sure old channels are closed
+  BOOST_TEST(cr.channelsPolled > 1);
+  BOOST_TEST(cr.channelsRemoved + 1 == cr.channelsPolled);
+
+  // make sure the events are correct, and the actor properties are preserved
+  BOOST_TEST(streamToEvents(stream, "%t %n %m") == expectedEvents, boost::test_tools::per_element());
 }
 
 BOOST_AUTO_TEST_CASE(move_ctor)

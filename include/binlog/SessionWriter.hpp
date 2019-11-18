@@ -6,6 +6,7 @@
 
 #include <mserialize/serialize.hpp>
 
+#include <algorithm> // max
 #include <cstddef>
 #include <utility> // move
 
@@ -91,6 +92,10 @@ public:
    * return the same value during a single log call,
    * otherwise undefined behaviour might be invoked.
    *
+   * If the queue is full (it has not enough space for the event),
+   * a new channel is created, suitable to hold this event,
+   * and the old one is closed.
+   *
    * @pre `eventSourceId` must be the id of an event source added to `session()`,
    *      see Session::addEventSource.
    * @param eventSourceId The id of the source which produces the event
@@ -101,11 +106,14 @@ public:
    *        mserialize tag of `Args` must match `argumentTags` of the event source.
    *
    * @returns true on success, false if there's not enough space in the queue
+   *          and failed to create a new channel.
    */
   template <typename... Args>
   bool addEvent(std::uint64_t eventSourceId, std::uint64_t clock, Args&&... args) noexcept;
 
 private:
+  bool replaceChannel(std::size_t minQueueCapacity) noexcept;
+
   Session* _session;
   Session::Channel* _channel;
   detail::QueueWriter _qw;
@@ -165,7 +173,12 @@ bool SessionWriter::addEvent(std::uint64_t eventSourceId, std::uint64_t clock, A
 
   // allocate space (totalSize includes size field)
   const std::size_t totalSize = size + sizeof(std::uint32_t);
-  if (! _qw.beginWrite(totalSize)) { return false; }
+  if (! _qw.beginWrite(totalSize))
+  {
+    // not enough space in queue, create a new channel
+    replaceChannel(totalSize);
+    if (! _qw.beginWrite(totalSize)) { return false; }
+  }
 
   // serialize fields
   using swallow = int[];
@@ -177,6 +190,29 @@ bool SessionWriter::addEvent(std::uint64_t eventSourceId, std::uint64_t clock, A
   };
 
   _qw.endWrite();
+  return true;
+}
+
+inline bool SessionWriter::replaceChannel(std::size_t minQueueCapacity) noexcept
+{
+  const std::size_t newCapacity = (std::max)(_qw.capacity(), 2 * minQueueCapacity);
+
+  try
+  {
+    Actor actor{_channel->actor.id, _channel->actor.name, 0}; // avoid racing on the last field
+    Session::Channel& newChannel = _session->createChannel(newCapacity, std::move(actor));
+    _qw = detail::QueueWriter(newChannel.queue);
+    _channel->closed = true;
+    _channel = &newChannel;
+  }
+  catch (...)
+  {
+    // allocation and mutex lock in createChannel can throw,
+    // but addEvent is more efficient if noexcept:
+    // indicate failure by return value instead.
+    return false;
+  }
+
   return true;
 }
 

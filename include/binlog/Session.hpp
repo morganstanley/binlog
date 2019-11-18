@@ -44,10 +44,11 @@ class Session
 public:
   struct Channel
   {
-    explicit Channel(std::size_t queueCapacity)
+    explicit Channel(std::size_t queueCapacity, Actor actor = {})
       :queue(queueCapacity),
        reader(queue),
-       closed(false)
+       closed(false),
+       actor(std::move(actor))
     {}
 
     detail::Queue queue;        /**< Holds log events */
@@ -74,7 +75,7 @@ public:
    *
    * @return stable reference to the created channel
    */
-  Channel& createChannel(std::size_t queueCapacity);
+  Channel& createChannel(std::size_t queueCapacity, Actor actor = {});
 
   /**
    * Thread-safe way to set the actor id of `channel` to `id`.
@@ -143,11 +144,11 @@ private:
   std::size_t _totalConsumedBytes = 0;
 };
 
-inline Session::Channel& Session::createChannel(std::size_t queueCapacity)
+inline Session::Channel& Session::createChannel(std::size_t queueCapacity, Actor actor)
 {
   std::lock_guard<std::mutex> lock(_mutex);
 
-  _channels.emplace_back(queueCapacity);
+  _channels.emplace_back(queueCapacity, std::move(actor));
   return _channels.back();
 }
 
