@@ -15,12 +15,12 @@ namespace {
 
 void logOnEveryLevel(binlog::SessionWriter& writer)
 {
-  BINLOG_CREATE_SOURCE_AND_EVENT_IF(writer, binlog::Severity::trace, category, "", 0);
-  BINLOG_CREATE_SOURCE_AND_EVENT_IF(writer, binlog::Severity::debug, category, "", 0);
-  BINLOG_CREATE_SOURCE_AND_EVENT_IF(writer, binlog::Severity::info, category, "", 0);
-  BINLOG_CREATE_SOURCE_AND_EVENT_IF(writer, binlog::Severity::warning, category, "", 0);
-  BINLOG_CREATE_SOURCE_AND_EVENT_IF(writer, binlog::Severity::error, category, "", 0);
-  BINLOG_CREATE_SOURCE_AND_EVENT_IF(writer, binlog::Severity::critical, category, "", 0);
+  BINLOG_CREATE_SOURCE_AND_EVENT_IF(writer, binlog::Severity::trace, category, 0, "");
+  BINLOG_CREATE_SOURCE_AND_EVENT_IF(writer, binlog::Severity::debug, category, 0, "");
+  BINLOG_CREATE_SOURCE_AND_EVENT_IF(writer, binlog::Severity::info, category, 0, "");
+  BINLOG_CREATE_SOURCE_AND_EVENT_IF(writer, binlog::Severity::warning, category, 0, "");
+  BINLOG_CREATE_SOURCE_AND_EVENT_IF(writer, binlog::Severity::error, category, 0, "");
+  BINLOG_CREATE_SOURCE_AND_EVENT_IF(writer, binlog::Severity::critical, category, 0, "");
 }
 
 int failIfCalled()
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(no_eval_if_disabled)
 
   session.setMinSeverity(binlog::Severity::warning);
   BINLOG_CREATE_SOURCE_AND_EVENT_IF(
-    writer, binlog::Severity::info, category, "{}", 0, failIfCalled()
+    writer, binlog::Severity::info, category, 0, "{}", failIfCalled()
   );
 
   BOOST_TEST(true); // if reached, we are fine.

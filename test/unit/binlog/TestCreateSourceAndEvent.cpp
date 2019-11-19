@@ -19,7 +19,7 @@ void writeEvent(binlog::Session& session)
 {
   binlog::SessionWriter writer(session, 128);
 
-  BINLOG_CREATE_SOURCE_AND_EVENT(writer, binlog::Severity::info, category, "Hello Concurrent World", 0);
+  BINLOG_CREATE_SOURCE_AND_EVENT(writer, binlog::Severity::info, category, 0, "Hello Concurrent World");
 }
 
 } // namespace
@@ -31,7 +31,7 @@ BOOST_AUTO_TEST_CASE(no_arg)
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
 
-  BINLOG_CREATE_SOURCE_AND_EVENT(writer, binlog::Severity::info, category, "Hello", 0);
+  BINLOG_CREATE_SOURCE_AND_EVENT(writer, binlog::Severity::info, category, 0, "Hello");
 
   BOOST_TEST(getEvents(session, "%m") == std::vector<std::string>{"Hello"}, boost::test_tools::per_element());
 }
@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(one_arg)
   binlog::SessionWriter writer(session, 128);
 
   BINLOG_CREATE_SOURCE_AND_EVENT(
-    writer, binlog::Severity::info, category, "Hello {}", 0,
+    writer, binlog::Severity::info, category, 0, "Hello {}",
     std::string("World")
   );
 
@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(several_args)
   binlog::SessionWriter writer(session, 128);
 
   BINLOG_CREATE_SOURCE_AND_EVENT(
-    writer, binlog::Severity::info, category, "Hello {} a={} b={} c={}", 0,
+    writer, binlog::Severity::info, category, 0, "Hello {} a={} b={} c={}",
     std::string("World"), 1, true, std::vector<int>{2,3,4}
   );
 
@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(severity_and_category)
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
 
-  BINLOG_CREATE_SOURCE_AND_EVENT(writer, binlog::Severity::info, my_category, "Hello", 0);
+  BINLOG_CREATE_SOURCE_AND_EVENT(writer, binlog::Severity::info, my_category, 0, "Hello");
 
   BOOST_TEST(getEvents(session, "%S %C %m") == std::vector<std::string>{"INFO my_category Hello"}, boost::test_tools::per_element());
 }
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(location)
   binlog::SessionWriter writer(session, 128);
 
   const std::uint64_t line = __LINE__ + 1;
-  BINLOG_CREATE_SOURCE_AND_EVENT(writer, binlog::Severity::info, my_category, "Hello", 0);
+  BINLOG_CREATE_SOURCE_AND_EVENT(writer, binlog::Severity::info, my_category, 0, "Hello");
 
   std::ostringstream msg;
   msg << __func__ << " " << __FILE__ << " " << line << " Hello";
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(actor)
   binlog::SessionWriter writer(session, 128);
   writer.setName("w1");
 
-  BINLOG_CREATE_SOURCE_AND_EVENT(writer, binlog::Severity::info, category, "Hello", 0);
+  BINLOG_CREATE_SOURCE_AND_EVENT(writer, binlog::Severity::info, category, 0, "Hello");
 
   BOOST_TEST(getEvents(session, "%n %m") == std::vector<std::string>{"w1 Hello"}, boost::test_tools::per_element());
 }
@@ -104,8 +104,9 @@ BOOST_AUTO_TEST_CASE(time)
 
   const auto now = std::chrono::system_clock::now();
   BINLOG_CREATE_SOURCE_AND_EVENT(
-    writer, binlog::Severity::info, category, "Hello",
-    std::uint64_t(now.time_since_epoch().count())
+    writer, binlog::Severity::info, category,
+    std::uint64_t(now.time_since_epoch().count()),
+    "Hello"
   );
 
   BOOST_TEST(getEvents(session, "%d %m") == std::vector<std::string>{timePointToString(now) + " Hello"}, boost::test_tools::per_element());
@@ -118,7 +119,7 @@ BOOST_AUTO_TEST_CASE(loop)
 
   for (int i = 0; i < 10; ++i)
   {
-    BINLOG_CREATE_SOURCE_AND_EVENT(writer, binlog::Severity::info, category, "{}", 0, i);
+    BINLOG_CREATE_SOURCE_AND_EVENT(writer, binlog::Severity::info, category, 0, "{}", i);
   }
 
   std::stringstream stream;
