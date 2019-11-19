@@ -70,6 +70,7 @@ add_executable(UnitTest test/unit/UnitTest.cpp
   test/unit/binlog/TestSessionWriter.cpp
   test/unit/binlog/TestCreateSourceAndEvent.cpp
   test/unit/binlog/TestCreateSourceAndEventIf.cpp
+  test/unit/binlog/TestAdvancedLogMacros.cpp
 
   test/unit/binlog/test_utils.cpp
 )
