@@ -57,8 +57,8 @@ BOOST_AUTO_TEST_CASE(set_channel_name)
   binlog::Session session;
   binlog::Session::Channel& ch = session.createChannel(128);
 
-  session.setChannelActorName(ch, "Sio");
-  BOOST_TEST(ch.actor.name == "Sio");
+  session.setChannelWriterName(ch, "Sio");
+  BOOST_TEST(ch.writerProp.name == "Sio");
 }
 
 BOOST_AUTO_TEST_CASE(min_severity)

@@ -37,8 +37,8 @@ const Event* EventStream::nextEvent()
       case EventSource::Tag:
         readEventSource(range);
         break;
-      case Actor::Tag:
-        readActor(range);
+      case WriterProp::Tag:
+        readWriterProp(range);
         break;
       case ClockSync::Tag:
         readClockSync(range);
@@ -88,12 +88,12 @@ void EventStream::readEventSource(Range range)
   _eventSources[eventSource.id] = std::move(eventSource);
 }
 
-void EventStream::readActor(Range range)
+void EventStream::readWriterProp(Range range)
 {
-  // Make sure _actor is updated only if deserialize does not throw
-  Actor actor;
-  mserialize::deserialize(actor, range);
-  _actor = std::move(actor);
+  // Make sure _writerProp is updated only if deserialize does not throw
+  WriterProp wp;
+  mserialize::deserialize(wp, range);
+  _writerProp = std::move(wp);
 }
 
 void EventStream::readClockSync(Range range)

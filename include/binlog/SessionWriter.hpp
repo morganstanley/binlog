@@ -48,9 +48,9 @@ public:
   Session& session() { return *_session; }
 
   /**
-   * Set the actor id of the underlying channel.
+   * Set the writer id of the underlying channel.
    *
-   * The actor id is shown when produced events are
+   * The writer id is shown when produced events are
    * pretty printed with "%t", see PrettyPrinter.
    *
    * This call takes effect on events produced by
@@ -64,9 +64,9 @@ public:
   void setId(std::uint64_t id);
 
   /**
-   * Set the actor name of the underlying channel.
+   * Set the writer name of the underlying channel.
    *
-   * The actor name is shown when produced events are
+   * The writer name is shown when produced events are
    * pretty printed with "%n", see PrettyPrinter.
    *
    * This call takes effect on events produced by
@@ -155,12 +155,12 @@ inline SessionWriter& SessionWriter::operator=(SessionWriter&& rhs) noexcept
 
 inline void SessionWriter::setId(std::uint64_t id)
 {
-  _session->setChannelActorId(*_channel, id);
+  _session->setChannelWriterId(*_channel, id);
 }
 
 inline void SessionWriter::setName(std::string name)
 {
-  _session->setChannelActorName(*_channel, std::move(name));
+  _session->setChannelWriterName(*_channel, std::move(name));
 }
 
 template <typename... Args>
@@ -199,8 +199,8 @@ inline bool SessionWriter::replaceChannel(std::size_t minQueueCapacity) noexcept
 
   try
   {
-    Actor actor{_channel->actor.id, _channel->actor.name, 0}; // avoid racing on the last field
-    Session::Channel& newChannel = _session->createChannel(newCapacity, std::move(actor));
+    WriterProp wp{_channel->writerProp.id, _channel->writerProp.name, 0}; // avoid racing on the last field
+    Session::Channel& newChannel = _session->createChannel(newCapacity, std::move(wp));
     _qw = detail::QueueWriter(newChannel.queue);
     _channel->closed = true;
     _channel = &newChannel;

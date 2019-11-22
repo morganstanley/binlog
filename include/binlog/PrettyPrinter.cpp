@@ -46,7 +46,7 @@ PrettyPrinter::PrettyPrinter(std::string eventFormat, std::string timeFormat)
 void PrettyPrinter::printEvent(
   std::ostream& out,
   const Event& event,
-  const Actor& actor,
+  const WriterProp& writerProp,
   const ClockSync& clockSync
 ) const
 {
@@ -58,7 +58,7 @@ void PrettyPrinter::printEvent(
     if (c == '%' && ++i != _eventFormat.size())
     {
       const char spec = _eventFormat[i];
-      printEventField(out, spec, event, actor, clockSync);
+      printEventField(out, spec, event, writerProp, clockSync);
     }
     else
     {
@@ -71,7 +71,7 @@ void PrettyPrinter::printEventField(
   std::ostream& out,
   char spec,
   const Event& event,
-  const Actor& actor,
+  const WriterProp& writerProp,
   const ClockSync& clockSync
 ) const
 {
@@ -105,10 +105,10 @@ void PrettyPrinter::printEventField(
     out << event.source->argumentTags;
     break;
   case 'n':
-    out << actor.name;
+    out << writerProp.name;
     break;
   case 't':
-    out << actor.id;
+    out << writerProp.id;
     break;
   case 'd':
     printProducerLocalTime(out, clockSync, event.clockValue);

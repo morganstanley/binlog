@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(add_event_with_time)
   BOOST_TEST(getEvents(session, "%d %m") == std::vector<std::string>{timePointToString(now) + " a=456 b=foo"}, boost::test_tools::per_element());
 }
 
-BOOST_AUTO_TEST_CASE(add_event_with_actor_id_name)
+BOOST_AUTO_TEST_CASE(add_event_with_writer_id_name)
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(add_event_with_actor_id_name)
   BOOST_TEST(getEvents(session, "%t %n %m") == std::vector<std::string>{"111 John a=456 b=foo"}, boost::test_tools::per_element());
 }
 
-BOOST_AUTO_TEST_CASE(add_event_with_actor_id_name_ctor)
+BOOST_AUTO_TEST_CASE(add_event_with_writer_id_name_ctor)
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128, 111, "John");
@@ -232,7 +232,7 @@ BOOST_AUTO_TEST_CASE(queue_is_full)
   BOOST_TEST(cr.channelsPolled > 1);
   BOOST_TEST(cr.channelsRemoved + 1 == cr.channelsPolled);
 
-  // make sure the events are correct, and the actor properties are preserved
+  // make sure the events are correct, and the writer properties are preserved
   BOOST_TEST(streamToEvents(stream, "%t %n %m") == expectedEvents, boost::test_tools::per_element());
 }
 

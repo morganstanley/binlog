@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(more_args)
   BOOST_TEST(getEventsFromDefaultSession("%S %C %m") == expectedEvents, boost::test_tools::per_element());
 }
 
-BOOST_AUTO_TEST_CASE(actor_name)
+BOOST_AUTO_TEST_CASE(writer_name)
 {
   binlog::default_thread_local_writer().setName("W");
 

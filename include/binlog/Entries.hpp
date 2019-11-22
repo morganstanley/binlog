@@ -47,19 +47,22 @@ struct EventSource
 };
 
 /**
- * Represents an actor (thread, fiber, coroutine, task)
- * which triggers EventSources to produce events.
+ * Represents a writer (thread, fiber, coroutine, task)
+ * that triggers EventSources to produce events.
  *
  * `id` and `name` are free-form, can be anything
- * which helps the user to identify the actor.
+ * which helps the user to identify the writer.
  *
  * `batchSize` is a hint, equal to the size
  * of the events following this entry.
  * If specified, must be a valid offset to a later entry,
  * useful for fast forward seeking in the stream.
  * Can be zero if unknown.
+ *
+ * Events following directly are assumed to be produced
+ * by the writer represented by this entry.
  */
-struct Actor
+struct WriterProp
 {
   static constexpr std::uint64_t Tag = std::uint64_t(-2);
 
@@ -149,8 +152,8 @@ std::size_t serializeSizePrefixedTagged(const Entry& entry, OutputStream& out)
 MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(  binlog::EventSource, id, severity, category, function, file, line, formatString, argumentTags)
 MSERIALIZE_MAKE_STRUCT_DESERIALIZABLE(binlog::EventSource, id, severity, category, function, file, line, formatString, argumentTags)
 
-MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(  binlog::Actor, id, name, batchSize)
-MSERIALIZE_MAKE_STRUCT_DESERIALIZABLE(binlog::Actor, id, name, batchSize)
+MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(  binlog::WriterProp, id, name, batchSize)
+MSERIALIZE_MAKE_STRUCT_DESERIALIZABLE(binlog::WriterProp, id, name, batchSize)
 
 MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(  binlog::ClockSync, clockValue, clockFrequency, nsSinceEpoch, tzOffset, tzName)
 MSERIALIZE_MAKE_STRUCT_DESERIALIZABLE(binlog::ClockSync, clockValue, clockFrequency, nsSinceEpoch, tzOffset, tzName)

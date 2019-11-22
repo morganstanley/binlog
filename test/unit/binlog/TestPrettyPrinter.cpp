@@ -32,13 +32,13 @@ struct TestcaseBase
   std::string argsBuffer;
   binlog::Range args;
   binlog::Event event{&eventSource, 1569939329, {}};
-  binlog::Actor actor{789, "actor", 0};
+  binlog::WriterProp writerProp{789, "writer", 0};
   binlog::ClockSync clockSync{0, 1, 0, 5400, "XYZ"};
 
   std::string print(binlog::PrettyPrinter& pp)
   {
     std::ostringstream str;
-    pp.printEvent(str, event, actor, clockSync);
+    pp.printEvent(str, event, writerProp, clockSync);
     return str.str();
   }
 };
@@ -62,7 +62,7 @@ BOOST_FIXTURE_TEST_CASE(full_fmt, TestcaseBase)
 
   BOOST_TEST(print(pp) ==
     "123 INFO cat func dir1/dir2/file file 456 a: {}, b: {}"
-    " i[c actor 789"
+    " i[c writer 789"
     " 2019 19-10-01 15:45:29.000000000 +0130 XYZ"
     " 2019 19-10-01 14:15:29.000000000 +0000 UTC"
     " 1569939329 a: 111, b: foo % %x foo"
@@ -81,7 +81,7 @@ BOOST_FIXTURE_TEST_CASE(reverse_full_fmt, TestcaseBase)
     "foo %x % a: 111, b: foo 1569939329"
     " UTC +0000 000000000.29:15:14 01-10-19 2019"
     " XYZ +0130 000000000.29:45:15 01-10-19 2019"
-    " 789 actor i[c a: {}, b: {} 456 file dir1/dir2/file func cat INFO cat"
+    " 789 writer i[c a: {}, b: {} 456 file dir1/dir2/file func cat INFO cat"
   );
 }
 

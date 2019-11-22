@@ -20,7 +20,7 @@ std::vector<std::string> streamToEvents(std::istream& input, const char* eventFo
   while (const binlog::Event* event = eventStream.nextEvent())
   {
     std::ostringstream str;
-    pp.printEvent(str, *event, eventStream.actor(), eventStream.clockSync());
+    pp.printEvent(str, *event, eventStream.writerProp(), eventStream.clockSync());
     result.push_back(str.str());
   }
 

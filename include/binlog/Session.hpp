@@ -46,17 +46,17 @@ class Session
 public:
   struct Channel
   {
-    explicit Channel(std::size_t queueCapacity, Actor actor = {})
+    explicit Channel(std::size_t queueCapacity, WriterProp writerProp = {})
       :queue(queueCapacity),
        reader(queue),
        closed(false),
-       actor(std::move(actor))
+       writerProp(std::move(writerProp))
     {}
 
     detail::Queue queue;        /**< Holds log events */
     detail::QueueReader reader; /**< Reads log events from `queue` */
     std::atomic<bool> closed;   /**< True, if queue will be no longer written */
-    Actor actor;                /**< Describes the writer of this channel (optional) */
+    WriterProp writerProp;      /**< Describes the writer of this channel (optional) */
   };
 
   /** Describe the result of a consume call */
@@ -77,23 +77,23 @@ public:
    *
    * @return stable reference to the created channel
    */
-  Channel& createChannel(std::size_t queueCapacity, Actor actor = {});
+  Channel& createChannel(std::size_t queueCapacity, WriterProp writerProp = {});
 
   /**
-   * Thread-safe way to set the actor id of `channel` to `id`.
+   * Thread-safe way to set the writer id of `channel` to `id`.
    *
    * @pre `channel` must be owned by *this
-   * @post channel.actor.id == id
+   * @post channel.writerProp.id == id
    */
-  void setChannelActorId(Channel& channel, std::uint64_t id);
+  void setChannelWriterId(Channel& channel, std::uint64_t id);
 
   /**
-   * Thread-safe way to set the actor name of `channel` to `name`.
+   * Thread-safe way to set the writer name of `channel` to `name`.
    *
    * @pre `channel` must be owned by *this
-   * @post channel.actor.name == name
+   * @post channel.writerProp.name == name
    */
-  void setChannelActorName(Channel& channel, std::string name);
+  void setChannelWriterName(Channel& channel, std::string name);
 
   /**
    * Add `eventSource` to the set of metadata managed by this session.
@@ -133,7 +133,7 @@ public:
    * sooner than events referencing them.
    *
    * After that, each channel is polled for log data,
-   * and consumed together with an Actor entry, if data is found.
+   * and consumed together with an WriterProp entry, if data is found.
    * Closed and empty channels are removed.
    * Because data is consumed in batches, it is possible
    * that concurrently added events consumed from different channels
@@ -160,26 +160,26 @@ private:
   std::atomic<Severity> _minSeverity = {Severity::trace};
 };
 
-inline Session::Channel& Session::createChannel(std::size_t queueCapacity, Actor actor)
+inline Session::Channel& Session::createChannel(std::size_t queueCapacity, WriterProp writerProp)
 {
   std::lock_guard<std::mutex> lock(_mutex);
 
-  _channels.emplace_back(queueCapacity, std::move(actor));
+  _channels.emplace_back(queueCapacity, std::move(writerProp));
   return _channels.back();
 }
 
-inline void Session::setChannelActorId(Channel& channel, std::uint64_t id)
+inline void Session::setChannelWriterId(Channel& channel, std::uint64_t id)
 {
   std::lock_guard<std::mutex> lock(_mutex);
 
-  channel.actor.id = id;
+  channel.writerProp.id = id;
 }
 
-inline void Session::setChannelActorName(Channel& channel, std::string name)
+inline void Session::setChannelWriterName(Channel& channel, std::string name)
 {
   std::lock_guard<std::mutex> lock(_mutex);
 
-  channel.actor.name = std::move(name);
+  channel.writerProp.name = std::move(name);
 }
 
 inline std::uint64_t Session::addEventSource(EventSource eventSource)
@@ -208,7 +208,7 @@ Session::ConsumeResult Session::consume(OutputStream& out)
   // This lock:
   //  - Ensures only a single consumer is running at a time
   //  - Ensures safe read of _channels
-  //  - Ensures safe read of Channel::actor (written by setChannelActorName)
+  //  - Ensures safe read of Channel::writerProp (written by setChannelWriterName)
   //  - Ensures safe read/write of _sources
   //  - Ensures no new EventSource can be added to _sources while consuming
   //
@@ -253,9 +253,9 @@ Session::ConsumeResult Session::consume(OutputStream& out)
     const detail::QueueReader::ReadResult data = it->reader.beginRead();
     if (data.size())
     {
-      // consume actor entry
-      it->actor.batchSize = data.size();
-      result.bytesConsumed += serializeSizePrefixedTagged(it->actor, out);
+      // consume writerProp entry
+      it->writerProp.batchSize = data.size();
+      result.bytesConsumed += serializeSizePrefixedTagged(it->writerProp, out);
 
       // consume queue data
       out.write(data.buffer1, std::streamsize(data.size1));

@@ -85,17 +85,17 @@ std::ostream& operator<<(std::ostream& out, const EventSource& a)
       << " argumentTags: " << a.argumentTags << " }";
 }
 
-bool operator==(const Actor& a, const Actor& b)
+bool operator==(const WriterProp& a, const WriterProp& b)
 {
   return a.id == b.id
     &&   a.name == b.name
     &&   a.batchSize == b.batchSize;
 }
 
-std::ostream& operator<<(std::ostream& out, const Actor& a)
+std::ostream& operator<<(std::ostream& out, const WriterProp& a)
 {
   return
-  out << "Actor{"
+  out << "WriterProp{"
       << " id: " << a.id
       << " name: " << a.name
       << " batchSize: " << a.batchSize << " }";
@@ -295,75 +295,75 @@ BOOST_AUTO_TEST_CASE(incomplete_event)
   BOOST_TEST(stream.tellg() == 3);
 }
 
-BOOST_AUTO_TEST_CASE(default_actor)
+BOOST_AUTO_TEST_CASE(default_writer_prop)
 {
   std::stringstream stream;
   binlog::EventStream eventStream(stream);
 
-  BOOST_TEST(eventStream.actor() == binlog::Actor{});
+  BOOST_TEST(eventStream.writerProp() == binlog::WriterProp{});
 }
 
-BOOST_AUTO_TEST_CASE(multiple_actors)
+BOOST_AUTO_TEST_CASE(multiple_writerProps)
 {
   const binlog::EventSource eventSource = testEventSource(123);
-  const binlog::Actor actor1{1, "foo", 0};
-  const binlog::Actor actor2{1, "bar", 0};
+  const binlog::WriterProp writerProp1{1, "foo", 0};
+  const binlog::WriterProp writerProp2{1, "bar", 0};
   const TestEvent<> event{123, 0, {}};
 
   std::stringstream stream;
   serializeSizePrefixedTagged(eventSource, stream);
-  serializeSizePrefixedTagged(actor2, stream);
-  serializeSizePrefixedTagged(actor1, stream);
+  serializeSizePrefixedTagged(writerProp2, stream);
+  serializeSizePrefixedTagged(writerProp1, stream);
   serializeSizePrefixed(event, stream);
-  serializeSizePrefixedTagged(actor2, stream);
+  serializeSizePrefixedTagged(writerProp2, stream);
   serializeSizePrefixed(event, stream);
   serializeSizePrefixed(event, stream);
-  serializeSizePrefixedTagged(actor1, stream);
+  serializeSizePrefixedTagged(writerProp1, stream);
   serializeSizePrefixed(event, stream);
 
   binlog::EventStream eventStream(stream);
 
   BOOST_TEST(eventStream.nextEvent() != nullptr);
-  BOOST_TEST(eventStream.actor() == actor1);
+  BOOST_TEST(eventStream.writerProp() == writerProp1);
   BOOST_TEST(eventStream.nextEvent() != nullptr);
-  BOOST_TEST(eventStream.actor() == actor2);
+  BOOST_TEST(eventStream.writerProp() == writerProp2);
   BOOST_TEST(eventStream.nextEvent() != nullptr);
-  BOOST_TEST(eventStream.actor() == actor2);
+  BOOST_TEST(eventStream.writerProp() == writerProp2);
   BOOST_TEST(eventStream.nextEvent() != nullptr);
-  BOOST_TEST(eventStream.actor() == actor1);
+  BOOST_TEST(eventStream.writerProp() == writerProp1);
 }
 
-BOOST_AUTO_TEST_CASE(continue_after_event_invalid_actor)
+BOOST_AUTO_TEST_CASE(continue_after_event_invalid_writer_prop)
 {
   const binlog::EventSource eventSource1 = testEventSource(123);
   const binlog::EventSource eventSource2 = testEventSource(124);
-  const binlog::Actor actor1{1, "foo", 0};
-  const binlog::Actor actor2{1, "bar", 0};
+  const binlog::WriterProp writerProp1{1, "foo", 0};
+  const binlog::WriterProp writerProp2{1, "bar", 0};
   const TestEvent<> event1{123, 0, {}};
   const TestEvent<> event2{124, 0, {}};
 
   std::stringstream stream;
   serializeSizePrefixedTagged(eventSource1, stream);
   serializeSizePrefixedTagged(eventSource2, stream);
-  serializeSizePrefixedTagged(actor1, stream);
+  serializeSizePrefixedTagged(writerProp1, stream);
   serializeSizePrefixed(event1, stream);
-  corruptSerializeSizePrefixedTagged(actor2, stream);
+  corruptSerializeSizePrefixedTagged(writerProp2, stream);
   serializeSizePrefixed(event2, stream);
 
   binlog::EventStream eventStream(stream);
 
   BOOST_TEST(eventStream.nextEvent() != nullptr);
-  BOOST_TEST(eventStream.actor() == actor1);
+  BOOST_TEST(eventStream.writerProp() == writerProp1);
   BOOST_CHECK_THROW(eventStream.nextEvent(), std::runtime_error);
 
-  // after corrupt actor entry, progress can be made:
+  // after corrupt writerProp entry, progress can be made:
   const binlog::Event* e = eventStream.nextEvent();
   BOOST_TEST_REQUIRE(e != nullptr);
   BOOST_TEST_REQUIRE(e->source != nullptr);
   BOOST_TEST(*e->source == eventSource2);
 
-  // and the old actor is not corrupted
-  BOOST_TEST(eventStream.actor() == actor1);
+  // and the old writerProp is not corrupted
+  BOOST_TEST(eventStream.writerProp() == writerProp1);
 }
 
 BOOST_AUTO_TEST_CASE(default_clockSync)

@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(wc_more_args)
   BOOST_TEST(getEvents(session, "%S %C %m") == expectedEvents, boost::test_tools::per_element());
 }
 
-BOOST_AUTO_TEST_CASE(wc_actor_name)
+BOOST_AUTO_TEST_CASE(wc_writer_name)
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 512);

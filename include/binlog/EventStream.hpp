@@ -41,11 +41,11 @@ public:
   const Event* nextEvent();
 
   /**
-   * @return the most recent actor consumed from
+   * @return the most recent writer properties consumed from
    *         the stream or a default constructed
-   *         object if no such actor was found.
+   *         object if no such entry was found.
    */
-  const Actor& actor() const { return _actor; }
+  const WriterProp& writerProp() const { return _writerProp; }
 
   /**
    * @return the most recent clock sync consumed
@@ -59,7 +59,7 @@ private:
 
   void readEventSource(Range range);
 
-  void readActor(Range range);
+  void readWriterProp(Range range);
 
   void readClockSync(Range range);
 
@@ -68,7 +68,7 @@ private:
   std::istream& _input;
   std::vector<char> _buffer; // TODO(benedek) perf: use input buffer directly
   std::map<std::uint64_t, EventSource> _eventSources; // TODO(benedek) perf: use SegmentedMap
-  Actor _actor;
+  WriterProp _writerProp;
   ClockSync _clockSync;
   Event _event;
 };

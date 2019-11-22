@@ -24,8 +24,8 @@ namespace binlog {
  *    %L Line
  *    %P Format string
  *    %T Argument tags
- *    %n Actor (thread) name
- *    %t Actor (thread) id
+ *    %n Writer (thread) name
+ *    %t Writer (thread) id
  *    %d Timestamp, in producer timezone
  *    %u Timestamp, in UTC
  *    %r Timestamp, raw clock value
@@ -46,7 +46,7 @@ public:
   );
 
   /**
-   * Print `event` using `actor` and `clockSync`
+   * Print `event` using `writerProp` and `clockSync`
    * to `out`, according the the format specified in the consturctor.
    *
    * If clockSync.clockFrequency is zero,
@@ -59,7 +59,7 @@ public:
   void printEvent(
     std::ostream& out,
     const Event& event,
-    const Actor& actor = {},
+    const WriterProp& writerProp = {},
     const ClockSync& clockSync = {}
   ) const;
 
@@ -68,7 +68,7 @@ private:
     std::ostream& out,
     char spec,
     const Event& event,
-    const Actor& actor,
+    const WriterProp& writerProp,
     const ClockSync& clockSync
   ) const;
 
