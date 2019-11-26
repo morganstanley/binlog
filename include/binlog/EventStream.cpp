@@ -32,20 +32,29 @@ const Event* EventStream::nextEvent()
     if (range.empty()) { return nullptr; }
 
     const std::uint64_t tag = range.read<std::uint64_t>();
-    switch (tag)
+    const bool special = (tag & 1UL << 63) != 0;
+
+    if (special)
     {
-      case EventSource::Tag:
-        readEventSource(range);
-        break;
-      case WriterProp::Tag:
-        readWriterProp(range);
-        break;
-      case ClockSync::Tag:
-        readClockSync(range);
-        break;
-      default:
-        readEvent(tag, range);
-        return &_event;
+      switch (tag)
+      {
+        case EventSource::Tag:
+          readEventSource(range);
+          break;
+        case WriterProp::Tag:
+          readWriterProp(range);
+          break;
+        case ClockSync::Tag:
+          readClockSync(range);
+          break;
+        // default: ignore unkown special entries
+        // to be forward compatible.
+      }
+    }
+    else
+    {
+      readEvent(tag, range);
+      return &_event;
     }
   }
 }

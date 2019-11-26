@@ -48,6 +48,14 @@ struct TestEvent
   std::tuple<Args...> args;
 };
 
+struct UnknownSpecial
+{
+  static constexpr std::uint64_t Tag = std::uint64_t(-100);
+
+  std::string key;
+  std::string value;
+};
+
 binlog::EventSource testEventSource(std::uint64_t id, const std::string& seed = "foo", std::string argumentTags = {})
 {
   return binlog::EventSource{
@@ -126,6 +134,8 @@ std::ostream& operator<<(std::ostream& out, const ClockSync& a)
 MSERIALIZE_MAKE_TEMPLATE_SERIALIZABLE(
   (typename... Args), (TestEvent<Args...>), eventSourceId, clockValue, args
 )
+
+MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(UnknownSpecial, key, value)
 
 BOOST_AUTO_TEST_SUITE(EventStream)
 
@@ -427,6 +437,30 @@ BOOST_AUTO_TEST_CASE(continue_after_event_invalid_clockSync)
 
   // and the old clockSync is not corrupted
   BOOST_TEST(eventStream.clockSync() == clockSync1);
+}
+
+BOOST_AUTO_TEST_CASE(unknown_specials_are_ignored)
+{
+  // To allow schema evolution and extensions,
+  // unknown special entries are ignored.
+  // An entry is special if the most significant
+  // bit of its tag is set (see doc in Entries.hpp).
+
+  const binlog::EventSource eventSource = testEventSource(123);
+  const UnknownSpecial special{"ignore", "me"};
+  const TestEvent<> event{123, 0, {}};
+
+  std::stringstream stream;
+  serializeSizePrefixedTagged(eventSource, stream);
+  binlog::serializeSizePrefixedTagged(special, stream);
+  serializeSizePrefixed(event, stream);
+
+  binlog::EventStream eventStream(stream);
+
+  const binlog::Event* e1 = eventStream.nextEvent();
+  BOOST_TEST_REQUIRE(e1 != nullptr);
+  BOOST_TEST_REQUIRE(e1->source != nullptr);
+  BOOST_TEST(*e1->source == eventSource);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
