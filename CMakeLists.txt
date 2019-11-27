@@ -99,6 +99,11 @@ add_executable(UnitTest test/unit/UnitTest.cpp
 add_test(NAME UnitTest
          COMMAND UnitTest --log_level=test_suite --color_output=true)
 
+# IntegrationTest
+
+add_executable(Logging test/integration/Logging.cpp)
+  target_link_libraries(Logging binlog)
+
 # Tools
 add_executable(GenerateForeachMacro tools/generate_foreach_macro.cpp)
 
