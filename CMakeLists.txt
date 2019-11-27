@@ -36,7 +36,7 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 # Boost
-find_package(Boost 1.59.0 REQUIRED COMPONENTS unit_test_framework)
+find_package(Boost 1.64.0 REQUIRED COMPONENTS unit_test_framework system)
 
 # Mserialize
 add_library(mserialize INTERFACE)
@@ -100,6 +100,22 @@ add_test(NAME UnitTest
          COMMAND UnitTest --log_level=test_suite --color_output=true)
 
 # IntegrationTest
+
+add_executable(IntegrationTest test/integration/IntegrationTest.cpp)
+  target_compile_features(IntegrationTest PRIVATE cxx_std_14)
+  target_compile_definitions(IntegrationTest PRIVATE
+    BOOST_TEST_DYN_LINK
+    BOOST_TEST_NO_MAIN
+  )
+  target_include_directories(IntegrationTest SYSTEM PRIVATE
+    ${Boost_INCLUDE_DIRS}
+  )
+  target_link_libraries(IntegrationTest Boost::unit_test_framework)
+  target_link_libraries(IntegrationTest Boost::system)
+  target_link_libraries(IntegrationTest mserialize)
+
+add_test(NAME IntegrationTest
+  COMMAND IntegrationTest --log_level=test_suite --color_output=true -- $<TARGET_FILE:bread> ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR})
 
 add_executable(Logging test/integration/Logging.cpp)
   target_link_libraries(Logging binlog)
