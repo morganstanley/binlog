@@ -31,11 +31,12 @@ class CodelinkProcessor(Treeprocessor):
     def __init__(self, md, config):
         self.md = md
         self.config = config
-        self.include = re.compile('#include <([^>]+)>')
+        self.include = re.compile('#include &lt;(.+?)&gt;')
 
     def run(self, root):
         prefix = self.config['link_prefix']
         for elem in root.getiterator('code'):
-            code = self.include.sub(r'#include &lt;<a href="' + prefix + r'\1">\1</a>&gt;', elem.text)
+            code = elem.text.replace('<', '&lt;').replace('>', '&gt;')
+            code = self.include.sub(r'#include &lt;<a href="' + prefix + r'\1">\1</a>&gt;', code)
             placeholder = self.md.htmlStash.store(code)
             elem.text = placeholder
