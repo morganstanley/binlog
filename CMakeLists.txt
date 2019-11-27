@@ -117,8 +117,13 @@ add_executable(IntegrationTest test/integration/IntegrationTest.cpp)
 add_test(NAME IntegrationTest
   COMMAND IntegrationTest --log_level=test_suite --color_output=true -- $<TARGET_FILE:bread> ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR})
 
-add_executable(Logging test/integration/Logging.cpp)
-  target_link_libraries(Logging binlog)
+function(add_inttest name)
+  add_executable(${name} test/integration/${name}.cpp)
+    target_link_libraries(${name} binlog)
+endfunction()
+
+add_inttest(Logging)
+add_inttest(LoggingFundamentals)
 
 # Tools
 add_executable(GenerateForeachMacro tools/generate_foreach_macro.cpp)

@@ -82,10 +82,8 @@ void runReadDiff(const std::string& name, const std::string& format)
 
 BOOST_AUTO_TEST_SUITE(RunReadDiff)
 
-BOOST_AUTO_TEST_CASE(Logging)
-{
-  runReadDiff("Logging", "%S %m");
-}
+BOOST_AUTO_TEST_CASE(Logging)               { runReadDiff("Logging", "%S %m"); }
+BOOST_AUTO_TEST_CASE(LoggingFundamentals)   { runReadDiff("LoggingFundamentals", "%m"); }
 
 BOOST_AUTO_TEST_SUITE_END()
 
