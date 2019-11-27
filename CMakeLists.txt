@@ -52,6 +52,13 @@ add_library(binlog OBJECT
   target_compile_features(binlog PRIVATE cxx_std_14)
   target_include_directories(binlog PUBLIC include)
 
+# bread
+add_executable(bread
+  bin/bread.cpp
+)
+  target_compile_features(bread PRIVATE cxx_std_14)
+  target_link_libraries(bread binlog)
+
 # UnitTest
 add_executable(UnitTest test/unit/UnitTest.cpp
   test/unit/mserialize/roundtrip.cpp
