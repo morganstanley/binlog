@@ -85,6 +85,7 @@ BOOST_AUTO_TEST_SUITE(RunReadDiff)
 BOOST_AUTO_TEST_CASE(Logging)               { runReadDiff("Logging", "%S %m"); }
 BOOST_AUTO_TEST_CASE(LoggingFundamentals)   { runReadDiff("LoggingFundamentals", "%m"); }
 BOOST_AUTO_TEST_CASE(LoggingContainers)     { runReadDiff("LoggingContainers", "%m"); }
+BOOST_AUTO_TEST_CASE(LoggingStrings)        { runReadDiff("LoggingStrings", "%m"); }
 
 BOOST_AUTO_TEST_SUITE_END()
 
