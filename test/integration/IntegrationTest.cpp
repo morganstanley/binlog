@@ -88,6 +88,7 @@ BOOST_AUTO_TEST_CASE(LoggingContainers)     { runReadDiff("LoggingContainers", "
 BOOST_AUTO_TEST_CASE(LoggingStrings)        { runReadDiff("LoggingStrings", "%m"); }
 BOOST_AUTO_TEST_CASE(LoggingPointers)       { runReadDiff("LoggingPointers", "%m"); }
 BOOST_AUTO_TEST_CASE(LoggingTuples)         { runReadDiff("LoggingTuples", "%m"); }
+BOOST_AUTO_TEST_CASE(LoggingEnums)          { runReadDiff("LoggingEnums", "%m"); }
 
 BOOST_AUTO_TEST_SUITE_END()
 

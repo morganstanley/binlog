@@ -131,6 +131,7 @@ add_inttest(LoggingStrings)
 add_inttest(LoggingPointers)
   target_include_directories(LoggingPointers SYSTEM PRIVATE ${Boost_INCLUDE_DIRS})
 add_inttest(LoggingTuples)
+add_inttest(LoggingEnums)
 
 # Tools
 add_executable(GenerateForeachMacro tools/generate_foreach_macro.cpp)
