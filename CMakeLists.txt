@@ -124,6 +124,8 @@ endfunction()
 
 add_inttest(Logging)
 add_inttest(LoggingFundamentals)
+add_inttest(LoggingContainers)
+  target_include_directories(LoggingContainers SYSTEM PRIVATE ${Boost_INCLUDE_DIRS})
 
 # Tools
 add_executable(GenerateForeachMacro tools/generate_foreach_macro.cpp)
