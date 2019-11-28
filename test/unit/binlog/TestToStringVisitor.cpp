@@ -166,7 +166,7 @@ BOOST_FIXTURE_TEST_CASE(seq_of_enum, TestcaseBase)
   visitor.visit(V::Enum{"E", "", 'i', "3"});
   visitor.visit(V::SequenceEnd{});
 
-  BOOST_TEST(result() == "[b, a, 3]");
+  BOOST_TEST(result() == "[b, a, 0x3]");
 }
 
 BOOST_FIXTURE_TEST_CASE(empty_struct, TestcaseBase)

@@ -72,7 +72,14 @@ void ToStringVisitor::visit(mserialize::Visitor::Null)
 void ToStringVisitor::visit(mserialize::Visitor::Enum e)
 {
   comma();
-  _out << ((e.enumerator.empty()) ? e.value : e.enumerator);
+  if (e.enumerator.empty())
+  {
+    _out << "0x" << e.value;
+  }
+  else
+  {
+    _out << e.enumerator;
+  }
 }
 
 void ToStringVisitor::visit(mserialize::Visitor::StructBegin sb)
