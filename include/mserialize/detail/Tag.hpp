@@ -127,6 +127,13 @@ struct BuiltinTag<Optional, enable_spec_if<is_optional<Optional>>>
   }
 };
 
+// Enum tag
+
+template <typename Enum>
+struct BuiltinTag<Enum, enable_spec_if<std::is_enum<Enum>>>
+  :Tag<std::underlying_type_t<Enum>>::type
+{};
+
 } // namespace detail
 } // namespace mserialize
 

@@ -85,6 +85,16 @@ struct CustomTag<Custom>
 
 static_assert(mserialize::tag<Custom>() == "{Custom}", "");
 
+// Tag of not adapted enums is the tag of their underlying type
+
+enum Enum8  : std::uint8_t  {};
+enum Enum16 : std::uint16_t {};
+enum Enum32 : std::int32_t {};
+
+static_assert(mserialize::tag<Enum8>() == "B", "");
+static_assert(mserialize::tag<Enum16>() == "S", "");
+static_assert(mserialize::tag<Enum32>() == "i", "");
+
 // test MSERIALIZE_MAKE_ENUM_TAG
 
 MSERIALIZE_MAKE_ENUM_TAG(test::CEnum, Alpha, Bravo, Charlie)
