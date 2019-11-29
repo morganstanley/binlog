@@ -176,6 +176,13 @@ BOOST_FIXTURE_TEST_CASE(empty_struct, TestcaseBase)
   BOOST_TEST(result() == "Empty");
 }
 
+BOOST_FIXTURE_TEST_CASE(empty_struct_template, TestcaseBase)
+{
+  visitor.visit(V::StructBegin{"Empty<A,B,C>", ""});
+  visitor.visit(V::StructEnd{});
+  BOOST_TEST(result() == "Empty");
+}
+
 BOOST_FIXTURE_TEST_CASE(simple_struct, TestcaseBase)
 {
   visitor.visit(V::StructBegin{"Alpha", "`a'i`b'y"});

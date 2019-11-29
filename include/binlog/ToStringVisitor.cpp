@@ -1,5 +1,7 @@
 #include <binlog/ToStringVisitor.hpp>
 
+#include <mserialize/detail/tag_util.hpp> // remove_prefix_before
+
 #include <ios> // boolalpha
 
 namespace binlog {
@@ -85,7 +87,7 @@ void ToStringVisitor::visit(mserialize::Visitor::Enum e)
 void ToStringVisitor::visit(mserialize::Visitor::StructBegin sb)
 {
   comma();
-  _out << sb.name;
+  _out << mserialize::detail::remove_prefix_before(sb.name, '<');
   if (sb.tag.empty())
   {
     _emptyStruct = true;
