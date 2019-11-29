@@ -133,6 +133,7 @@ add_inttest(LoggingPointers)
 add_inttest(LoggingTuples)
 add_inttest(LoggingEnums)
 add_inttest(LoggingAdaptedStructs)
+add_inttest(NamedWriters)
 
 # Tools
 add_executable(GenerateForeachMacro tools/generate_foreach_macro.cpp)
