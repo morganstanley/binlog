@@ -135,6 +135,7 @@ add_inttest(LoggingEnums)
 add_inttest(LoggingAdaptedStructs)
 add_inttest(NamedWriters)
 add_inttest(SeverityControl)
+add_inttest(Categories)
 
 # Tools
 add_executable(GenerateForeachMacro tools/generate_foreach_macro.cpp)
