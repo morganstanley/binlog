@@ -62,6 +62,7 @@ public:
 BINLOG_ADAPT_STRUCT(first::First)
 BINLOG_ADAPT_STRUCT(first, business)
 
+//[mixed
 struct Foo
 {
   int a = 0;
@@ -71,6 +72,7 @@ struct Foo
 };
 
 BINLOG_ADAPT_STRUCT(Foo, a, b, c)
+//]
 
 int main()
 {
@@ -98,8 +100,11 @@ int main()
   BINLOG_INFO("{}", way);
   // Outputs: first{ business: first::First }
 
+  //[mixed
+
   BINLOG_INFO("My foo: {}", Foo{1, "two"});
   // Outputs: My foo: Foo{ a: 1, b: two, c: true }
+  //]
 
   binlog::consume(std::cout);
   return 0;

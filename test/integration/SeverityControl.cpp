@@ -1,5 +1,10 @@
 #include <binlog/binlog.hpp>
 
+//[setmin
+#include <binlog/Severity.hpp>
+//]
+
+
 #include <iostream>
 
 int f()
@@ -48,11 +53,16 @@ int main()
 
   // Arguments of disabled severities are not evaluated:
 
+  //[setmin
+
   session.setMinSeverity(binlog::Severity::warning);
   // trace, debug, info severities are disabled
+  //]
 
+  //[noeval
   // after setting min severity to warning above:
   BINLOG_INFO("Call f: {}", f()); // f will not be called
+  //]
 
   binlog::consume(std::cout);
   return 0;

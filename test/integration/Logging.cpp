@@ -17,8 +17,10 @@ int main()
   BINLOG_CRITICAL("Hello");
   // Outputs: CRIT Hello
 
+  //[log
   BINLOG_INFO("Result: {}", 42);
   // Outputs: INFO Result: 42
+  //]
 
   binlog::consume(std::cout);
   return 0;

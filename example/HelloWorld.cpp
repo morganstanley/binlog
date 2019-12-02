@@ -1,7 +1,11 @@
+//[hello
 #include <binlog/binlog.hpp>
+//]
 
 #include <fstream>
 #include <iostream>
+
+//[hello
 
 int main()
 {
@@ -9,6 +13,7 @@ int main()
 
   std::ofstream logfile("hello.blog", std::ofstream::out|std::ofstream::binary);
   binlog::consume(logfile);
+//]
 
   if (! logfile)
   {
@@ -18,4 +23,7 @@ int main()
 
   std::cout << "Binary log written to hello.blog\n";
   return 0;
+
+//[hello
 }
+//]

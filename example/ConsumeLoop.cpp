@@ -15,6 +15,7 @@ int main()
 {
   std::ofstream logfile("consumeloop.blog", std::ofstream::out|std::ofstream::binary);
 
+  //[loop
   binlog::Session session;
   const std::size_t queueCapacityBytes = 1 << 20;
   binlog::SessionWriter writer(session, queueCapacityBytes);
@@ -25,6 +26,7 @@ int main()
     processInput(input, writer); // logs using `writer`
     session.consume(logfile);
   }
+  //]
 
   if (! logfile)
   {

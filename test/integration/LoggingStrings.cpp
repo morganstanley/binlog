@@ -10,9 +10,11 @@
 
 int main()
 {
+  //[stdstr
   std::string str = "String";
   BINLOG_INFO("Hello {}!", str);
   // Outputs: Hello String!
+  //]
 
   boost::container::string bs = "foo";
   const char* ccs = "bar";

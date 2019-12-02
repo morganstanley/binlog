@@ -9,19 +9,23 @@
 
 #include <memory>
 
+//[optspec
 namespace mserialize { namespace detail {
   template <typename T> struct is_optional<boost::optional<T>> : std::true_type {};
 }}
+//]
 
 int main()
 {
   // Standard pointers
 
+  //[stdptr
   int* ptr = nullptr;
   std::unique_ptr<int> uptr(std::make_unique<int>(1));
   std::shared_ptr<int> sptr(std::make_shared<int>(2));
   BINLOG_INFO("Pointers: {} {} {}", ptr, uptr, sptr);
   // Outputs: Pointers: {null} 1 2
+  //]
 
   int value = 3;
   ptr = &value;
