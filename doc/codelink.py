@@ -31,7 +31,7 @@ class CodelinkProcessor(Treeprocessor):
     def __init__(self, md, config):
         self.md = md
         self.config = config
-        self.include = re.compile('#include &lt;(.+?)&gt;')
+        self.include = re.compile('#include &lt;(.+?\.hpp)&gt;')
 
     def run(self, root):
         prefix = self.config['link_prefix']
