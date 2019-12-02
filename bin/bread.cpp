@@ -6,7 +6,20 @@
 #include <iostream>
 #include <string>
 
+#include <getopt.h>
+
 namespace {
+
+std::istream& openFile(const std::string& path, std::ifstream& file)
+{
+  if (path == "-")
+  {
+    return std::cin;
+  }
+
+  file.open(path, std::ios_base::in | std::ios_base::binary);
+  return file;
+}
 
 void printEvents(std::istream& input, std::ostream& output, const std::string& format)
 {
@@ -21,28 +34,43 @@ void printEvents(std::istream& input, std::ostream& output, const std::string& f
 
 } // namespace
 
-int main(int argc, const char* argv[])
+int main(int argc, /*const*/ char* argv[])
 {
-  const std::string logfile = (argc > 1) ? argv[1] : "-";
-  const std::string format = (argc > 2) ? argv[2] + std::string("\n") : "%S %C [%d] %n %m (%G:%L)\n";
+  std::string inputPath = "-";
+  std::string format = "%S %C [%d] %n %m (%G:%L)\n";
+
+  int opt;
+  while ((opt = getopt(argc, argv, "f:")) != -1)
+  {
+    switch (opt)
+    {
+    case 'f':
+      format = optarg;
+      format += "\n";
+      break;
+    default:
+      std::cerr << "[bread] Unknown command line argument\n";
+      // TODO(benedek) show help
+      return 1;
+    }
+  }
+
+  if (optind < argc)
+  {
+    inputPath = argv[optind];
+  }
+
+  std::ifstream inputFile;
+  std::istream& input = openFile(inputPath, inputFile);
+  if (! input)
+  {
+    std::cerr << "[bread] Failed to open '" << inputPath << "' for reading\n";
+    return 2;
+  }
 
   try
   {
-    if (logfile == "-")
-    {
-      printEvents(std::cin, std::cout, format);
-    }
-    else
-    {
-      std::ifstream input(logfile, std::ios_base::in | std::ios_base::binary);
-      if (! input)
-      {
-        std::cerr << "[bread] Failed to open: " << logfile << "\n";
-        return 2;
-      }
-
-      printEvents(input, std::cout, format);
-    }
+    printEvents(input, std::cout, format);
   }
   catch (const std::exception& ex)
   {
