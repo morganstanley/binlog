@@ -21,10 +21,10 @@ std::istream& openFile(const std::string& path, std::ifstream& file)
   return file;
 }
 
-void printEvents(std::istream& input, std::ostream& output, const std::string& format)
+void printEvents(std::istream& input, std::ostream& output, const std::string& format, const std::string& dateFormat)
 {
   binlog::EventStream eventStream(input);
-  binlog::PrettyPrinter pp(format);
+  binlog::PrettyPrinter pp(format, dateFormat);
 
   while (const binlog::Event* event = eventStream.nextEvent())
   {
@@ -38,15 +38,19 @@ int main(int argc, /*const*/ char* argv[])
 {
   std::string inputPath = "-";
   std::string format = "%S %C [%d] %n %m (%G:%L)\n";
+  std::string dateFormat = "%m/%d %H:%M:%S.%N";
 
   int opt;
-  while ((opt = getopt(argc, argv, "f:")) != -1)
+  while ((opt = getopt(argc, argv, "f:d:")) != -1)
   {
     switch (opt)
     {
     case 'f':
       format = optarg;
       format += "\n";
+      break;
+    case 'd':
+      dateFormat = optarg;
       break;
     default:
       std::cerr << "[bread] Unknown command line argument\n";
@@ -70,7 +74,7 @@ int main(int argc, /*const*/ char* argv[])
 
   try
   {
-    printEvents(input, std::cout, format);
+    printEvents(input, std::cout, format, dateFormat);
   }
   catch (const std::exception& ex)
   {

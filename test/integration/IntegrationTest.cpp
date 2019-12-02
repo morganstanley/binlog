@@ -49,6 +49,19 @@ std::vector<std::string> expectedDataFromSource(const std::string& name)
   return result;
 }
 
+void compareVectors(const std::vector<std::string>& expected, const std::vector<std::string>& actual)
+{
+  BOOST_TEST(actual == expected);
+  if (actual.size() != expected.size())
+  {
+    // In this case, the test framework diagnostic is really lacking
+    std::cerr << "***Expected***\n";
+    for (auto&& s : expected) { std::cerr << s << "\n"; }
+    std::cerr << "***Actual***\n";
+    for (auto&& s : actual) { std::cerr << s << "\n"; }
+  }
+}
+
 void runReadDiff(const std::string& name, const std::string& format)
 {
   namespace bp = boost::process;
@@ -68,16 +81,7 @@ void runReadDiff(const std::string& name, const std::string& format)
   inttest.wait();
 
   const std::vector<std::string> expected = expectedDataFromSource(name);
-
-  BOOST_TEST(actual == expected);
-  if (actual.size() != expected.size())
-  {
-    // In this case, the test framework diagnostic is really lacking
-    std::cerr << "***Expected***\n";
-    for (auto&& s : expected) { std::cerr << s << "\n"; }
-    std::cerr << "***Actual***\n";
-    for (auto&& s : actual) { std::cerr << s << "\n"; }
-  }
+  compareVectors(expected, actual);
 }
 
 BOOST_AUTO_TEST_SUITE(RunReadDiff)
@@ -93,6 +97,32 @@ BOOST_AUTO_TEST_CASE(LoggingAdaptedStructs) { runReadDiff("LoggingAdaptedStructs
 BOOST_AUTO_TEST_CASE(NamedWriters)          { runReadDiff("NamedWriters", "%n %m"); }
 BOOST_AUTO_TEST_CASE(SeverityControl)       { runReadDiff("SeverityControl", "%S %m"); }
 BOOST_AUTO_TEST_CASE(Categories)            { runReadDiff("Categories", "%C %n %m"); }
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(Bread)
+
+BOOST_AUTO_TEST_CASE(DateFormat)
+{
+  // read dateformat.blog, convert to text, check result
+  namespace bp = boost::process;
+
+  const std::string blogPath = g_src_dir + "data/dateformat.blog";
+  bp::ipstream text;
+  bp::child bread(g_bread_path, blogPath, "-f", "%u %m", "-d", "%Y-%m-%dT%H:%M:%S.%NZ", bp::std_out > text);
+
+  std::vector<std::string> actual;
+  for (std::string line; std::getline(text, line);)
+  {
+    actual.push_back(std::move(line));
+  }
+
+  bread.wait();
+
+  const std::vector<std::string> expected{"2019-12-02T13:37:38.262735011Z Hello"};
+
+  compareVectors(expected, actual);
+}
 
 BOOST_AUTO_TEST_SUITE_END()
 
