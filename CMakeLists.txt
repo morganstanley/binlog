@@ -137,6 +137,17 @@ add_inttest(NamedWriters)
 add_inttest(SeverityControl)
 add_inttest(Categories)
 
+# Examples
+
+function(add_example name)
+  add_executable(${name} example/${name}.cpp)
+    target_include_directories(${name} PUBLIC include)
+endfunction()
+
+add_example(HelloWorld)
+add_example(DetailedHelloWorld)
+add_example(ConsumeLoop)
+
 # Tools
 add_executable(GenerateForeachMacro tools/generate_foreach_macro.cpp)
 
