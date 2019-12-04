@@ -167,6 +167,9 @@ else ()
   message(STATUS "Google Benchmark library not found, will not build benchmarks")
 endif ()
 
+add_executable(LargeLogfile test/perf/LargeLogfile.cpp)
+  target_include_directories(LargeLogfile PUBLIC include)
+
 # Tools
 add_executable(GenerateForeachMacro tools/generate_foreach_macro.cpp)
 
