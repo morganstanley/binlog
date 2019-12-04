@@ -198,7 +198,6 @@ inline Severity Session::minSeverity() const
 
 inline void Session::setMinSeverity(Severity severity)
 {
-  // TODO(benedek) perf: replicate _minSeverity in writers to save one cache-line access
   _minSeverity.store(severity, std::memory_order_release);
 }
 
