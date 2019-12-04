@@ -38,6 +38,9 @@ find_package(Threads REQUIRED)
 # Boost
 find_package(Boost 1.64.0 REQUIRED COMPONENTS unit_test_framework system)
 
+# Bechmark
+find_package(benchmark COMPONENTS benchmark)
+
 # Mserialize
 add_library(mserialize INTERFACE)
 target_include_directories(mserialize INTERFACE include)
@@ -147,6 +150,21 @@ endfunction()
 add_example(HelloWorld)
 add_example(DetailedHelloWorld)
 add_example(ConsumeLoop)
+
+if (benchmark_FOUND)
+  message(STATUS "Google Benchmark library found")
+
+  function(add_benchmark name)
+    add_executable(${name} test/perf/${name}.cpp)
+      target_include_directories(${name} PUBLIC include)
+      target_link_libraries(${name} benchmark::benchmark)
+  endfunction()
+
+  add_benchmark(PerftestQueue)
+
+else ()
+  message(STATUS "Google Benchmark library not found, will not build benchmarks")
+endif ()
 
 # Tools
 add_executable(GenerateForeachMacro tools/generate_foreach_macro.cpp)

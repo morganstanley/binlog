@@ -66,3 +66,13 @@ automatically included from source files. To build the documentation,
 Make sure that the targets are up-to-date, `ctest` doesn't check that by default.
 
     Release/$ ctest --output-on-failure
+
+## Performance Test
+
+Requires [Google Benchmark][] library. `cmake` can use it, even if not installed system wide:
+
+    $ ls /path/to/benchmark/install
+    benchmarkConfig.cmake  benchmarkConfigVersion.cmake  benchmarkTargets-relwithdebinfo.cmake  benchmarkTargets.cmake
+    Release/$ CMAKE_PREFIX_PATH=/path/to/benchmark/install cmake ..
+
+[Google Benchmark]: https://github.com/google/benchmark

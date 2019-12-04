@@ -108,8 +108,6 @@ private:
   char* buffer()       { return _buffer.get(); }
   char* buffer() const { return _buffer.get(); }
 
-  // TODO(benedek) perf: check if forcing indices to different cache-lines improves perf
-
   // members written by Writer
   std::atomic<std::size_t> _writeIndex; /**< Next index to write */
   std::size_t _dataEnd;                 /**< No valid data after this index */
