@@ -161,6 +161,7 @@ if (benchmark_FOUND)
   endfunction()
 
   add_benchmark(PerftestQueue)
+  add_benchmark(PerftestSessionWriter)
 
 else ()
   message(STATUS "Google Benchmark library not found, will not build benchmarks")
