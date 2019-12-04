@@ -142,6 +142,8 @@ int main(int argc, /*const*/ char* argv[])
     return 2;
   }
 
+  std::ostream::sync_with_stdio(false);
+
   try
   {
     printEvents(input, std::cout, format, dateFormat);
