@@ -6,6 +6,7 @@
 #include <mserialize/string_view.hpp>
 #include <mserialize/visit.hpp>
 
+#include <cassert>
 #include <cstddef>
 #include <cstdlib> // abs
 #include <iomanip> // setw
@@ -21,17 +22,25 @@ void printFilename(std::ostream& out, const std::string& path)
   out.write(path.data() + i, std::streamsize(path.size() - i));
 }
 
+void printTwoDigits(std::ostream& out, int i)
+{
+  assert(0 <= i && i < 100);
+  const int b = i % 10;
+  const int a = (i - b) / 10;
+  out.put(char('0' + a));
+  out.put(char('0' + b));
+}
+
 // print `seconds` as TZ offset in the ISO 8601 format (e.g: +0340 or -0430)
-// @pre out.fill() == '0'
 void printTimeZoneOffset(std::ostream& out, int seconds)
 {
   const char sign = (seconds >= 0) ? '+' : '-';
-  const std::int64_t psecs = std::abs(seconds);
-  const std::int64_t hours = psecs / 3600;
-  const std::int64_t mins  = (psecs / 60) - 60 * hours;
-  out << sign
-      << std::setw(2) << hours
-      << std::setw(2) << mins;
+  const int psecs = std::abs(seconds);
+  const int hours = psecs / 3600;
+  const int mins  = (psecs / 60) - 60 * hours;
+  out.put(sign);
+  printTwoDigits(out, hours);
+  printTwoDigits(out, mins);
 }
 
 } // namespace
@@ -214,30 +223,28 @@ void PrettyPrinter::printTime(std::ostream& out, BrokenDownTime& bdt, int tzoffs
 
 void PrettyPrinter::printTimeField(std::ostream& out, char spec, BrokenDownTime& bdt, int tzoffset, const char* tzname) const
 {
-  // TODO(benedek) perf: there's a faster way to print two digits (y,m,d,H,M,S)
-
   switch (spec)
   {
   case 'Y':
     out << bdt.tm_year + 1900;
     break;
   case 'y':
-    out << std::setw(2) << bdt.tm_year % 100;
+    printTwoDigits(out, bdt.tm_year % 100);
     break;
   case 'm':
-    out << std::setw(2) << bdt.tm_mon + 1;
+    printTwoDigits(out, bdt.tm_mon + 1);
     break;
   case 'd':
-    out << std::setw(2) << bdt.tm_mday;
+    printTwoDigits(out, bdt.tm_mday);
     break;
   case 'H':
-    out << std::setw(2) << bdt.tm_hour;
+    printTwoDigits(out, bdt.tm_hour);
     break;
   case 'M':
-    out << std::setw(2) << bdt.tm_min;
+    printTwoDigits(out, bdt.tm_min);
     break;
   case 'S':
-    out << std::setw(2) << bdt.tm_sec;
+    printTwoDigits(out, bdt.tm_sec);
     break;
   case 'z':
     printTimeZoneOffset(out, tzoffset);
