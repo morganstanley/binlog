@@ -28,27 +28,17 @@ void ToStringVisitor::visit(std::uint8_t v)
   _out << unsigned(v);
 }
 
-void ToStringVisitor::visit(mserialize::Visitor::SequenceBegin sb)
+void ToStringVisitor::visit(mserialize::Visitor::SequenceBegin)
 {
   comma();
 
-  // TODO(benedek) perf: special-case strings at the Visitor interface level
-  if (sb.tag == "c")
-  {
-    // special case for strings, render them as foo instead of [ f, o, o ]
-    _state = State::CharSeq;
-    ++_seqDepth;
-  }
-  else
-  {
-    _out.put('[');
-    enterSeq();
-  }
+  _out.put('[');
+  enterSeq();
 }
 
 void ToStringVisitor::visit(mserialize::Visitor::SequenceEnd)
 {
-  if (_state != State::CharSeq) { _out.put(']'); }
+  _out.put(']');
   leaveSeq();
 }
 

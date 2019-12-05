@@ -65,8 +65,7 @@ private:
 
   // In sequences (sequence, tuple, structure fields)
   // add a comma between each element.
-  // Except for character sequences (strings).
-  enum class State { Normal, SeqBegin, Seq, CharSeq };
+  enum class State { Normal, SeqBegin, Seq };
 
   State _state;
   int _seqDepth;

@@ -80,7 +80,7 @@ BOOST_FIXTURE_TEST_CASE(sequence_of_char, TestcaseBase)
   visitor.visit('c');
   visitor.visit(V::SequenceEnd{});
 
-  BOOST_TEST(result() == "abc");
+  BOOST_TEST(result() == "[a, b, c]");
 }
 
 
@@ -127,7 +127,7 @@ BOOST_FIXTURE_TEST_CASE(seq_of_seq_of_char, TestcaseBase)
   visitor.visit(V::SequenceEnd{});
   visitor.visit(V::SequenceEnd{});
 
-  BOOST_TEST(result() == "[ab, cd, ef]");
+  BOOST_TEST(result() == "[[a, b], [c, d], [e, f]]");
 }
 
 BOOST_FIXTURE_TEST_CASE(empty_tuple, TestcaseBase)
