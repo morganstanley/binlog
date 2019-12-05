@@ -83,6 +83,13 @@ BOOST_FIXTURE_TEST_CASE(sequence_of_char, TestcaseBase)
   BOOST_TEST(result() == "abc");
 }
 
+
+BOOST_FIXTURE_TEST_CASE(string, TestcaseBase)
+{
+  visitor.visit(V::String{{"abc"}});
+  BOOST_TEST(result() == "abc");
+}
+
 BOOST_FIXTURE_TEST_CASE(seq_of_seq_of_int, TestcaseBase)
 {
   visitor.visit(V::SequenceBegin{3, "[i"});

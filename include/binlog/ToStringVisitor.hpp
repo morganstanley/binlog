@@ -39,6 +39,8 @@ public:
   void visit(mserialize::Visitor::SequenceBegin);
   void visit(mserialize::Visitor::SequenceEnd);
 
+  void visit(mserialize::Visitor::String);
+
   void visit(mserialize::Visitor::TupleBegin);
   void visit(mserialize::Visitor::TupleEnd);
 

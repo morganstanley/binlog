@@ -18,6 +18,7 @@ namespace binlog {
  * Provides convenience read() members to copy
  * data from the viewed buffer.
  * Models the mserialize::InputStream concept.
+ * Models the mserialize::ViewStream concept.
  */
 class Range
 {
@@ -93,6 +94,25 @@ public:
     _begin += size;
 
     return *this;
+  }
+
+  /**
+   * Drop `size` bytes from the view.
+   *
+   * Provides strong exception guarantee.
+   *
+   * @pre size >= 0
+   * @throws std::runtime_error if size() < size
+   * @post size() == old_size - size
+   * @returns pointer to the dropped bytes
+   */
+  const char* view(std::size_t size)
+  {
+    throw_if_overflow(size);
+
+    const char* result = _begin;
+    _begin += size;
+    return result;
   }
 
 private:

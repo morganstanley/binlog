@@ -71,6 +71,34 @@ void visit_arithmetic(char tag, Visitor& visitor, InputStream& istream)
   }
 }
 
+template <typename Visitor, typename InputStream>
+void visit_sequence_impl(const string_view full_tag, const string_view elem_tag, std::uint32_t size, Visitor& visitor, InputStream& istream, char)
+{
+  visitor.visit(mserialize::Visitor::SequenceBegin{size, elem_tag});
+
+  while (size--)
+  {
+    visit_impl(full_tag, elem_tag, visitor, istream);
+  }
+
+  visitor.visit(mserialize::Visitor::SequenceEnd{});
+}
+
+template <typename Visitor, typename InputStream>
+void_t<decltype(&InputStream::view)>
+visit_sequence_impl(const string_view full_tag, const string_view elem_tag, std::uint32_t size, Visitor& visitor, InputStream& istream, int)
+{
+  if (elem_tag.size() == 1 && elem_tag[0] == 'c')
+  {
+    string_view data(istream.view(size), size);
+    visitor.visit(mserialize::Visitor::String{data});
+  }
+  else
+  {
+    visit_sequence_impl(full_tag, elem_tag, size, visitor, istream, '\0');
+  }
+}
+
 /** @pre tag.front() == '[' , followed by a single tag */
 template <typename Visitor, typename InputStream>
 void visit_sequence(const string_view full_tag, string_view tag, Visitor& visitor, InputStream& istream)
@@ -80,14 +108,8 @@ void visit_sequence(const string_view full_tag, string_view tag, Visitor& visito
   std::uint32_t size;
   mserialize::deserialize(size, istream);
   const string_view elem_tag = tag_pop(tag);
-  visitor.visit(mserialize::Visitor::SequenceBegin{size, elem_tag});
 
-  while (size--)
-  {
-    visit_impl(full_tag, elem_tag, visitor, istream);
-  }
-
-  visitor.visit(mserialize::Visitor::SequenceEnd{});
+  visit_sequence_impl(full_tag, elem_tag, size, visitor, istream, 0);
 }
 
 /** @pre tag.front() == '(' and tag.back() == ')' , enclosing any number of concatenated tags */

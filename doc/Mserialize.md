@@ -316,6 +316,18 @@ Library design tends to be arguable. Some decisions need to be explained.
       { istream.read(buf, size) } -> InpStr&;
     };
 
+## ViewStream
+
+    template <typename VStr>
+    concept ViewStream = requires(VStr vstream, std::size_t size)
+    {
+      // Consume `size` bytes from the stream and return a pointer
+      // to the start of the consumed bytes. The returned pointer
+      // is valid until the next operation.
+      // Throw std::exception on failure (i.e: not enough bytes available)
+      { vstream.view(size) } -> const char*;
+    };
+
 ## Visitor
 
     template <typename V>
@@ -338,6 +350,8 @@ Library design tends to be arguable. Some decisions need to be explained.
 
       visitor.visit(mserialize::Visitor::SequenceBegin );
       visitor.visit(mserialize::Visitor::SequenceEnd   );
+
+      visitor.visit(mserialize::Visitor::String        );
 
       visitor.visit(mserialize::Visitor::TupleBegin    );
       visitor.visit(mserialize::Visitor::TupleEnd      );

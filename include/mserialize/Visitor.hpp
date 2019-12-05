@@ -31,6 +31,13 @@ struct Visitor
   };
   struct SequenceEnd {};
 
+  // String - a special Sequence of char, for efficiency
+
+  struct String
+  {
+    string_view data;
+  };
+
   // Tuple
 
   struct TupleBegin
