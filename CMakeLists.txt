@@ -1,177 +1,280 @@
-cmake_minimum_required(VERSION 2.6)
-project(Binlog)
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+cmake_minimum_required(VERSION 3.1)
+project(binlog VERSION 0.1.0 LANGUAGES CXX)
 
-include(CTest)
+#---------------------------
+# CMake modules
+#---------------------------
+
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+
 include(AddressSanitizer)
-include(ThreadSanitizer)
+include(CMakePackageConfigHelpers)
+include(CTest)
 include(Coverage)
 include(MarkdownToHtml)
 include(OptionalCompileOption)
+include(ThreadSanitizer)
 
-# Set default type to Release with debug symbols
-if (NOT CMAKE_BUILD_TYPE AND NOT BINLOG_GEN_COVERAGE)
+#---------------------------
+# Depencencies
+#---------------------------
+
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
+find_package(Boost 1.64.0 COMPONENTS unit_test_framework system)
+
+find_package(benchmark COMPONENTS benchmark)
+
+#---------------------------
+# Build type
+#---------------------------
+
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Defaulting to build type: 'RelWithDebInfo'")
   set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Debug|Release|RelWithDebInfo|MinSizeRel" FORCE)
-endif ()
+endif()
 
-# Setup compile options
+#---------------------------
+# C++ standard
+#---------------------------
+
+set(CMAKE_CXX_STANDARD 14)            # -std=c++14
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)         # no gnu++14
+
+#---------------------------
+# Compiler options
+#---------------------------
+
 if (MSVC)
   add_compile_options(/W4)
 else ()
   add_compile_options(-Wall -Wextra -Werror -pedantic)
-  add_optional_compile_options(
-    -Wconversion -Wsign-conversion -Wold-style-cast -Wsuggest-override
-  )
+  add_optional_compile_options(-Wconversion -Wsign-conversion -Wold-style-cast -Wsuggest-override)
 endif ()
 
-# Clang Tidy
-if (BINLOG_USE_CLANG_TIDY)
-  set(CMAKE_CXX_CLANG_TIDY clang-tidy
-    -warnings-as-errors=*
+#---------------------------
+# clang-tidy
+#---------------------------
+
+if(CMAKE_VERSION VERSION_GREATER 3.6)
+  option(BINLOG_USE_CLANG_TIDY "Run clang-tidy on sources" OFF)
+  find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
+
+  if(BINLOG_USE_CLANG_TIDY AND CLANG_TIDY_EXE)
+    message(STATUS "Use clang-tidy: ${CLANG_TIDY_EXE}")
+    set(CMAKE_CXX_CLANG_TIDY  "${CLANG_TIDY_EXE}" -warnings-as-errors=*)
+  endif()
+endif()
+
+#---------------------------
+# binlog libraries
+#---------------------------
+
+add_library(headers INTERFACE)
+  target_include_directories(headers INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
   )
-endif ()
 
-# Threads (e.g: -pthread)
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
-
-# Boost
-find_package(Boost 1.64.0 REQUIRED COMPONENTS unit_test_framework system)
-
-# Bechmark
-find_package(benchmark COMPONENTS benchmark)
-
-# Mserialize
-add_library(mserialize INTERFACE)
-target_include_directories(mserialize INTERFACE include)
-
-# Binlog
 add_library(binlog OBJECT
   include/binlog/EventStream.cpp
   include/binlog/Time.cpp
   include/binlog/ToStringVisitor.cpp
   include/binlog/PrettyPrinter.cpp
 )
-  target_compile_features(binlog PRIVATE cxx_std_14)
-  target_include_directories(binlog PUBLIC include)
+  target_link_libraries(binlog PUBLIC headers)
 
+#---------------------------
 # bread
+#---------------------------
+
 add_executable(bread
   bin/bread.cpp
 )
-  target_compile_features(bread PRIVATE cxx_std_14)
-  target_link_libraries(bread binlog)
+  target_link_libraries(bread PRIVATE binlog)
 
-# UnitTest
-add_executable(UnitTest test/unit/UnitTest.cpp
-  test/unit/mserialize/roundtrip.cpp
-  test/unit/mserialize/cx_string.cpp
-  test/unit/mserialize/tag.cpp
-  test/unit/mserialize/visit.cpp
-  test/unit/mserialize/documentation.cpp
+#---------------------------
+# Documentation
+#---------------------------
 
-  $<TARGET_OBJECTS:binlog>
-  test/unit/binlog/TestEventStream.cpp
-  test/unit/binlog/TestTime.cpp
-  test/unit/binlog/TestToStringVisitor.cpp
-  test/unit/binlog/TestPrettyPrinter.cpp
-  test/unit/binlog/TestQueue.cpp
-  test/unit/binlog/TestSession.cpp
-  test/unit/binlog/TestSessionWriter.cpp
-  test/unit/binlog/TestCreateSourceAndEvent.cpp
-  test/unit/binlog/TestCreateSourceAndEventIf.cpp
-  test/unit/binlog/TestAdvancedLogMacros.cpp
-  test/unit/binlog/TestBasicLogMacros.cpp
-  test/unit/binlog/TestArrayView.cpp
-  test/unit/binlog/TestConstCharPtrIsString.cpp
+markdown_to_html_group(Documentation UserGuide Mserialize)
 
-  test/unit/binlog/test_utils.cpp
-)
-  target_compile_features(UnitTest PRIVATE cxx_std_14)
-  target_compile_definitions(UnitTest PRIVATE
-    BOOST_TEST_DYN_LINK
-    BOOST_TEST_NO_MAIN
-  )
-  target_include_directories(UnitTest SYSTEM PRIVATE
-    ${Boost_INCLUDE_DIRS}
-  )
-  target_link_libraries(UnitTest Boost::unit_test_framework)
-  target_link_libraries(UnitTest mserialize)
-  target_link_libraries(UnitTest Threads::Threads) # used by: TestQueue, TestSessionWriter, TestCreateSourceAndEvent
-
-add_test(NAME UnitTest
-         COMMAND UnitTest --log_level=test_suite --color_output=true)
-
-# IntegrationTest
-
-add_executable(IntegrationTest test/integration/IntegrationTest.cpp)
-  target_compile_features(IntegrationTest PRIVATE cxx_std_14)
-  target_compile_definitions(IntegrationTest PRIVATE
-    BOOST_TEST_DYN_LINK
-    BOOST_TEST_NO_MAIN
-  )
-  target_include_directories(IntegrationTest SYSTEM PRIVATE
-    ${Boost_INCLUDE_DIRS}
-  )
-  target_link_libraries(IntegrationTest Boost::unit_test_framework)
-  target_link_libraries(IntegrationTest Boost::system)
-  target_link_libraries(IntegrationTest mserialize)
-
-add_test(NAME IntegrationTest
-  COMMAND IntegrationTest --log_level=test_suite --color_output=true -- $<TARGET_FILE:bread> ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR})
-
-function(add_inttest name)
-  add_executable(${name} test/integration/${name}.cpp)
-    target_link_libraries(${name} binlog)
-endfunction()
-
-add_inttest(Logging)
-add_inttest(LoggingFundamentals)
-add_inttest(LoggingContainers)
-  target_include_directories(LoggingContainers SYSTEM PRIVATE ${Boost_INCLUDE_DIRS})
-add_inttest(LoggingStrings)
-  target_include_directories(LoggingStrings SYSTEM PRIVATE ${Boost_INCLUDE_DIRS})
-add_inttest(LoggingPointers)
-  target_include_directories(LoggingPointers SYSTEM PRIVATE ${Boost_INCLUDE_DIRS})
-add_inttest(LoggingTuples)
-add_inttest(LoggingEnums)
-add_inttest(LoggingAdaptedStructs)
-add_inttest(NamedWriters)
-add_inttest(SeverityControl)
-add_inttest(Categories)
-
+#---------------------------
 # Examples
+#---------------------------
 
 function(add_example name)
   add_executable(${name} example/${name}.cpp)
-    target_include_directories(${name} PUBLIC include)
+  target_link_libraries(${name} headers)
 endfunction()
 
 add_example(HelloWorld)
 add_example(DetailedHelloWorld)
 add_example(ConsumeLoop)
 
+#---------------------------
+# Unit Test
+#---------------------------
+
+if(Boost_FOUND)
+
+  message(STATUS "Build unit tests")
+
+  add_executable(UnitTest
+    test/unit/UnitTest.cpp
+
+    test/unit/mserialize/roundtrip.cpp
+    test/unit/mserialize/cx_string.cpp
+    test/unit/mserialize/tag.cpp
+    test/unit/mserialize/visit.cpp
+    test/unit/mserialize/documentation.cpp
+
+    $<TARGET_OBJECTS:binlog>
+    test/unit/binlog/TestEventStream.cpp
+    test/unit/binlog/TestTime.cpp
+    test/unit/binlog/TestToStringVisitor.cpp
+    test/unit/binlog/TestPrettyPrinter.cpp
+    test/unit/binlog/TestQueue.cpp
+    test/unit/binlog/TestSession.cpp
+    test/unit/binlog/TestSessionWriter.cpp
+    test/unit/binlog/TestCreateSourceAndEvent.cpp
+    test/unit/binlog/TestCreateSourceAndEventIf.cpp
+    test/unit/binlog/TestAdvancedLogMacros.cpp
+    test/unit/binlog/TestBasicLogMacros.cpp
+    test/unit/binlog/TestArrayView.cpp
+    test/unit/binlog/TestConstCharPtrIsString.cpp
+
+    test/unit/binlog/test_utils.cpp
+  )
+    target_compile_definitions(UnitTest PRIVATE
+      BOOST_TEST_DYN_LINK
+      BOOST_TEST_NO_MAIN
+    )
+    target_link_libraries(UnitTest Boost::boost) # headers
+    target_link_libraries(UnitTest Boost::unit_test_framework)
+    target_link_libraries(UnitTest headers)
+    target_link_libraries(UnitTest Threads::Threads) # used by: TestQueue, TestSessionWriter, TestCreateSourceAndEvent
+
+  add_test(NAME UnitTest COMMAND UnitTest --log_level=test_suite --color_output=true)
+
+else()
+  message(STATUS "Boost not found, will not build unit tests")
+endif()
+
+#---------------------------
+# Integration Test
+#---------------------------
+
+if(Boost_FOUND)
+
+  message(STATUS "Build integration tests")
+
+  add_executable(IntegrationTest test/integration/IntegrationTest.cpp)
+    target_compile_definitions(IntegrationTest PRIVATE
+      BOOST_TEST_DYN_LINK
+      BOOST_TEST_NO_MAIN
+    )
+    target_link_libraries(UnitTest Boost::boost) # headers
+    target_link_libraries(IntegrationTest Boost::unit_test_framework)
+    target_link_libraries(IntegrationTest Boost::system)
+    target_link_libraries(IntegrationTest headers)
+
+  add_test(NAME IntegrationTest
+    COMMAND IntegrationTest --log_level=test_suite --color_output=true -- "$<TARGET_FILE:bread>" "${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}")
+
+  function(add_inttest name)
+    add_executable(${name} test/integration/${name}.cpp)
+    target_link_libraries(${name} headers)
+  endfunction()
+
+  add_inttest(Logging)
+  add_inttest(LoggingFundamentals)
+  add_inttest(LoggingContainers)
+    target_link_libraries(LoggingContainers Boost::boost) # headers
+  add_inttest(LoggingStrings)
+    target_link_libraries(LoggingStrings Boost::boost) # headers
+  add_inttest(LoggingPointers)
+    target_link_libraries(LoggingPointers Boost::boost) # headers
+  add_inttest(LoggingTuples)
+  add_inttest(LoggingEnums)
+  add_inttest(LoggingAdaptedStructs)
+  add_inttest(NamedWriters)
+  add_inttest(SeverityControl)
+  add_inttest(Categories)
+
+else()
+  message(STATUS "Boost not found, will not build integration tests")
+endif()
+
+#---------------------------
+# Performance Test
+#---------------------------
+
 if (benchmark_FOUND)
-  message(STATUS "Google Benchmark library found")
+
+  message(STATUS "Build performance tests")
 
   function(add_benchmark name)
     add_executable(${name} test/perf/${name}.cpp)
-      target_include_directories(${name} PUBLIC include)
-      target_link_libraries(${name} benchmark::benchmark)
+    target_link_libraries(${name} headers)
+    target_link_libraries(${name} benchmark::benchmark)
   endfunction()
 
   add_benchmark(PerftestQueue)
   add_benchmark(PerftestSessionWriter)
 
 else ()
-  message(STATUS "Google Benchmark library not found, will not build benchmarks")
+  message(STATUS "Google Benchmark library not found, will not build performance tests")
 endif ()
 
-add_executable(LargeLogfile test/perf/LargeLogfile.cpp)
-  target_include_directories(LargeLogfile PUBLIC include)
-
+#---------------------------
 # Tools
+#---------------------------
+
+add_executable(LargeLogfile test/perf/LargeLogfile.cpp)
+  target_link_libraries(LargeLogfile headers)
+
 add_executable(GenerateForeachMacro tools/generate_foreach_macro.cpp)
 
-# Documentation
-markdown_to_html_group(Documentation UserGuide Mserialize)
+#---------------------------
+# Install
+#---------------------------
+
+write_basic_package_version_file(
+  binlogConfigVersion.cmake
+  VERSION ${PACKAGE_VERSION}
+  COMPATIBILITY ExactVersion
+)
+
+configure_package_config_file(
+  "${PROJECT_SOURCE_DIR}/cmake/binlogConfig.cmake.in"
+  "${PROJECT_BINARY_DIR}/binlogConfig.cmake"
+  INSTALL_DESTINATION lib/cmake/binlog
+)
+
+install(
+  FILES "${PROJECT_BINARY_DIR}/binlogConfigVersion.cmake"
+        "${PROJECT_BINARY_DIR}/binlogConfig.cmake"
+  DESTINATION lib/cmake/binlog
+)
+
+install(
+  TARGETS bread headers
+  EXPORT binlogTargets
+  RUNTIME DESTINATION bin
+)
+
+install(
+  EXPORT binlogTargets
+  FILE binlogTargets.cmake
+  NAMESPACE binlog::
+  DESTINATION lib/cmake/binlog
+)
+
+install(
+  DIRECTORY ${PROJECT_SOURCE_DIR}/include/
+  DESTINATION include
+  FILES_MATCHING PATTERN "*.hpp"
+)
