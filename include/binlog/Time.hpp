@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <ctime>
 
-#include <time.h> // NOLINT localtime_r, gmtime_r
+#include <time.h> // NOLINT localtime_r, gmtime_r, clock_gettime
 
 namespace binlog {
 
@@ -58,7 +58,7 @@ std::chrono::nanoseconds clockToNsSinceEpoch(const ClockSync& clockSync, std::ui
 void nsSinceEpochToBrokenDownTimeUTC(std::chrono::nanoseconds sinceEpoch, BrokenDownTime& dst);
 
 /**
- * Create a ClockSync corresponding to std::system_clock.
+ * Create a ClockSync corresponding to std::chrono::system_clock.
  *
  * Time zone is set according to std::localtime.
  *
@@ -95,13 +95,39 @@ inline ClockSync systemClockSync()
     tzName[0] = 0;
   }
 
+  // on linux, clock_gettime is used directly
+  #ifdef __linux__
+    const uint64_t frequency = 1'000'000'000; // nanoseconds
+  #else
+    const uint64_t frequency = std::uint64_t(Clock::period::den);
+  #endif
+
   return ClockSync{
     std::uint64_t(since_epoch.count()),
-    std::uint64_t(Clock::period::den),
+    frequency,
     std::uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(since_epoch).count()),
     offset,
     tzName
   };
+}
+
+/** Get the number of nanoseconds since the UNIX epoch in UTC (no leaps seconds) */
+inline std::uint64_t clockNow()
+{
+  // Depending on how libstdc++ is built (_GLIBCXX_USE_CLOCK_GETTIME_SYSCALL),
+  // system_clock::now() can result in a clock_gettime syscall,
+  // which is really slow compared to the vsyscall equivalent.
+  // Call clock_gettime unconditionally on linux:
+  #ifdef __linux__
+    struct timespec ts{};
+    clock_gettime(CLOCK_REALTIME, &ts);
+    const std::chrono::nanoseconds nanos{
+      std::chrono::seconds{ts.tv_sec} + std::chrono::nanoseconds{ts.tv_nsec}
+    };
+    return std::uint64_t(nanos.count());
+  #else
+    return std::uint64_t(std::chrono::system_clock::now().time_since_epoch().count());
+  #endif
 }
 
 } // namespace binlog

@@ -10,6 +10,8 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 include(AddressSanitizer)
 include(CMakePackageConfigHelpers)
 include(CTest)
+include(CheckFunctionExists)
+include(CheckLibraryExists)
 include(Coverage)
 include(MarkdownToHtml)
 include(OptionalCompileOption)
@@ -55,6 +57,18 @@ else ()
 endif ()
 
 #---------------------------
+# Platform specific configuration
+#---------------------------
+
+# clock_gettime
+check_function_exists("clock_gettime" HAS_CLOCK_GETTIME)
+if(NOT HAS_CLOCK_GETTIME)
+  # Before glibc 2.17, clock_gettime is in librt
+  check_library_exists("rt" "clock_gettime" "" CLOCK_GETTIME_IN_LIBRT)
+  set(HAS_CLOCK_GETTIME 1)
+endif()
+
+#---------------------------
 # clang-tidy
 #---------------------------
 
@@ -77,6 +91,7 @@ add_library(headers INTERFACE)
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
   )
+  target_link_libraries(headers INTERFACE $<$<BOOL:CLOCK_GETTIME_IN_LIBRT>:-lrt>)
 
 add_library(binlog OBJECT
   include/binlog/EventStream.cpp

@@ -2,6 +2,7 @@
 #define BINLOG_ADVANCED_LOG_MACROS_HPP
 
 #include <binlog/Severity.hpp>
+#include <binlog/Time.hpp>
 #include <binlog/create_source_and_event_if.hpp>
 
 #include <chrono>
@@ -29,7 +30,7 @@
 #define BINLOG_TRACE_WC(writer, category, ...)                                  \
   BINLOG_CREATE_SOURCE_AND_EVENT_IF(                                            \
     writer, binlog::Severity::trace, category,                                  \
-    std::uint64_t(std::chrono::system_clock::now().time_since_epoch().count()), \
+    binlog::clockNow(),                                                         \
     __VA_ARGS__                                                                 \
   )                                                                             \
   /**/
@@ -37,7 +38,7 @@
 #define BINLOG_DEBUG_WC(writer, category, ...)                                  \
   BINLOG_CREATE_SOURCE_AND_EVENT_IF(                                            \
     writer, binlog::Severity::debug, category,                                  \
-    std::uint64_t(std::chrono::system_clock::now().time_since_epoch().count()), \
+    binlog::clockNow(),                                                         \
     __VA_ARGS__                                                                 \
   )                                                                             \
   /**/
@@ -45,7 +46,7 @@
 #define BINLOG_INFO_WC(writer, category, ...)                                   \
   BINLOG_CREATE_SOURCE_AND_EVENT_IF(                                            \
     writer, binlog::Severity::info, category,                                   \
-    std::uint64_t(std::chrono::system_clock::now().time_since_epoch().count()), \
+    binlog::clockNow(),                                                         \
     __VA_ARGS__                                                                 \
   )                                                                             \
   /**/
@@ -53,7 +54,7 @@
 #define BINLOG_WARN_WC(writer, category, ...)                                   \
   BINLOG_CREATE_SOURCE_AND_EVENT_IF(                                            \
     writer, binlog::Severity::warning, category,                                \
-    std::uint64_t(std::chrono::system_clock::now().time_since_epoch().count()), \
+    binlog::clockNow(),                                                         \
     __VA_ARGS__                                                                 \
   )                                                                             \
   /**/
@@ -61,7 +62,7 @@
 #define BINLOG_ERROR_WC(writer, category, ...)                                  \
   BINLOG_CREATE_SOURCE_AND_EVENT_IF(                                            \
     writer, binlog::Severity::error, category,                                  \
-    std::uint64_t(std::chrono::system_clock::now().time_since_epoch().count()), \
+    binlog::clockNow(),                                                         \
     __VA_ARGS__                                                                 \
   )                                                                             \
   /**/
@@ -69,7 +70,7 @@
 #define BINLOG_CRITICAL_WC(writer, category, ...)                               \
   BINLOG_CREATE_SOURCE_AND_EVENT_IF(                                            \
     writer, binlog::Severity::critical, category,                               \
-    std::uint64_t(std::chrono::system_clock::now().time_since_epoch().count()), \
+    binlog::clockNow(),                                                         \
     __VA_ARGS__                                                                 \
   )                                                                             \
   /**/
