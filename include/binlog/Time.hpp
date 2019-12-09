@@ -73,9 +73,12 @@ inline ClockSync systemClockSync()
   const auto since_epoch = now.time_since_epoch();
   const std::time_t now_tt = Clock::to_time_t(now);
 
-  // TODO(benedek) platform: use localtime_r/localtime_s/localtime based on availability
   std::tm now_tm{};
-  localtime_r(&now_tt, &now_tm);
+  #ifdef _WIN32
+    localtime_s(&now_tm, &now_tt);
+  #else // assume POSIX
+    localtime_r(&now_tt, &now_tm);
+  #endif
 
   // TODO(benedek) platform: access TZ related tm fields, where available
   int offset = 0;
