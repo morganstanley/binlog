@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="generator" content="binlog/doc/gendoc.py" />
+    <title>Mserialize | Binlog</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.0/css/bootstrap.min.css" integrity="sha384-SI27wrMjH3ZZ89r4o+fGIJtnzkAnFs3E4qz9DIYioCQ5l9Rd/7UAa8DHcaL8jkWt" crossorigin="anonymous">
+    <style>pre { background: #f5f5f5; } h1,h2 { margin-top: 1em; } div.navbar { padding: 8px 0; }</style>
+  </head>
+  <body>
+    <div class="container">
+
+      <div class="navbar-wrapper">
+        <div class="navbar" role="navigation">
+          <div class="navbar-header">
+            <a class="navbar-brand" href="index.html">Binlog</a>
+          </div>
+          <nav class="nav">
+            <a class="nav-link" href="UserGuide.html">UserGuide</a>
+            <a class="nav-link" href="Mserialize.html">Mserialize</a>
+          </nav>
+        </div>
+      </div>
+
+      <h1>Binlog Mserialize</h1>
+      <p>A fast, platform dependent serialization library.</p>
+<div class="toc">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#serialization-and-deserialization">Serialization and Deserialization</a><ul>
+<li><a href="#adapting-custom-types">Adapting custom types</a></li>
+</ul>
+</li>
+<li><a href="#visiting-serialized-values">Visiting serialized values</a><ul>
+<li><a href="#adapting-enums-for-visitation">Adapting enums for visitation</a></li>
+<li><a href="#adapting-user-defined-types-for-visitation">Adapting user defined types for visitation</a></li>
+<li><a href="#adapting-user-defined-recursive-types-for-visitation">Adapting user defined recursive types for visitation</a></li>
+</ul>
+</li>
+<li><a href="#limitations">Limitations</a></li>
+<li><a href="#design-rationale">Design Rationale</a></li>
+<li><a href="#concepts">Concepts</a><ul>
+<li><a href="#outputstream">OutputStream</a></li>
+<li><a href="#inputstream">InputStream</a></li>
+<li><a href="#viewstream">ViewStream</a></li>
+<li><a href="#visitor">Visitor</a></li>
+</ul>
+</li>
+<li><a href="#references">References</a><ul>
+<li><a href="#type-tags">Type tags</a></li>
+<li><a href="#serialized-format">Serialized format</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<h1 id="overview"><a class="toclink" href="#overview">Overview</a></h1>
+<p>Mserialize supports the serialization and deserialization of values,
+represented by objects of supported types, and the visitation of serialized values.
+The primary goal of the library is to make serialization as fast as possible,
+while allowing correct deserialization and visitation.
+To achieve this goal, Mserialize adds very little overhead, if at all, to the serialized values.
+Most of the time, the <a href="#serialized-format">serialized format</a> matches the original value, byte by byte.
+The format is not intended to be universal, it does not serve the purpose of
+exchanging messages between different platforms (e.g: between platforms of different endianness).</p>
+<h1 id="serialization-and-deserialization"><a class="toclink" href="#serialization-and-deserialization">Serialization and Deserialization</a></h1>
+<p>Objects of supported types can be easily serialized:</p>
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/mserialize/serialize.hpp">mserialize/serialize.hpp</a>&gt;
+
+const T my_value;
+std::ofstream ostream(path);
+mserialize::serialize(my_value, ostream);
+</code></pre>
+<p>The supported types (<code>T</code>) for serialization include:</p>
+<ul>
+<li>Fundamental types (<code>bool</code>, <code>char</code>, integer and floating point types)</li>
+<li>Enums</li>
+<li>Strings (<code>const char*</code>, string, string_view)</li>
+<li>Containers (vector, deque, set, map, etc., anything with begin/end and supported <code>value_type</code>)</li>
+<li>Pairs and Tuples</li>
+<li>Pointers and Smart Pointers (<code>T*</code>, unique_ptr, shared_ptr, weak_ptr, with a supported <code>elem_type</code>)</li>
+<li>Optional like types</li>
+<li>Variant like types</li>
+</ul>
+<p>Additional types can be adapted to the library, as <a href="#adapting-custom-types">shown below</a>.
+The target <code>ostream</code> can be anything that models the <a href="#outputstream">OutputStream</a> concept.</p>
+<p>Deserialization of serialized objects is equally easy:</p>
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/mserialize/deserialize.hpp">mserialize/deserialize.hpp</a>&gt;
+
+T my_value;
+std::ifstream istream(path);
+istream.exceptions(std::ios_base::failbit);
+mserialize::deserialize(my_value, istream);
+</code></pre>
+<p>Almost any object, that can be serialized, can be also <em>deserialized into</em>,
+except a few, that do not own the underlying resource (e.g: <code>T*</code>, string_view, weak_ptr)
+ - see <a href="#design-rationale">Design Rationale</a> for details.</p>
+<p>The source <code>istream</code> can be anything that models the <a href="#inputstream">InputStream</a> concept.
+Therefore, standard streams must be configured to throw exceptions on failure.</p>
+<p>The type of the value in the input stream is inferred from the destination (first) argument of <code>deserialize</code>.
+It is only allowed to deserialize a value into an object of a <em>compatible type</em>.
+Compatibility is defined in terms of <a href="#visiting-serialized-values">type tags</a>.
+Two types are <em>compatible</em> if their type tags match.</p>
+<p>If the deserialization fails (e.g: if the content of the stream cannot be interpreted
+as a serialized value of the type inferred from the destination), <code>deserialize</code>
+throws <code>std::runtime_error</code>.</p>
+<h2 id="adapting-custom-types"><a class="toclink" href="#adapting-custom-types">Adapting custom types</a></h2>
+<p>By default, serialization and deserialization of generic user defined types are not supported
+(unless they meet the requirements of some supported concept, e.g: a container).
+Such types can be still adapted though, by specializing extension points for these types.
+The easiest way is to use macros:</p>
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/mserialize/make_struct_deserializable.hpp">mserialize/make_struct_deserializable.hpp</a>&gt;
+#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/mserialize/make_struct_serializable.hpp">mserialize/make_struct_serializable.hpp</a>&gt;
+
+// Given a custom type:
+struct Alpha { int a = 0; std::string b; };
+
+// Serialization and deserialization can be enabled by macros:
+MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(Alpha, a, b)
+MSERIALIZE_MAKE_STRUCT_DESERIALIZABLE(Alpha, a, b)
+
+// At this point, objects of `Alpha` can be used
+// together with mserialize::serialize and deserialize,
+// the same way as by-default supported objects.
+const Alpha in{30, "foo"};
+std::stringstream stream;
+mserialize::serialize(in, stream);
+
+Alpha out;
+stream.exceptions(std::ios_base::failbit);
+mserialize::deserialize(out, stream);
+
+assert(in.a == out.a && in.b == out.b);
+</code></pre>
+<p>The macros have to be invoked at the global scope, outside of any namespace.
+The first argument is the name of the type, the rest are the members
+(The member list can be empty).
+The member list does not have to enumerate every member of the given type: if a
+member is omitted, it will be simply ignored during
+serialization/deserialization (e.g: a mutex member is typically not to be
+serialized). However, to make roundtrip work, the member lists given to each
+macro must match exactly.</p>
+<p>For serialization, a member can be either a non-static, non-reference,
+non-bitfield data member, or a getter, which is a const qualified, nullary
+member function, which returns a serializable object.</p>
+<p>For deserialization, a member can be either a non-const, non-static,
+non-reference, non-bitfield data member, or a setter, which takes
+a single, deserializable argument.</p>
+<pre><code>// Given a custom type with getters and setters:
+class Beta
+{
+  std::string c;
+  float d;
+
+public:
+  const std::string& getC() const;
+  void setC(std::string);
+
+  float getD() const;
+  void setD(float);
+};
+
+// Serialization and deserialization can be enabled the same way:
+MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(Beta, getC, getD)
+MSERIALIZE_MAKE_STRUCT_DESERIALIZABLE(Beta, setC, setD)
+</code></pre>
+<p>If some of the data members, getters or setters are private, but serialization
+or deserialization is still preferred via those members, the following friend
+declarations can be added to the type:</p>
+<pre><code>class Gamma
+{
+  std::string e;  // private data member
+  int f() const;  // private getter
+  void f(int);    // private setter
+
+  template &lt;typename, typename&gt;
+  friend struct mserialize::CustomSerializer;
+
+  template &lt;typename, typename&gt;
+  friend struct mserialize::CustomDeserializer;
+};
+</code></pre>
+<p>Class templates can be made serializable and deserializable on the same conditions,
+except that a different macro must be called:</p>
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/mserialize/make_template_deserializable.hpp">mserialize/make_template_deserializable.hpp</a>&gt;
+#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/mserialize/make_template_serializable.hpp">mserialize/make_template_serializable.hpp</a>&gt;
+
+template &lt;typename A, typename B&gt;
+struct Pair { A a; B b; };
+
+MSERIALIZE_MAKE_TEMPLATE_SERIALIZABLE((typename A, typename B), (Pair&lt;A,B&gt;), a, b)
+MSERIALIZE_MAKE_TEMPLATE_DESERIALIZABLE((typename A, typename B), (Pair&lt;A,B&gt;), a, b)
+</code></pre>
+<p>The first argument of the macro must be the arguments of the template, with the
+necessary typename prefix, where needed, as they appear after the template
+keyword in the definition, wrapped by parentheses. (The parentheses are
+required to avoid the preprocessor splitting the arguments at the commas)</p>
+<p>The second argument is the template name with the template arguments, as it
+should appear in a specialization, wrapped by parentheses.
+The rest of the arguments are members, same as above.</p>
+<h1 id="visiting-serialized-values"><a class="toclink" href="#visiting-serialized-values">Visiting serialized values</a></h1>
+<p>As an alternative to deserialization, serialized objects
+can be visited. Visitation is useful if the precise type
+of the serialized object is not known, the type is not available,
+or not deserializable.</p>
+<p>While the precise type of the serialized object is not needed,
+a <em>type tag</em> still must be available for visitation to work.
+A type tag is a string, that describes a serializable type to the extent that it can be visited.</p>
+<p>The following example shows how serialization and visitation can work together:</p>
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/mserialize/serialize.hpp">mserialize/serialize.hpp</a>&gt;
+#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/mserialize/tag.hpp">mserialize/tag.hpp</a>&gt;
+
+// serialize a T object
+const T t;
+const auto tag = mserialize::tag&lt;T&gt;();
+std::ofstream ostream(path);
+mserialize::serialize(tag, ostream);
+mserialize::serialize(t, ostream);
+</code></pre>
+<p>&nbsp;</p>
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/mserialize/deserialize.hpp">mserialize/deserialize.hpp</a>&gt;
+#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/mserialize/visit.hpp">mserialize/visit.hpp</a>&gt;
+
+// visit the object
+std::ifstream istream(path);
+istream.exceptions(std::ios_base::failbit);
+std::string tag;
+mserialize::deserialize(tag, istream);
+Visitor visitor;
+mserialize::visit(tag, visitor, istream);
+</code></pre>
+<p><code>Visitor</code> can be any type that models the <a href="#visitor">Visitor</a> concept.
+<code>visit</code> throws <code>std::exception</code> if the visitation fails
+(e.g: the provided tag does not match the serialized object in the stream).
+In the example, the tag is serialized alongside the object.
+In general, the tag is not required to be in the stream,
+it can be sent to the visiting party by any other means.
+The tag given to visit must be a valid type tag:
+do not use tags coming from a potentially malicious source.</p>
+<h2 id="adapting-enums-for-visitation"><a class="toclink" href="#adapting-enums-for-visitation">Adapting enums for visitation</a></h2>
+<p>By default, enums have no tag associated.
+A tag, suitable for visitation can be defined in the following way:</p>
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/mserialize/make_enum_tag.hpp">mserialize/make_enum_tag.hpp</a>&gt;
+
+enum Delta { a, b, c };
+MSERIALIZE_MAKE_ENUM_TAG(Delta, a, b, c)
+</code></pre>
+<p>This works with both enums and enum classes, regardless the underlying type of the enum.
+The macro has to be called in global scope (outside of any namespace).
+If an enumerator is omitted from the macro call, the tag will be incomplete,
+and during visitation, if the missing enumerator is visited, only its
+underlying value will be available, the enumerator name will be empty.</p>
+<h2 id="adapting-user-defined-types-for-visitation"><a class="toclink" href="#adapting-user-defined-types-for-visitation">Adapting user defined types for visitation</a></h2>
+<p>By default, in general, user defined types have no tag associated.
+(In general, since any type modeling a specific supported concept, e.g:
+user defined containers, does have a tag associated by default).
+A tag, suitable for visitation can be defined in the following way:</p>
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/mserialize/make_struct_tag.hpp">mserialize/make_struct_tag.hpp</a>&gt;
+
+struct Epsilon { int a; std::string b; };
+MSERIALIZE_MAKE_STRUCT_TAG(Epsilon, a, b)
+</code></pre>
+<p>The macro has to be called in global scope (outside of any namespace).
+The members can be data members or getters, just like for <a href="#adapting-custom-types">serialization</a>.
+For private members, the following friend declaration can be added:</p>
+<pre><code>template &lt;typename, typename&gt;
+friend struct mserialize::CustomTag;
+</code></pre>
+<p>The member list must be in sync with the <code>MSERIALIZE_MAKE_STRUCT_SERIALIZABLE</code> call,
+if visitation of objects serialized that way is desired.
+<code>MSERIALIZE_MAKE_STRUCT_TAG</code> cannot be used with recursive types.
+See <a href="#adapting-user-defined-recursive-types-for-visitation">Adapting user defined recursive types for visitation</a> for a solution.</p>
+<p>A tag can be assigned to class templates on the same conditions,
+except that a different macro must be called:</p>
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/mserialize/make_template_tag.hpp">mserialize/make_template_tag.hpp</a>&gt;
+
+template &lt;typename A, typename B, typename C&gt;
+struct Triplet { A a; B b; C c; };
+
+MSERIALIZE_MAKE_TEMPLATE_TAG((typename A, typename B, typename C), (Triplet&lt;A,B,C&gt;), a, b, c)
+</code></pre>
+<p>The first argument of the macro must be the arguments of the template, with the
+necessary typename prefix, where needed, as they appear after the template
+keyword in the definition, wrapped by parentheses. (The parentheses are
+required to avoid the preprocessor splitting the arguments at the commas)</p>
+<p>The second argument is the template name with the template arguments, as it
+should appear in a specialization, wrapped by parentheses.
+The rest of the arguments are members, same as above.</p>
+<h2 id="adapting-user-defined-recursive-types-for-visitation"><a class="toclink" href="#adapting-user-defined-recursive-types-for-visitation">Adapting user defined recursive types for visitation</a></h2>
+<p>From the tag generation point of view, a structure is recursive
+if one of its fields has a type tag that includes the type tag of the parent type.
+Currently, <code>MSERIALIZE_MAKE_STRUCT_TAG</code> is unable to deal with such recursive structures.
+As a workaround, such type tags can be manually assigned:</p>
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/mserialize/tag.hpp">mserialize/tag.hpp</a>&gt;
+
+struct Node { int value; Node* next; };
+
+namespace mserialize {
+
+template &lt;&gt;
+struct CustomTag&lt;Node&gt;
+{
+  static constexpr auto tag_string()
+  {
+    return make_cx_string("{Node`value'i`next'&lt;0{Node}&gt;}");
+  }
+};
+
+} // namespace mserialize
+</code></pre>
+<p>A breakdown of the string literal:</p>
+<ul>
+<li><code>{</code>: Start structure tag</li>
+<li><code>Node</code>: Name of the structure</li>
+<li><code>`value'</code>: Name of the first field</li>
+<li><code>i</code>: Type tag of the first field. Also see the <a href="#type-tags">type tag reference</a></li>
+<li><code>`next'</code>: Name of the second field</li>
+<li><code>&lt;</code>: Begin variant tag (pointers are modeled as either nothing or something)</li>
+<li><code>0</code>: The pointer is either null</li>
+<li><code>{Node}</code>: or points to a Node objects. This is the important part: the structure
+   definition here is not expanded again, as that would result in infinite recursion.
+   The visitor will recognize that Node is not an empty type, but something defined earlier.</li>
+<li><code>&gt;</code> End variant tag</li>
+<li><code>}</code> End structure tag</li>
+</ul>
+<h1 id="limitations"><a class="toclink" href="#limitations">Limitations</a></h1>
+<ul>
+<li>
+<p>To keep the implementation and interface simple, values cannot be deserialized
+   into object that do not own the underlying resource, e.g: <code>T*</code> or string_view.
+   See <a href="#design-rationale">Design Rationale</a> for considered alternatives.</p>
+</li>
+<li>
+<p>In the <a href="#serialized-format">Serialized format</a> the size of a serialized sequence
+   is represented by a 32 bit unsigned integer. Therefore, sequences longer than
+   2^32 cannot be serialized. As a workaround, such sequences can be split
+   into a sequence of smaller sequences.</p>
+</li>
+<li>
+<p>In the <a href="#serialized-format">Serialized format</a> the discriminator of a variant
+   is represented by an 8 bit unsigned integer. Therefore, variants with more
+   than 256 alternatives cannot be serialized. As a workaround, such variants
+   can be split into a variant of smaller variants.</p>
+</li>
+<li>
+<p>Macros taking arbitrary number of arguments (e.g: member lists, enumerators)
+   need to iterate over the given arguments. The iteration is done by loop
+   unrolling, which is currently capped at 1024. This limit can be increased
+   by regenerating foreach.hpp.</p>
+</li>
+</ul>
+<h1 id="design-rationale"><a class="toclink" href="#design-rationale">Design Rationale</a></h1>
+<p>Library design tends to be arguable. Some decisions need to be explained.</p>
+<p><strong>How to signal errors when deserializing?</strong></p>
+<ol>
+<li>
+<p>Leave the stream in bad state. This is common practice in standard library
+    components, but does not give enough context about the nature of the error.</p>
+</li>
+<li>
+<p>Set an <code>error_code</code>. This requires the <code>ec</code> to be propagated through every
+    deserialization layer (which might or might not be good), and also requires
+    several extra checks (to stop if the <code>ec</code> is set). As a deserialization
+    error is considered exceptional, the nominal case should not be penalized
+    with extra checks, which can be avoided with exceptions.</p>
+</li>
+<li>
+<p>Throw an exception. Can provide enough context, fast if there are no
+    errors, requires extra care. This is the chosen solution. The type of the
+    exception should be <code>std::runtime_error</code>, but on platforms using the
+    pre-C++11 ABI, <code>std::ios_base::failure</code> (thrown by streams) is not derived
+    from <code>std::runtime_error</code>, therefore <code>std::exception</code> must be used.</p>
+</li>
+</ol>
+<p><strong>How to deserialize non-owning types?</strong> Let's consider <code>T*</code>:</p>
+<ol>
+<li>
+<p>Simply allocate a <code>T</code> object on the heap, assign its address to the target
+    pointer, and expect that the user will properly delete it later. This
+    solution is simple, but hard to get right, especially with complicated
+    structures.</p>
+</li>
+<li>
+<p>Provide an overload, which takes a memory manager.
+    This solution is memory safe and allows a wider range of types to be
+    deserialized, by requires the introduction of yet another concept, with
+    further complexity.</p>
+</li>
+<li>
+<p>Do not allow direct deserialization of such types.
+    This sharp solution is simple to implement, but it restricts some common
+    types (e.g: string_view), and prevents the user from using the same type on
+    both ends. Because of its simplicity, this is the chosen solution.</p>
+</li>
+</ol>
+<p><strong>How should the type tag of user defined types look like?</strong></p>
+<ol>
+<li>
+<p>Type tags of user defined types should be shallow, e.g: <code>{Person}</code>, and the
+    complete definition of the type has to be supplied via yet another side
+    channel. This approach diverges from the original meaning of type tag, (as
+    the shallow tag on its own doesn't allow visitation), and puts additional
+    load on the user. On the other hand, it is easy to implement, even for
+    recursive structures.</p>
+</li>
+<li>
+<p>Type tags should always describe the complete type. e.g:
+    <code>{Person`age'i`name'[c}</code>, <em>allow</em> automatic generation of tags for recursive
+    structures. This is a pure approach, fits nicely to the original concept
+    of type tags. However, it is difficult to implement (in a efficient
+    constexpr fashion) if recursive (including mutually recursive) types need
+    to be supported.</p>
+</li>
+<li>
+<p>Type tags should always describe the complete type. e.g:
+    <code>{Person`age'i`name'[c}</code>, <em>disallow</em> automatic generation of tags for
+    recursive structures. A pure approach with some restriction. It remains
+    easy to use, while allowing clients to use more difficult ways if
+    visitation of recursive structures is needed. This is the chosen solution.</p>
+</li>
+</ol>
+<p><strong>Split making types serializable and generation of tags or not?</strong></p>
+<ol>
+<li>
+<p>Combining them leads to slightly smaller source code, but ties the
+    requirements and usage together.</p>
+</li>
+<li>
+<p>Separate serialization and tag generation logic aligns with the <em>only pay
+    for what you use</em> principle. It allows the two to have different
+    requirements (e.g: whether recursive types are allowed), and deserializer
+    programs to inspect tags without pulling in the serializer logic. On the
+    other hand, the separate specialization logic needs slightly more code.
+    This is the chosen solution.</p>
+</li>
+</ol>
+<h1 id="concepts"><a class="toclink" href="#concepts">Concepts</a></h1>
+<h2 id="outputstream"><a class="toclink" href="#outputstream">OutputStream</a></h2>
+<pre><code>template &lt;typename OutStr&gt;
+concept OutputStream = requires(OutStr ostream, const char* buf, std::streamsize size)
+{
+  // Append `size` bytes from `buffer` to the stream
+  { ostream.write(buf, size) } -&gt; OutStr&;
+};
+</code></pre>
+<h2 id="inputstream"><a class="toclink" href="#inputstream">InputStream</a></h2>
+<pre><code>template &lt;typename InpStr&gt;
+concept InputStream = requires(InpStr istream, char* buf, std::streamsize size)
+{
+  // Consume `size` bytes from the stream and copy them to the `buffer`.
+  // Throw std::exception on failure (i.e: not enough bytes available)
+  { istream.read(buf, size) } -&gt; InpStr&;
+};
+</code></pre>
+<h2 id="viewstream"><a class="toclink" href="#viewstream">ViewStream</a></h2>
+<pre><code>template &lt;typename VStr&gt;
+concept ViewStream = requires(VStr vstream, std::size_t size)
+{
+  // Consume `size` bytes from the stream and return a pointer
+  // to the start of the consumed bytes. The returned pointer
+  // is valid until the next operation.
+  // Throw std::exception on failure (i.e: not enough bytes available)
+  { vstream.view(size) } -&gt; const char*;
+};
+</code></pre>
+<h2 id="visitor"><a class="toclink" href="#visitor">Visitor</a></h2>
+<pre><code>template &lt;typename V&gt;
+concept Visitor = requires(V visitor)
+{
+  visitor.visit(bool          );
+  visitor.visit(char          );
+  visitor.visit(std::int8_t   );
+  visitor.visit(std::int16_t  );
+  visitor.visit(std::int32_t  );
+  visitor.visit(std::int64_t  );
+  visitor.visit(std::uint8_t  );
+  visitor.visit(std::uint16_t );
+  visitor.visit(std::uint32_t );
+  visitor.visit(std::uint64_t );
+
+  visitor.visit(float         );
+  visitor.visit(double        );
+  visitor.visit(long double   );
+
+  visitor.visit(mserialize::Visitor::SequenceBegin );
+  visitor.visit(mserialize::Visitor::SequenceEnd   );
+
+  visitor.visit(mserialize::Visitor::String        );
+
+  visitor.visit(mserialize::Visitor::TupleBegin    );
+  visitor.visit(mserialize::Visitor::TupleEnd      );
+
+  visitor.visit(mserialize::Visitor::VariantBegin  );
+  visitor.visit(mserialize::Visitor::VariantEnd    );
+  visitor.visit(mserialize::Visitor::Null          );
+
+  visitor.visit(mserialize::Visitor::StructBegin   );
+  visitor.visit(mserialize::Visitor::StructEnd     );
+
+  visitor.visit(mserialize::Visitor::FieldBegin    );
+  visitor.visit(mserialize::Visitor::FieldEnd      );
+
+  visitor.visit(mserialize::Visitor::Enum          );
+};
+</code></pre>
+<h1 id="references"><a class="toclink" href="#references">References</a></h1>
+<h2 id="type-tags"><a class="toclink" href="#type-tags">Type tags</a></h2>
+<p>The table below describes the type tags of supported types.
+In the first column, <code>T</code> refers to any supported type, and <code>T...</code> to any pack of supported types.
+In the second column, <code>t</code> refers to the tag of <code>T</code> in the cell left of it, and <code>t...</code> to the
+concatenated tags of the <code>T...</code> pack.</p>
+<table class="table">
+<thead>
+  <tr> <th>Type</th> <th>Type Tag</th> </tr>
+</thead>
+<tbody>
+  <tr><td><code>bool</code></td>      <td><code>y</code></td></tr>
+  <tr><td><code>char</code></td>      <td><code>c</code></td></tr>
+  <tr><td><code>int8_t</code></td>    <td><code>b</code></td></tr>
+  <tr><td><code>int16_t</code></td>   <td><code>s</code></td></tr>
+  <tr><td><code>int32_t</code></td>   <td><code>i</code></td></tr>
+  <tr><td><code>int64_t</code></td>   <td><code>l</code></td></tr>
+  <tr><td><code>uint8_t</code></td>   <td><code>B</code></td></tr>
+  <tr><td><code>uint16_t</code></td>  <td><code>S</code></td></tr>
+  <tr><td><code>uint32_t</code></td>  <td><code>I</code></td></tr>
+  <tr><td><code>uint64_t</code></td>  <td><code>L</code></td></tr>
+  <tr><td><code>float</code></td>     <td><code>f</code></td></tr>
+  <tr><td><code>double</code></td>    <td><code>d</code></td></tr>
+  <tr><td><code>long double</code></td>    <td><code>D</code></td></tr>
+  <tr><td>Array of <code>T</code></td><td><code>[t</code></td></tr>
+  <tr><td>Tuple of <code>T...</code></td><td><code>(t...)</code></td></tr>
+  <tr><td>Variant of <code>T...</code></td><td><code>&lt;t...&gt;</code></td></tr>
+  <tr><td><code>void</code> (only to indicate empty state of a variant)</td>      <td><code>0</code></td></tr>
+  <tr><td>Adapted <code>enum E : T { a, b = 123, c}</code></td><td>
+    <code>/t`E'0`a'7B`b'7C`c'\</code>, i.e:
+    <pre>EnumTag = / UnderlyingTypeTag EnumName Enumerator* \
+UnderlyingTypeTag = b|s|i|l|B|S|I|L
+EnumName = `Typename'
+Enumerator = ValueInHex `EnumeratorName' </pre>
+  </td></tr>
+  <tr><td>Adapted <code>struct Foo { T1 a; T2 b; }</code></td><td>
+  <code>{Foo`a't1`b't2}</code>, i.e:
+  <pre>StructTag = { StructName StructField* }
+StructName = `Typename'
+StructField = `FieldName' FieldTag</pre>
+  </td></tr>
+</tbody>
+</table>
+
+<h2 id="serialized-format"><a class="toclink" href="#serialized-format">Serialized format</a></h2>
+<p>By default, serializable types are mapped to type tags,
+and serialized according to that type tag, as described below.
+User defined serializers are allowed to use different serialization schemas,
+not described here.</p>
+<table class="table">
+<thead>
+  <tr> <th>Type</th> <th>Serialized format</th> </tr>
+</thead>
+<tbody>
+  <tr><td>Arithmetic types (<code>y,c,b,s,i,l,B,S,I,L,f,d,D</code>)</td>
+  <td>Serialized as if by memcpy</td></tr>
+
+  <tr><td>Array of <code>T</code></td>
+  <td>4 bytes (host endian) size of the array, followed by the serialized array elements</td></tr>
+
+  <tr><td>Tuple of <code>T...</code></td>
+  <td>Elements are serialized in order, without additional decoration</td></tr>
+
+  <tr><td>Variant of <code>T...</code></td>
+  <td>1 byte discriminator, followed by the serialized active option</td></tr>
+
+  <tr><td>Adapted enum</td>
+  <td>Serialized as if by memcpy</td></tr>
+
+  <tr><td>Adapted user defined type</td>
+  <td>Members are serialized in order, without additional decoration</td></tr>
+</tbody>
+</table>
+
+      <hr/>
+      <footer class="text-center text-muted">
+        Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a> |
+        Generated: 2019. 12. 09.
+      </footer>
+      <hr/>
+    </div>
+  </body>
+</html>
+

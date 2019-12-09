@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="generator" content="binlog/doc/gendoc.py" />
+    <title>User Guide | Binlog</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.0/css/bootstrap.min.css" integrity="sha384-SI27wrMjH3ZZ89r4o+fGIJtnzkAnFs3E4qz9DIYioCQ5l9Rd/7UAa8DHcaL8jkWt" crossorigin="anonymous">
+    <style>pre { background: #f5f5f5; } h1,h2 { margin-top: 1em; } div.navbar { padding: 8px 0; }</style>
+  </head>
+  <body>
+    <div class="container">
+
+      <div class="navbar-wrapper">
+        <div class="navbar" role="navigation">
+          <div class="navbar-header">
+            <a class="navbar-brand" href="index.html">Binlog</a>
+          </div>
+          <nav class="nav">
+            <a class="nav-link" href="UserGuide.html">UserGuide</a>
+            <a class="nav-link" href="Mserialize.html">Mserialize</a>
+          </nav>
+        </div>
+      </div>
+
+      <h1>Binlog User Guide</h1>
+      <p>A quick tour to a high-throughput low-latency logging library.</p>
+<div class="toc">
+<ul>
+<li><a href="#hello-world">Hello World</a></li>
+<li><a href="#logging">Logging</a><ul>
+<li><a href="#logging-containers">Logging Containers</a></li>
+<li><a href="#logging-strings">Logging Strings</a></li>
+<li><a href="#logging-pointers">Logging Pointers</a></li>
+<li><a href="#logging-pairs-and-tuples">Logging Pairs and Tuples</a></li>
+<li><a href="#logging-enums">Logging Enums</a></li>
+<li><a href="#logging-user-defined-structures">Logging User Defined Structures</a></li>
+</ul>
+</li>
+<li><a href="#tools">Tools</a><ul>
+<li><a href="#bread">bread</a></li>
+</ul>
+</li>
+<li><a href="#a-more-elaborate-greeting-of-the-world">A More Elaborate Greeting of the World</a></li>
+<li><a href="#named-writers">Named Writers</a></li>
+<li><a href="#severity-control">Severity Control</a></li>
+<li><a href="#categories">Categories</a></li>
+<li><a href="#consume-logs">Consume Logs</a></li>
+</ul>
+</div>
+<h1 id="hello-world"><a class="toclink" href="#hello-world">Hello World</a></h1>
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/binlog/binlog.hpp">binlog/binlog.hpp</a>&gt;
+
+int main()
+{
+  BINLOG_INFO("Hello {}!", "World");
+
+  std::ofstream logfile("hello.blog", std::ofstream::out|std::ofstream::binary);
+  binlog::consume(logfile);
+}
+</code></pre>
+<p>Compile and run this program: it will produce a binary logfile, <code>hello.blog</code>.
+The logfile can be converted to text using <code>bread</code>:</p>
+<pre><code>$ bread hello.blog
+INFO [10/05 20:05:30.176362854] Hello World!
+</code></pre>
+<p>Compared to other log libraries, Binlog is very fast for two reasons:
+First, Binlog is using asynchronous logging. The log events are first copied to
+a fast-access, lock-free intermediate storage, before <code>consume</code> writes
+them to the logfile.
+Second, Binlog produces a structured, binary log.
+This means, in the application, arguments and timestamps are not converted to text,
+and are not substituted into a format string. These happen in a later stage offline,
+while reading the logs (i.e: when running <code>bread</code>).
+As a bonus, structured logfiles are smaller, more flexible (e.g: text representation is customizable),
+and easier to data mine.</p>
+<h1 id="logging"><a class="toclink" href="#logging">Logging</a></h1>
+<p>Binlog provides a macro interface for logging.
+The most basic log macros are: <code>BINLOG_TRACE</code>, <code>BINLOG_DEBUG</code>, <code>BINLOG_INFO</code>, <code>BINLOG_WARNING</code>, <code>BINLOG_ERROR</code> and <code>BINLOG_CRITICAL</code>,
+one for each severity. Usage:</p>
+<pre><code>BINLOG_INFO("Result: {}", 42);
+// Outputs: INFO Result: 42
+</code></pre>
+<p>Each basic log macro takes a format string, and zero or more arguments.
+The format string can contain <code>{}</code> placeholders for the arguments.
+The number of placeholders in the format string and the number of arguments must match,
+and it is enforced by a compile time check.
+Events are timestamped using <code>std::chrono::system_clock</code>.
+The set of loggable argument types includes primitives, containers, pointers,
+pairs and tuples, enums and adapted user defined types - as shown below.</p>
+<h2 id="logging-containers"><a class="toclink" href="#logging-containers">Logging Containers</a></h2>
+<p>Standard containers of loggable <code>value_type</code> are loggable by default:</p>
+<pre><code>std::vector&lt;int&gt;       vec{1,2,3};
+std::array&lt;int, 3&gt;     arr{4,5,6};
+std::forward_list&lt;int&gt; lst{7,8,9};
+BINLOG_INFO("Sequence containers: {} {} {}", vec, arr, lst);
+// Outputs: Sequence containers: [1, 2, 3] [4, 5, 6] [7, 8, 9]
+
+std::set&lt;int&gt; set{4,8,15,16,23,42};
+std::map&lt;char, std::string&gt; map{{'a', "alpha"}, {'b', "beta"}};
+BINLOG_INFO("Associative containers: {} {}", set, map);
+// Outputs: Associative containers: [4, 8, 15, 16, 23, 42] [(a, alpha), (b, beta)]
+</code></pre>
+<p>Aside the standard containers, any container-like type is loggable
+that satisfies the following constraints:</p>
+<ul>
+<li>It has a const qualified <code>begin()</code> and <code>end()</code></li>
+<li>The iterators returned by begin/end satisfy the forward iterator concept</li>
+<li>The <code>value_type</code> of the iterator is loggable</li>
+</ul>
+<p>C style arrays of loggable elements can be wrapped in a view if the array size is known,
+to be logged as a container:</p>
+<pre><code>int array[] = {1, 2, 3};
+BINLOG_INFO("Array: {}", binlog::array_view(array, 3));
+// Outputs: Array: [1, 2, 3]
+</code></pre>
+<h2 id="logging-strings"><a class="toclink" href="#logging-strings">Logging Strings</a></h2>
+<p>Containers of characters (e.g: <code>std::string</code> or <code>std::vector&lt;char&gt;</code>) are logged just
+like any other container, but have a special text representation:</p>
+<pre><code>std::string str = "String";
+BINLOG_INFO("Hello {}!", str);
+// Outputs: Hello String!
+</code></pre>
+<p><code>const char*</code> arguments, because of established convention, are assumed to
+point to null terminated strings, therefore logged and displayed accordingly.</p>
+<h2 id="logging-pointers"><a class="toclink" href="#logging-pointers">Logging Pointers</a></h2>
+<p>Raw and standard smart pointers pointing to a loggable <code>element_type</code>
+are loggable by default:</p>
+<pre><code>int* ptr = nullptr;
+std::unique_ptr&lt;int&gt; uptr(std::make_unique&lt;int&gt;(1));
+std::shared_ptr&lt;int&gt; sptr(std::make_shared&lt;int&gt;(2));
+BINLOG_INFO("Pointers: {} {} {}", ptr, uptr, sptr);
+// Outputs: Pointers: {null} 1 2
+</code></pre>
+<p>If the pointer is valid, it gets dereferenced and the pointed object will be logged.
+If the pointer is <em>empty</em> (i.e: it points to no valid object),
+no value is logged, and in the text log it will be shown as <code>{null}</code>.
+Logging of <code>weak_ptr</code> is not supported, those must be <code>.lock()</code>-ed first.</p>
+<p>Aside the standard pointers, any pointer or optional-like type is loggable
+that satisfies the following constraints:</p>
+<ul>
+<li>It is explicitly convertible to <code>bool</code></li>
+<li>Dereferencing it yields to a loggable type</li>
+<li>It is declared as being an optional, e.g:<pre><code>namespace mserialize { namespace detail {
+  template &lt;typename T&gt; struct is_optional&lt;boost::optional&lt;T&gt;&gt; : std::true_type {};
+}}
+</code></pre>
+</li>
+</ul>
+<h2 id="logging-pairs-and-tuples"><a class="toclink" href="#logging-pairs-and-tuples">Logging Pairs and Tuples</a></h2>
+<p>Standard pair and tuple with loggable elements are loggable by default:</p>
+<pre><code>std::pair&lt;int, char&gt; p{1, 'a'};
+std::tuple&lt;std::string, bool, int&gt; t{"foo", true, 2};
+BINLOG_INFO("Pair: {}, Tuple: {}", p, t);
+// Outputs: Pair: (1, a), Tuple: (foo, true, 2)
+</code></pre>
+<p>Aside the standard pair and tuple, any tuple-like type is loggable
+that satisfies the following constraints:</p>
+<ul>
+<li>It's declaration matches <code>T&lt;E...&gt;</code>.</li>
+<li>Each <code>E</code> of <code>E...</code> are loggable</li>
+<li>Elements are accessible via unqualified call to <code>get&lt;N&gt;(t)</code></li>
+<li>It is declared as being a tuple, e.g:<pre><code>namespace mserialize { namespace detail {
+  template &lt;typename... T&gt;
+  struct is_tuple&lt;boost::tuple&lt;T...&gt;&gt; : std::true_type {};
+}}
+</code></pre>
+</li>
+</ul>
+<h2 id="logging-enums"><a class="toclink" href="#logging-enums">Logging Enums</a></h2>
+<p>Enums are loggable by default, serialized and shown as their underlying type:</p>
+<pre><code>enum Enum { Alpha = 123, Beta = 124 };
+BINLOG_INFO("Enum: {}", Alpha);
+// Outputs: Enum: 123
+</code></pre>
+<p>To make the log easier to read, enums can be adapted:
+adapted enums are still serialized as their underlying type,
+but in the log, the enumerator name is shown:</p>
+<pre><code>enum AdaptedEnum { Gamma, Delta };
+BINLOG_ADAPT_ENUM(AdaptedEnum, Gamma, Delta)
+
+BINLOG_INFO("Adapted enum: {}", Delta);
+// Outputs: Adapted enum: Delta
+</code></pre>
+<p>The <code>BINLOG_ADAPT_ENUM</code> must be called in global scope, outside of any namespace.
+If an enumerator is omitted, the underlying value will be shown
+instead of the omitted enumerator name.
+Both scoped and unscoped enums can be adapted.
+For scoped enums, the enumerators must be prefixed with the enum name, as usual:</p>
+<pre><code>enum class ScopedEnum { Epsilon, Phi };
+BINLOG_ADAPT_ENUM(ScopedEnum, Epsilon, Phi)
+
+BINLOG_INFO("Scoped enum: {}", ScopedEnum::Epsilon);
+// Outputs: Scoped enum: Epsilon
+</code></pre>
+<p>The maximum number of enumerators is limited to 1024.</p>
+<h2 id="logging-user-defined-structures"><a class="toclink" href="#logging-user-defined-structures">Logging User Defined Structures</a></h2>
+<p>User defined types outside the categories above can be still logged,
+if adapted:</p>
+<pre><code>struct Foo
+{
+  int a = 0;
+  std::string b;
+
+  bool c() const { return true; }
+};
+
+BINLOG_ADAPT_STRUCT(Foo, a, b, c)
+
+BINLOG_INFO("My foo: {}", Foo{1, "two"});
+// Outputs: My foo: Foo{ a: 1, b: two, c: true }
+</code></pre>
+<p><code>BINLOG_ADAPT_STRUCT</code> takes a typename, and a list of data members or getters.</p>
+<p>Data members are:</p>
+<ul>
+<li>non-static</li>
+<li>non-reference</li>
+<li>non-bitfield members, which has a</li>
+<li>loggable type.</li>
+</ul>
+<p>Getters are:</p>
+<ul>
+<li>const qualified</li>
+<li>nullary methods,</li>
+<li>returning a loggable value, and</li>
+<li>getters must not throw</li>
+<li>must not log, and</li>
+<li>must always return the same value during the creation of a single log event</li>
+</ul>
+<p>The member list does not have to be exhaustive, e.g: mutex members can be omitted, those will not be logged.
+The member list can be empty. The maximum number of members is limited to 1024.
+<code>BINLOG_ADAPT_STRUCT</code> must be called in global scope, outside of any namespace.
+The type must not be recursive, e.g: <code>Foo</code> can't have a to be logged <code>Foo*</code> typed member.
+For more information and to make templates or recursive types loggable,
+see the Mserialize documentation on <a href="Mserialize.html#adapting-custom-types">Adapting custom types</a> and
+<a href="Mserialize.html#adapting-user-defined-recursive-types-for-visitation">Adapting user defined recursive types for visitation</a>.</p>
+<h1 id="tools"><a class="toclink" href="#tools">Tools</a></h1>
+<h2 id="bread"><a class="toclink" href="#bread">bread</a></h2>
+<p>The binary logfile produced by Binlog is not human-readable,
+it has to be converted to text first. The <code>bread</code> program
+reads the given binary logfile, converts it to text
+and writes the text to the standard output.</p>
+<pre><code>$ bread logfile.blog &gt; logfile.txt
+</code></pre>
+<p>The format of the text representation can be customized using command line switches:</p>
+<pre><code>$ bread -f "%S [%d] %n %m (%G:%L)" -d "%m/%d %H:%M:%S.%N" logfile.blog
+</code></pre>
+<p>To customize the output and for further options, see the builtin help:</p>
+<pre><code>$ bread -h
+</code></pre>
+<h1 id="a-more-elaborate-greeting-of-the-world"><a class="toclink" href="#a-more-elaborate-greeting-of-the-world">A More Elaborate Greeting of the World</a></h1>
+<p>The first section, <a href="#hello-world">Hello World</a> shows a very simple example,
+where the data flow might not be clear, due to the hidden state,
+which makes the example short. Consider the following, more explicit example:</p>
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/binlog/Session.hpp">binlog/Session.hpp</a>&gt;
+#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/binlog/SessionWriter.hpp">binlog/SessionWriter.hpp</a>&gt;
+#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/binlog/advanced_log_macros.hpp">binlog/advanced_log_macros.hpp</a>&gt;
+
+#include &lt;fstream&gt;
+#include &lt;iostream&gt;
+
+int main()
+{
+  binlog::Session session;
+  binlog::SessionWriter writer(session);
+
+  BINLOG_INFO_W(writer, "Hello {}!", "World");
+
+  std::ofstream logfile("hello.blog", std::ofstream::out|std::ofstream::binary);
+  session.consume(logfile);
+
+  if (! logfile)
+  {
+    std::cerr &lt;&lt; "Failed to write hello.blog\n";
+    return 1;
+  }
+
+  std::cout &lt;&lt; "Binary log written to hello.blog\n";
+  return 0;
+}
+</code></pre>
+<p><code>Session</code> is a log stream. <code>SessionWriter</code> can add log events to such a stream.
+Multiple writers can write a single session concurrently,
+as between the session and  each writer there's a queue of bytes.
+In the first example, the default instances of these types were used implicitly,
+provided by <code>default_session()</code> and <code>default_thread_local_writer()</code>.</p>
+<p><code>BINLOG_INFO_W</code> is the same as <code>BINLOG_INFO</code>, except that it takes
+an additional writer as the first argument, which it will use
+to add the event instead of the default writer.
+The log event, created by this macro, is first serialized into the
+queue of the <code>writer</code>, upon invocation. If this is the first
+call to this macro, the metadata associated with this event
+is also added to the session of the writer.
+This macro is available for each severity, i.e:
+<code>BINLOG_TRACE_W</code>, <code>BINLOG_DEBUG_W</code>, <code>BINLOG_INFO_W</code>, <code>BINLOG_WARNING_W</code>, <code>BINLOG_ERROR_W</code> and <code>BINLOG_CRITICAL_W</code>.
+Serialization is done using the <a href="Mserialize.html">Mserialize</a> library.</p>
+<p>When <code>session.consume</code> is called, first the available metadata is
+consumed and written to the provided stream. Then each writer queue
+is polled for data. Available data is written to the provided stream
+in batches. At the end of the program, the health of the output stream
+is checked, to make sure errors are not swallowed (e.g: disk full).</p>
+<h1 id="named-writers"><a class="toclink" href="#named-writers">Named Writers</a></h1>
+<p>To make the source of the events easier to identify, writers can be named.
+Writer names appear in the converted text output.
+This feature can be used to distinguish the output of different threads.</p>
+<pre><code>writer.setName("w1");
+BINLOG_INFO_W(writer, "Hello named writer");
+// Outputs: w1 Hello named writer
+</code></pre>
+<h1 id="severity-control"><a class="toclink" href="#severity-control">Severity Control</a></h1>
+<p>It might be desirable to change the verbosity of the logging runtime.
+Setting the minimum severity of the session disables production
+of events with lesser severities:</p>
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/binlog/Severity.hpp">binlog/Severity.hpp</a>&gt;
+
+session.setMinSeverity(binlog::Severity::warning);
+// trace, debug, info severities are disabled
+</code></pre>
+<p>If an event of disabled severity is given to a writer,
+it will be discarded without effect, and the log arguments will not be evaluated.</p>
+<pre><code>// after setting min severity to warning above:
+BINLOG_INFO("Call f: {}", f()); // f will not be called
+</code></pre>
+<h1 id="categories"><a class="toclink" href="#categories">Categories</a></h1>
+<p>To separate the log events coming from different components of the application,
+a category can be attached to them:</p>
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/binlog/advanced_log_macros.hpp">binlog/advanced_log_macros.hpp</a>&gt;
+
+BINLOG_INFO_C(my_category, "This is a categorized event");
+// Outputs: my_category  This is a categorized event
+</code></pre>
+<p><code>BINLOG_INFO_C</code> is the same as <code>BINLOG_INFO</code>, except that it takes
+an additional category name as the first argument, which will be the
+category of the event. The category name can be any valid identifier,
+that must be available compile time. The name of the default category is <code>main</code>.
+This macro is available for each severity, i.e:
+<code>BINLOG_TRACE_C</code>, <code>BINLOG_DEBUG_C</code>, <code>BINLOG_INFO_C</code>, <code>BINLOG_WARNING_C</code>, <code>BINLOG_ERROR_C</code> and <code>BINLOG_CRITICAL_C</code>.</p>
+<p>The <code>BINLOG_&lt;SEVERITY&gt;_W</code> and <code>BINLOG_&lt;SEVERITY&gt;_C</code> macros can be combined:</p>
+<pre><code>BINLOG_INFO_WC(writer, my_category, "My writer, my category");
+// Outputs: my_category W1 My writer, my category
+</code></pre>
+<p>As above, there's one for each severity, i.e:
+<code>BINLOG_TRACE_WC</code>, <code>BINLOG_DEBUG_WC</code>, <code>BINLOG_INFO_WC</code>, <code>BINLOG_WARNING_WC</code>, <code>BINLOG_ERROR_WC</code> and <code>BINLOG_CRITICAL_WC</code>.</p>
+<h1 id="consume-logs"><a class="toclink" href="#consume-logs">Consume Logs</a></h1>
+<p>Regardless the exact log macro being used (<code>BINLOG_&lt;SEVERITY&gt;*</code>), when an event is created,
+it is first put into the queue of the writer. When <code>session.consume(ostream)</code> is called,
+these queues are polled and the acquired data is written to the given <code>ostream</code>.
+If the writer is unable to write the queue, because it is full, it creates a new one,
+and closes the old. Therefore, a balance of new event frequency, queue size and consume frequency
+must be established. For applications built around a <em>main loop</em>, it might be suitable to
+consume the logs at the end of each loop iteration, sizing the queue according to the
+estimated amount of data one iteration produces:</p>
+<pre><code>binlog::Session session;
+const std::size_t queueCapacityBytes = 1 &lt;&lt; 20;
+binlog::SessionWriter writer(session, queueCapacityBytes);
+
+std::string input;
+while (std::getline(std::cin, input))
+{
+  processInput(input, writer); // logs using `writer`
+  session.consume(logfile);
+}
+</code></pre>
+<p>For different kind of applications, calling <code>consume</code> periodically in a dedicated thread
+or task can be an option.</p>
+
+      <hr/>
+      <footer class="text-center text-muted">
+        Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a> |
+        Generated: 2019. 12. 09.
+      </footer>
+      <hr/>
+    </div>
+  </body>
+</html>
+
