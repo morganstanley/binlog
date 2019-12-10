@@ -29,6 +29,27 @@ find_package(Boost 1.64.0 COMPONENTS unit_test_framework system)
 find_package(benchmark COMPONENTS benchmark)
 
 #---------------------------
+# CMake workarounds
+#---------------------------
+
+function(include_boost target)
+  if(CMAKE_VERSION VERSION_GREATER 3.5)
+    target_link_libraries(${target} Boost::boost) # headers
+  else()
+    target_include_directories(${target} SYSTEM PRIVATE ${Boost_INCLUDE_DIRS})
+  endif()
+endfunction()
+
+function(link_boost target library)
+  if(CMAKE_VERSION VERSION_GREATER 3.5)
+    target_link_libraries(${target} "Boost::${library}")
+  else()
+    string(TOUPPER ${library} LIBRARY)
+    target_link_libraries(${target} "${Boost_${LIBRARY}_LIBRARY}")
+  endif()
+endfunction()
+
+#---------------------------
 # Build type
 #---------------------------
 
@@ -99,7 +120,12 @@ add_library(binlog OBJECT
   include/binlog/ToStringVisitor.cpp
   include/binlog/PrettyPrinter.cpp
 )
-  target_link_libraries(binlog PUBLIC headers)
+  # before cmake 3.12, OBJECT libraries can't link
+  if(CMAKE_VERSION VERSION_GREATER 3.12)
+    target_link_libraries(binlog PUBLIC headers)
+  else()
+    target_include_directories(binlog PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+  endif()
 
 #---------------------------
 # bread
@@ -107,8 +133,9 @@ add_library(binlog OBJECT
 
 add_executable(bread
   bin/bread.cpp
+  $<TARGET_OBJECTS:binlog>
 )
-  target_link_libraries(bread PRIVATE binlog)
+  target_link_libraries(bread PRIVATE headers)
 
 #---------------------------
 # Documentation
@@ -167,8 +194,8 @@ if(Boost_FOUND)
       BOOST_TEST_DYN_LINK
       BOOST_TEST_NO_MAIN
     )
-    target_link_libraries(UnitTest Boost::boost) # headers
-    target_link_libraries(UnitTest Boost::unit_test_framework)
+    include_boost(UnitTest)
+    link_boost(UnitTest unit_test_framework)
     target_link_libraries(UnitTest headers)
     target_link_libraries(UnitTest Threads::Threads) # used by: TestQueue, TestSessionWriter, TestCreateSourceAndEvent
 
@@ -191,9 +218,9 @@ if(Boost_FOUND)
       BOOST_TEST_DYN_LINK
       BOOST_TEST_NO_MAIN
     )
-    target_link_libraries(UnitTest Boost::boost) # headers
-    target_link_libraries(IntegrationTest Boost::unit_test_framework)
-    target_link_libraries(IntegrationTest Boost::system)
+    include_boost(IntegrationTest)
+    link_boost(IntegrationTest unit_test_framework)
+    link_boost(IntegrationTest system)
     target_link_libraries(IntegrationTest headers)
 
   add_test(NAME IntegrationTest
@@ -207,11 +234,11 @@ if(Boost_FOUND)
   add_inttest(Logging)
   add_inttest(LoggingFundamentals)
   add_inttest(LoggingContainers)
-    target_link_libraries(LoggingContainers Boost::boost) # headers
+    include_boost(LoggingContainers)
   add_inttest(LoggingStrings)
-    target_link_libraries(LoggingStrings Boost::boost) # headers
+    include_boost(LoggingStrings)
   add_inttest(LoggingPointers)
-    target_link_libraries(LoggingPointers Boost::boost) # headers
+    include_boost(LoggingPointers)
   add_inttest(LoggingTuples)
   add_inttest(LoggingEnums)
   add_inttest(LoggingAdaptedStructs)
