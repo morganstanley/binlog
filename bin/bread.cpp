@@ -96,7 +96,7 @@ void showHelp()
     "  Default date format string: \"%m/%d %H:%M:%S.%N\"\n"
     "\n"
     "Report bugs to:\n"
-    "  benedek\n"; // TODO(benedek) we need a contact address
+    "  https://github.com/Morgan-Stanley/binlog/issues\n";
 }
 
 } // namespace
