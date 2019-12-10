@@ -69,7 +69,7 @@ void runReadDiff(const std::string& name, const std::string& format)
   bp::pipe p;
   bp::ipstream text;
   bp::child inttest(g_inttest_dir + name, bp::std_out > p);
-  bp::child bread(g_bread_path, "-", "-f", format, bp::std_in < p, bp::std_out > text);
+  bp::child bread(g_bread_path, "-f", format, "-", bp::std_in < p, bp::std_out > text);
 
   std::vector<std::string> actual;
   for (std::string line; std::getline(text, line);)
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(DateFormat)
 
   const std::string blogPath = g_src_dir + "data/dateformat.blog";
   bp::ipstream text;
-  bp::child bread(g_bread_path, blogPath, "-f", "%u %m", "-d", "%Y-%m-%dT%H:%M:%S.%NZ", bp::std_out > text);
+  bp::child bread(g_bread_path, "-f", "%u %m", "-d", "%Y-%m-%dT%H:%M:%S.%NZ", blogPath, bp::std_out > text);
 
   std::vector<std::string> actual;
   for (std::string line; std::getline(text, line);)

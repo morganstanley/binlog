@@ -1,3 +1,5 @@
+#include "getopt.hpp"
+
 #include <binlog/Entries.hpp> // Event
 #include <binlog/EventStream.hpp>
 #include <binlog/PrettyPrinter.hpp>
@@ -5,8 +7,6 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-
-#include <getopt.h>
 
 namespace {
 

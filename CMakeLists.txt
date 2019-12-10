@@ -136,6 +136,7 @@ add_executable(bread
   $<TARGET_OBJECTS:binlog>
 )
   target_link_libraries(bread PRIVATE headers)
+  target_sources(bread PRIVATE $<$<CXX_COMPILER_ID:MCVC>:bin/getopt.cpp>)
 
 #---------------------------
 # Documentation
