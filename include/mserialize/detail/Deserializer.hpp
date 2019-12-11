@@ -94,32 +94,49 @@ struct BuiltinDeserializer<Sequence, enable_spec_if<
     std::uint32_t size;
     mserialize::deserialize(size, istream);
 
-    resize(s, size);
-    deserialize_elems(is_proxy_sequence<Sequence>{}, s, size, istream);
+    deserialize_elems(has_insert<Sequence>{}, s, size, istream);
   }
 
 private:
-  /**
-   * Ensure size(s) == new_size by s.resize(new_size).
-   * @throw std::runtime_error if there's no resize and
-   *        the current size != new_size.
-   */
-  static void resize(Sequence& s, std::uint32_t new_size)
+  // e.g: [multi]{map,set}, unordered_{map,set}
+  template <typename InputStream>
+  static void deserialize_elems(
+    std::true_type  /* has insert */,
+    Sequence& s, std::uint32_t size, InputStream& istream
+  )
   {
-    // the third argument is used to rank overloads
-    // https://stackoverflow.com/questions/34419045/
-    resize_impl(s, new_size, 0);
+    // map value_type is pair<const K, V>, we need pair<K, V>
+    using T = deep_remove_const_t<typename Sequence::value_type>;
+
+    while (size--)
+    {
+      T elem;
+      mserialize::deserialize(elem, istream);
+      s.insert(std::move(elem));
+    }
   }
 
-  template <typename Sequence2>
-  static auto resize_impl(Sequence2& s, std::uint32_t new_size, int /* preferred overload */)
-    -> decltype(s.resize(new_size))
+  template <typename InputStream>
+  static void deserialize_elems(
+    std::false_type  /* no insert */,
+    Sequence& s, std::uint32_t size, InputStream& istream
+  )
+  {
+    resize(has_resize<Sequence>{}, s, size);
+
+    deserialize_elems_noinsert(
+      is_sequence_batch_deserializable<Sequence>{},
+      is_proxy_sequence<Sequence>{},
+      s, size, istream
+    );
+  }
+
+  static void resize(std::true_type /* has resize */, Sequence& s, std::uint32_t new_size)
   {
     return s.resize(new_size);
   }
 
-  template <typename Sequence2>
-  static void resize_impl(Sequence2& s, std::uint32_t new_size, char /* fallback */)
+  static void resize(std::false_type /* no resize */, Sequence& s, std::uint32_t new_size)
   {
     const auto size = sequence_size(s);
     if (size != new_size)
@@ -132,29 +149,11 @@ private:
     }
   }
 
+  // e.g: vector, array, C array - value type is trivial
   template <typename InputStream>
-  static void deserialize_elems(
-    std::false_type /* no proxy */,
-    Sequence& s, std::uint32_t size, InputStream& istream
-  )
-  {
-    deserialize_elems_noproxy(is_sequence_batch_deserializable<Sequence>{}, s, size, istream);
-  }
-
-  template <typename InputStream>
-  static void deserialize_elems_noproxy(
-    std::false_type /* no batch copy */,
-    Sequence& s, std::uint32_t /* size*/, InputStream& istream)
-  {
-    for (auto&& elem : s)
-    {
-      mserialize::deserialize(elem, istream);
-    }
-  }
-
-  template <typename InputStream>
-  static void deserialize_elems_noproxy(
-    std::true_type /* batch copy */,
+  static void deserialize_elems_noinsert(
+    std::true_type  /* batch deserialization */,
+    std::false_type /* not a proxy sequence */,
     Sequence& s, std::uint32_t size, InputStream& istream
   )
   {
@@ -163,10 +162,27 @@ private:
     istream.read(data, std::streamsize(serialized_size));
   }
 
+  // e.g: any deque, list, forward_list -
+  // and vector, array, C array of non trivial value type
   template <typename InputStream>
-  static void deserialize_elems(
-    std::true_type /* proxy */,
-    Sequence& s, std::uint32_t /* size */, InputStream& istream
+  static void deserialize_elems_noinsert(
+    std::false_type /* no batch deserialization */,
+    std::false_type /* not a proxy sequence */,
+    Sequence& s, std::uint32_t /*size*/, InputStream& istream
+  )
+  {
+    for (auto&& elem : s)
+    {
+      mserialize::deserialize(elem, istream);
+    }
+  }
+
+  // e.g: vector<bool>
+  template <typename InputStream, typename Ignored>
+  static void deserialize_elems_noinsert(
+    Ignored        /* dont care about batch deserialization */,
+    std::true_type /* proxy sequence */,
+    Sequence& s, std::uint32_t /*size*/, InputStream& istream
   )
   {
     // For some sequences (e.g: std::vector<bool>)

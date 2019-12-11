@@ -240,6 +240,23 @@ BOOST_AUTO_TEST_CASE(sequence_cross)
   ));
 }
 
+BOOST_AUTO_TEST_CASE_TEMPLATE(set, T, sets<int>)
+{
+  const T in{1, 2, 7, 7, 7, 9, 2, 8};
+  const T out = roundtrip(in);
+  BOOST_TEST(in == out);
+}
+
+// Can't pass argument to BOOST macro with commas inside
+using IntCharMaps = maps<int, char>;
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(map, T, IntCharMaps)
+{
+  const T in{ {1, 'a'}, {7, 'x'}, {2, 'b'}, {4, 'y'}, {7, 'z'} };
+  const T out = roundtrip(in);
+  BOOST_TEST(in == out);
+}
+
 // Can't pass argument to BOOST macro with commas inside
 using CharIntTuple = std::tuple<char, int>;
 

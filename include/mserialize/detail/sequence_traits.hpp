@@ -140,6 +140,24 @@ struct is_proxy_sequence : std::false_type {};
 template <>
 struct is_proxy_sequence<std::vector<bool>> : std::true_type {};
 
+// Has resize
+
+template <typename, typename = void>
+struct has_resize : std::false_type {};
+
+template <typename Sequence>
+struct has_resize<Sequence, void_t<decltype(std::declval<Sequence>().resize(0u))>> : std::true_type {};
+
+// Has insert - matches insert(vt) (set/map), but not insert(it, vt) (sequences)
+
+template <typename Sequence, typename = void>
+struct has_insert : std::false_type {};
+
+template <typename Sequence>
+struct has_insert<Sequence, void_t<decltype(
+  std::declval<Sequence>().insert(std::declval<typename Sequence::value_type>())
+)>> : std::true_type {};
+
 } // namespace detail
 } // namespace mserialize
 

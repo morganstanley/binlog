@@ -11,7 +11,11 @@
 #include <deque>
 #include <forward_list>
 #include <list>
+#include <map>
 #include <memory>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 using arithmetic_types = boost::mpl::list<
@@ -43,6 +47,20 @@ template <typename T>
 using smart_pointers = boost::mpl::list<
   std::unique_ptr<T>,
   std::shared_ptr<T>
+>;
+
+template <typename T>
+using sets = boost::mpl::list<
+  std::set<T>,
+  std::multiset<T>,
+  std::unordered_set<T>
+>;
+
+template <typename K, typename V>
+using maps = boost::mpl::list<
+  std::map<K, V>,
+  std::multimap<K, V>,
+  std::unordered_map<K, V>
 >;
 
 #endif // TEST_UNIT_MSERIALIZE_TEST_TYPE_LISTS_HPP

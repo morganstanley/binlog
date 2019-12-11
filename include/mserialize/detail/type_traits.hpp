@@ -90,6 +90,23 @@ struct is_optional<T, void_t<
   decltype(*std::declval<T>())
 >> : std::true_type {};
 
+// deep_remove_const - const std::pair<const int, const bool> -> std::pair<int, bool>
+
+template <typename T>
+struct deep_remove_const : std::remove_const<T> {};
+
+template <template <typename...> class T, typename... E>
+struct deep_remove_const<T<E...>>
+{
+  using type = std::remove_const_t<T<typename deep_remove_const<E>::type...>>;
+};
+
+template <template <typename...> class T, typename... E>
+struct deep_remove_const<const T<E...>> : deep_remove_const<T<E...>> {};
+
+template <typename T>
+using deep_remove_const_t = typename deep_remove_const<T>::type;
+
 } // namespace detail
 } // namespace mserialize
 
