@@ -1,7 +1,7 @@
 #ifndef BINLOG_ARRAY_VIEW_HPP
 #define BINLOG_ARRAY_VIEW_HPP
 
-#include <cstdint>
+#include <cstddef>
 
 namespace binlog {
 
