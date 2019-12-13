@@ -134,9 +134,9 @@ add_library(binlog OBJECT
 add_executable(bread
   bin/bread.cpp
   $<TARGET_OBJECTS:binlog>
+  $<$<CXX_COMPILER_ID:MSVC>:bin/getopt.cpp bin/binaryio.cpp>
 )
   target_link_libraries(bread PRIVATE headers)
-  target_sources(bread PRIVATE $<$<CXX_COMPILER_ID:MCVC>:bin/getopt.cpp>)
 
 #---------------------------
 # Documentation
@@ -228,7 +228,7 @@ if(Boost_FOUND)
     COMMAND IntegrationTest --log_level=test_suite --color_output=true -- "$<TARGET_FILE:bread>" "${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}")
 
   function(add_inttest name)
-    add_executable(${name} test/integration/${name}.cpp)
+    add_executable(${name} test/integration/${name}.cpp $<$<CXX_COMPILER_ID:MSVC>:bin/binaryio.cpp>)
     target_link_libraries(${name} headers)
   endfunction()
 

@@ -31,7 +31,7 @@ std::vector<std::string> expectedDataFromSource(const std::string& name)
   std::vector<std::string> result;
 
   const std::string path = g_src_dir + name + ".cpp";
-  std::ifstream input(path);
+  std::ifstream input(path, std::ios_base::in|std::ios_base::binary);
   const std::string marker("// Outputs: ");
 
   std::string line;
