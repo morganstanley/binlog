@@ -116,7 +116,7 @@ private:
     else // [...R###W......]
     {
       const std::int64_t rightSize = std::int64_t(_queue->_capacity - w);
-      const std::int64_t leftSize = std::int64_t(r - 1);
+      const std::int64_t leftSize = std::int64_t(r) - 1;
 
       if (rightSize >= leftSize)
       {
