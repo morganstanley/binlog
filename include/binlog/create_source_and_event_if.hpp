@@ -16,11 +16,11 @@
  *
  * @see BINLOG_CREATE_SOURCE_AND_EVENT
  */
-#define BINLOG_CREATE_SOURCE_AND_EVENT_IF(writer, severity, ...)     \
+#define BINLOG_CREATE_SOURCE_AND_EVENT_IF(writer, severity, category, clock, ...)     \
   do {                                                               \
     if (severity >= writer.session().minSeverity())                  \
     {                                                                \
-      BINLOG_CREATE_SOURCE_AND_EVENT(writer, severity, __VA_ARGS__); \
+      BINLOG_CREATE_SOURCE_AND_EVENT(writer, severity, category, clock, __VA_ARGS__); \
     }                                                                \
   } while (false)                                                    \
   /**/
