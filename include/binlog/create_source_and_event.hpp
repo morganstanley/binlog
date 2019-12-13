@@ -85,7 +85,7 @@ constexpr std::size_t count_placeholders(const char* str)
 
 template <typename... T>
 constexpr std::integral_constant<std::size_t, sizeof...(T)>
-count_arguments(T&&...); // Implementation is missing by design
+count_arguments(T&&...) { return {}; } // Implementation should be omitted but cannot be on MSVC
 
 // The first argument is dropped because __VA_ARGS__ cannot be empty,
 // therefore it is always combined with something unrelated.
