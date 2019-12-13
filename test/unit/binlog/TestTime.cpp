@@ -112,14 +112,19 @@ BOOST_AUTO_TEST_CASE(ns_to_gmt)
   binlog::nsSinceEpochToBrokenDownTimeUTC(std::chrono::nanoseconds{123}, bdt);
   BOOST_TEST(str(bdt) == "1970-01-01 00:00:00.000000123");
 
-  binlog::nsSinceEpochToBrokenDownTimeUTC(std::chrono::seconds{-69781770}, bdt);
-  BOOST_TEST(str(bdt) == "1967-10-16 08:10:30.000000000");
-
   binlog::nsSinceEpochToBrokenDownTimeUTC(std::chrono::nanoseconds{435601550'123456789}, bdt);
   BOOST_TEST(str(bdt) == "1983-10-21 16:25:50.123456789");
 
   binlog::nsSinceEpochToBrokenDownTimeUTC(std::chrono::nanoseconds{1542364201'987654321}, bdt);
   BOOST_TEST(str(bdt) == "2018-11-16 10:30:01.987654321");
+
+  // Who controls the past controls the future.
+  // Windows does not: "Midnight, January 1, 1970, is the lower bound of the date range"
+  // https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/gmtime-s-gmtime32-s-gmtime64-s?view=vs-2019
+  #ifndef _WIN32
+    binlog::nsSinceEpochToBrokenDownTimeUTC(std::chrono::seconds{ -69781770 }, bdt);
+    BOOST_TEST(str(bdt) == "1967-10-16 08:10:30.000000000");
+  #endif
 }
 
 BOOST_AUTO_TEST_SUITE_END()
