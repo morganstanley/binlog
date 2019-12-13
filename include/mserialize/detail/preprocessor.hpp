@@ -1,8 +1,11 @@
 #ifndef MSERIALIZE_DETAIL_PREPROCESSOR_HPP
 #define MSERIALIZE_DETAIL_PREPROCESSOR_HPP
 
+/** MSVC pastes __VA_ARGS__ as a single token, unless expanded once again: */
+#define MSERIALIZE_EXPAND(x) x
+
 /** Get the first element from __VA_ARGS__ */
-#define MSERIALIZE_FIRST(...) MSERIALIZE_FIRST_I(__VA_ARGS__, 0)
+#define MSERIALIZE_FIRST(...) MSERIALIZE_EXPAND(MSERIALIZE_FIRST_I(__VA_ARGS__, 0))
 #define MSERIALIZE_FIRST_I(first, ...) first
 
 /** Turn v into "v", expanding v once, if possible */

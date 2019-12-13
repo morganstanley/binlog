@@ -27,6 +27,9 @@
  *  + the easiest to understand
  *  + the easiest to extend
  *  - verbose, has to be generated.
+ *
+ * EXPAND is used to workaround MSVC bug:
+ * __VA_ARGS__ is pasted as a single token.
  */
 
 #include <cstdlib>
@@ -38,12 +41,12 @@ const char prefix[] = "MSERIALIZE_";
 void write_count(std::ostream& out, int max_count)
 {
   out << "\n/** Count the number of elements in the given __VA_ARGS__ */\n"
-      << "#define " << prefix << "COUNT(...) " << prefix << "COUNT_I(__VA_ARGS__";
+      << "#define " << prefix << "COUNT(...) " << prefix << "EXPAND(" << prefix << "COUNT_I(__VA_ARGS__";
   for (int i = max_count; i != 0; --i)
   {
     out << ',' << i;
   }
-  out << ",x)\n"
+  out << ",x))\n"
       << "#define " << prefix << "COUNT_I(";
   for (int i = 0; i < max_count+1; ++i)
   {
@@ -56,7 +59,7 @@ void write_foreach(std::ostream& out, int max_iteration)
 {
   out << "\n/** For each elem `e`, *except the first* in __VA_ARGS__, call F(d,e) */\n"
       << "#define " << prefix << "FOREACH(F, d, ...) \\\n  "
-      << prefix << "CAT(" << prefix << "FOREACH_, " << prefix << "COUNT(__VA_ARGS__)) (F, d, __VA_ARGS__)\n";
+      << prefix << "EXPAND(" << prefix << "CAT(" << prefix << "FOREACH_, " << prefix << "COUNT(__VA_ARGS__)) (F, d, __VA_ARGS__))\n";
 
   out << "\n/** FOREACH_n ignores the first argument, and calls F n-1 times */\n";
   for (int i = 1; i <= max_iteration+1; ++i)
