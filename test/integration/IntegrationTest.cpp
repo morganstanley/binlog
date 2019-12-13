@@ -17,6 +17,15 @@ std::string g_bread_path;
 std::string g_inttest_dir;
 std::string g_src_dir;
 
+std::string extension()
+{
+  #ifdef _WIN32
+    return ".exe";
+  #else
+    return {};
+  #endif
+}
+
 std::vector<std::string> expectedDataFromSource(const std::string& name)
 {
   std::vector<std::string> result;
@@ -68,7 +77,7 @@ void runReadDiff(const std::string& name, const std::string& format)
 
   bp::pipe p;
   bp::ipstream text;
-  bp::child inttest(g_inttest_dir + name, bp::std_out > p);
+  bp::child inttest(g_inttest_dir + name + extension(), bp::std_out > p);
   bp::child bread(g_bread_path, "-f", format, "-", bp::std_in < p, bp::std_out > text);
 
   std::vector<std::string> actual;
@@ -134,7 +143,7 @@ bool initMasterSuite()
   int argc = boost::unit_test::framework::master_test_suite().argc;
   char** argv = boost::unit_test::framework::master_test_suite().argv;
 
-  g_bread_path = (argc > 1) ? argv[1] : "./bread";
+  g_bread_path = (argc > 1) ? argv[1] : "./bread" + extension();
   g_inttest_dir = (argc > 2) ? argv[2] + std::string("/") : "./";
   g_src_dir = (argc > 3) ? argv[3] + std::string("/test/integration/") : "../test/integration/";
 
