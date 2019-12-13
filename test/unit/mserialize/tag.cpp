@@ -98,7 +98,7 @@ static_assert(mserialize::tag<Enum32>() == "i", "");
 // test MSERIALIZE_MAKE_ENUM_TAG
 
 MSERIALIZE_MAKE_ENUM_TAG(test::CEnum, Alpha, Bravo, Charlie)
-static_assert(mserialize::tag<test::CEnum>() == "/I`test::CEnum'0`Alpha'1`Bravo'2`Charlie'\\", "");
+static_assert(mserialize::tag<test::CEnum>() == "/i`test::CEnum'0`Alpha'1`Bravo'2`Charlie'\\", "");
 
 MSERIALIZE_MAKE_ENUM_TAG(test::EnumClass, Delta, Echo, Foxtrot)
 static_assert(mserialize::tag<test::EnumClass>() == "/i`test::EnumClass'0`Delta'1`Echo'2`Foxtrot'\\", "");

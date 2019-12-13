@@ -5,14 +5,14 @@
 
 namespace test {
 
-enum CEnum
+enum CEnum : int
 {
   Alpha,
   Bravo,
   Charlie
 };
 
-enum class EnumClass
+enum class EnumClass : int
 {
   Delta,
   Echo,
