@@ -112,6 +112,9 @@ BOOST_FIXTURE_TEST_CASE(filename, TestcaseBase)
 
   eventSource.file = "bar";
   BOOST_TEST(print(pp) == "bar");
+
+  eventSource.file = R"(\a\b\c.cpp)";
+  BOOST_TEST(print(pp) == "c.cpp");
 }
 
 BOOST_FIXTURE_TEST_CASE(tzoffset, TestcaseBase)

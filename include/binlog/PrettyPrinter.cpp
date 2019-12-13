@@ -15,10 +15,10 @@
 namespace {
 
 // Given path=foo/bar/baz.cpp, write baz.cpp to out,
-// or the full path if no slash found.
+// or the full path if no path separator (/ or \) found.
 void printFilename(std::ostream& out, const std::string& path)
 {
-  const std::size_t i = path.rfind('/') + 1;
+  const std::size_t i = path.find_last_of("/\\", std::string::npos, 2) + 1;
   out.write(path.data() + i, std::streamsize(path.size() - i));
 }
 
