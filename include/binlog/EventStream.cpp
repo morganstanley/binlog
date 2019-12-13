@@ -32,7 +32,7 @@ const Event* EventStream::nextEvent()
     if (range.empty()) { return nullptr; }
 
     const std::uint64_t tag = range.read<std::uint64_t>();
-    const bool special = (tag & 1UL << 63) != 0;
+    const bool special = (tag & (std::uint64_t(1) << 63)) != 0;
 
     if (special)
     {
