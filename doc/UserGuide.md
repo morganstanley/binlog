@@ -131,7 +131,7 @@ For scoped enums, the enumerators must be prefixed with the enum name, as usual:
 
     [catchfile test/integration/LoggingEnums.cpp scoped]
 
-The maximum number of enumerators is limited to 1024.
+The maximum number of enumerators is limited to 100.
 
 ## Logging User Defined Structures
 
@@ -159,7 +159,7 @@ Getters are:
  - must always return the same value during the creation of a single log event
 
 The member list does not have to be exhaustive, e.g: mutex members can be omitted, those will not be logged.
-The member list can be empty. The maximum number of members is limited to 1024.
+The member list can be empty. The maximum number of members is limited to 100.
 `BINLOG_ADAPT_STRUCT` must be called in global scope, outside of any namespace.
 The type must not be recursive, e.g: `Foo` can't have a to be logged `Foo*` typed member.
 For more information and to make templates or recursive types loggable,

@@ -37,7 +37,7 @@
  * is desired.
  *
  * The maximum number of members is limited by
- * mserialize/detail/foreach.hpp, currently 1024.
+ * mserialize/detail/foreach.hpp, currently 100.
  *
  * Limitation: it is not possible to generate
  * a tag for a recursive type with this macro.

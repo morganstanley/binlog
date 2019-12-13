@@ -220,8 +220,9 @@ A breakdown of the string literal:
 
  - Macros taking arbitrary number of arguments (e.g: member lists, enumerators)
    need to iterate over the given arguments. The iteration is done by loop
-   unrolling, which is currently capped at 1024. This limit can be increased
-   by regenerating foreach.hpp.
+   unrolling, which is currently capped at 100. This limit can be increased
+   by regenerating foreach.hpp, but MSVC does not support macros with
+   more than 127 arguments.
 
 # Design Rationale
 

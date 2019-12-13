@@ -38,7 +38,7 @@
  * be simply ignored during deserialization.
  *
  * The maximum number of enumerators is limited by
- * mserialize/detail/foreach.hpp, currently 1024.
+ * mserialize/detail/foreach.hpp, currently 100.
  *
  * If a private member has to be deserialized, the following friend
  * declaration can be added to the type declaration:

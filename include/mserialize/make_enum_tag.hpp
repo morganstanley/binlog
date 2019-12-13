@@ -30,7 +30,7 @@
  * the enumerator name will be empty.
  *
  * The maximum number of enumerators is limited by
- * mserialize/detail/foreach.hpp, currently 1024.
+ * mserialize/detail/foreach.hpp, currently 100.
  */
 #define MSERIALIZE_MAKE_ENUM_TAG(...)                          \
   namespace mserialize {                                       \

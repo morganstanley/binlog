@@ -31,7 +31,7 @@
  * The member list can be empty.
  * The member list does not have to enumerate every member
  * of `Struct`: if a member is omitted, it will not be logged.
- * The maximum number of members is limited to 1024.
+ * The maximum number of members is limited to 100.
  * If the member list references a private or protected
  * member, the following (or equivalent) friend declaration must be added:
  *

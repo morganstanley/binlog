@@ -26,7 +26,7 @@
  * (outside of any namespace).
  * Works with regular and scoped enums (enum class).
  * The list of enumerators can be empty.
- * The maximum number of enumerators is limited to 1024.
+ * The maximum number of enumerators is limited to 100.
  * If an enumerator is omitted from the macro call,
  * and it is logged, the hex representation of
  * the underlying value will be shown.

@@ -47,7 +47,7 @@
  * is desired.
  *
  * The maximum number of members and template arguments
- * is limited by mserialize/detail/foreach.hpp, currently 1024.
+ * is limited by mserialize/detail/foreach.hpp, currently 100.
  *
  * Limitation: it is not possible to generate
  * a tag for a recursive types with this macro.
