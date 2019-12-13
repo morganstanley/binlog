@@ -24,7 +24,7 @@ include(ThreadSanitizer)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-find_package(Boost 1.64.0 COMPONENTS unit_test_framework system)
+find_package(Boost 1.64.0 COMPONENTS unit_test_framework filesystem system)
 
 find_package(benchmark COMPONENTS benchmark)
 
@@ -218,9 +218,11 @@ if(Boost_FOUND)
     target_compile_definitions(IntegrationTest PRIVATE
       BOOST_TEST_DYN_LINK
       BOOST_TEST_NO_MAIN
+      BOOST_ALL_NO_LIB
     )
     include_boost(IntegrationTest)
     link_boost(IntegrationTest unit_test_framework)
+    link_boost(IntegrationTest filesystem)
     link_boost(IntegrationTest system)
     target_link_libraries(IntegrationTest headers)
 
