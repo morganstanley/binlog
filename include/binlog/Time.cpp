@@ -25,7 +25,7 @@ void nsSinceEpochToBrokenDownTimeUTC(std::chrono::nanoseconds sinceEpoch, Broken
   // assumption: system_clock measures Unix Time
   // (i.e., time since 1970.01.01 00:00:00 UTC, not counting leap seconds).
   // Valid since C++20, tested by unit tests.
-  const clock::time_point tp{sinceEpoch};
+  const clock::time_point tp{std::chrono::duration_cast<clock::duration>(sinceEpoch)};
   const std::time_t tt = clock::to_time_t(tp);
 
   #ifdef _WIN32
