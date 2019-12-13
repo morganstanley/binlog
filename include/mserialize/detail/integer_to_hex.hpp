@@ -54,6 +54,12 @@ constexpr char* write_integer_as_hex(Integer v, char* end)
   return end;
 }
 
+constexpr char* write_integer_as_hex(bool v, char* end)
+{
+  *--end = v ? '1' : '0';
+  return end;
+}
+
 template <typename Integer, Integer V>
 constexpr cx_string<hex_string_size(V)> integer_to_hex()
 {
