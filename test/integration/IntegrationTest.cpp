@@ -43,6 +43,11 @@ std::vector<std::string> expectedDataFromSource(const std::string& name)
       view.remove_prefix(1);
     }
 
+    while (! view.empty() && std::isspace(static_cast<unsigned char>(view.back())) != 0)
+    {
+      view.remove_suffix(1);
+    }
+
     if (view.starts_with(marker))
     {
       view.remove_prefix(marker.size());
