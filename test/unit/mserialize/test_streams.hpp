@@ -38,9 +38,9 @@ struct ViewStream
 
   explicit ViewStream(std::stringstream& s) :stream(s) {}
 
-  ViewStream& read(char* buf, std::streamsize size)
+  ViewStream& read(char* buffer, std::streamsize size)
   {
-    stream.read(buf, size);
+    stream.read(buffer, size);
     return *this;
   }
 
