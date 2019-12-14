@@ -24,6 +24,8 @@ include(ThreadSanitizer)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
+set(Boost_DEBUG ON) # debug GitHub environment
+
 find_package(Boost 1.64.0 COMPONENTS unit_test_framework filesystem system)
 
 find_package(benchmark COMPONENTS benchmark)
@@ -112,7 +114,9 @@ add_library(headers INTERFACE)
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
   )
-  target_link_libraries(headers INTERFACE $<$<BOOL:CLOCK_GETTIME_IN_LIBRT>:-lrt>)
+  if(CLOCK_GETTIME_IN_LIBRT)
+    target_link_libraries(headers INTERFACE -lrt)
+  endif()
 
 add_library(binlog OBJECT
   include/binlog/EventStream.cpp
