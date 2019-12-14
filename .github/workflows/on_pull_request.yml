@@ -18,3 +18,17 @@ jobs:
         run: |
           ctest -VV
 
+  build_linux_mac:
+    name: Build on macOS with Clang
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build
+        run: |
+          mkdir Release
+          cd Release
+          cmake ..
+          make -j2 VERBOSE=1
+      - name: Test
+        run: |
+          ctest -VV
