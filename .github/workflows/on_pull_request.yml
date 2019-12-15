@@ -12,23 +12,24 @@ jobs:
         run: |
           mkdir Release
           cd Release
-          cmake ..
+          cmake -DBOOST_ROOT=${BOOST_ROOT} -DBoost_ADDITIONAL_VERSIONS=1.69.0 ..
           make -j2 VERBOSE=1
       - name: Test
         run: |
           ctest -VV
 
-  build_linux_mac:
-    name: Build on macOS with Clang
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build
-        run: |
-          mkdir Release
-          cd Release
-          cmake ..
-          make -j2 VERBOSE=1
-      - name: Test
-        run: |
-          ctest -VV
+# do not waste github resources while we are figuring out things
+#  build_linux_mac:
+#    name: Build on macOS with Clang
+#    runs-on: macos-latest
+#    steps:
+#      - uses: actions/checkout@v2
+#      - name: Build
+#        run: |
+#          mkdir Release
+#          cd Release
+#          cmake ..
+#          make -j2 VERBOSE=1
+#      - name: Test
+#        run: |
+#          ctest -VV
