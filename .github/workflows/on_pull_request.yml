@@ -61,4 +61,4 @@ jobs:
       - name: Test
         run: |
           cd Release
-          ctest -VV
+          ctest -VV -C Release
