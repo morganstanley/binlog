@@ -17,7 +17,7 @@ jobs:
           mkdir Release
           cd Release
           #cmake -DBOOST_ROOT=${BOOST_ROOT} -DBoost_ADDITIONAL_VERSIONS=1.69.0 ..
-          cmake ..
+          cmake -DBOOST_LIBRARYDIR=/usr/lib/x86_64-linux-gnu/ ..
       - name: Build
         run: |
           cd Release
