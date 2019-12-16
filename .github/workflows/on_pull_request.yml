@@ -60,5 +60,4 @@ jobs:
           cmake --build Release
       - name: Test
         run: |
-          cd Release
           ctest -VV -C Release
