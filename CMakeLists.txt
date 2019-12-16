@@ -112,7 +112,9 @@ add_library(headers INTERFACE)
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
   )
-  target_link_libraries(headers INTERFACE $<$<BOOL:CLOCK_GETTIME_IN_LIBRT>:-lrt>)
+  if(CLOCK_GETTIME_IN_LIBRT)
+    target_link_libraries(headers INTERFACE -lrt)
+  endif()
 
 add_library(binlog OBJECT
   include/binlog/EventStream.cpp
