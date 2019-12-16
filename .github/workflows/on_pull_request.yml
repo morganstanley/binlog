@@ -60,7 +60,7 @@ jobs:
           cmake --build Release --config Release -j2
       - name: Test
         env:
-          PATH: ${env:PATH}:${env:BOOST_ROOT}/lib
+          PATH: ${{ env.PATH }};${{ env.BOOST_ROOT }}/lib
         run: |
           echo ${env:PATH}
           cd Release
