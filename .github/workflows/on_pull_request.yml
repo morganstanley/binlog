@@ -3,35 +3,35 @@ name: On Pull Request
 on: pull_request
 
 jobs:
-  build_linux_gcc:
-    name: Build on Linux with GCC
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install Dependencies
-        run: |
-          sudo apt-get install --force-yes libboost-filesystem1.65.1 libboost-test1.65.1 libboost-system1.65.1 libboost1.65-dev
-          sudo ln -s /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.65.1 /usr/lib/x86_64-linux-gnu/libboost_filesystem.so
-          sudo ln -s /usr/lib/x86_64-linux-gnu/libboost_unit_test_framework.so.1.65.1 /usr/lib/x86_64-linux-gnu/libboost_unit_test_framework.so
-          sudo ln -s /usr/lib/x86_64-linux-gnu/libboost_system.so.1.65.1 /usr/lib/x86_64-linux-gnu/libboost_system.so
-      - name: Configure
-        run: |
-          set -x
-          mkdir Release
-          cd Release
-          #cmake -DBOOST_ROOT=${BOOST_ROOT} -DBoost_ADDITIONAL_VERSIONS=1.69.0 ..
-          cmake -DBOOST_LIBRARYDIR=/usr/lib/x86_64-linux-gnu/ ..
-      - name: Build
-        run: |
-          cd Release
-          make -j2 VERBOSE=1
-      - name: Test
-        run: |
-          cd Release
-          ctest -VV
+# do not waste github resources while we are figuring out things
+#  build_linux_gcc:
+#    name: Build on Linux with GCC
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v2
+#      - name: Install Dependencies
+#        run: |
+#          sudo apt-get install --force-yes libboost-filesystem1.65.1 libboost-test1.65.1 libboost-system1.65.1 libboost1.65-dev
+#          sudo ln -s /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.65.1 /usr/lib/x86_64-linux-gnu/libboost_filesystem.so
+#          sudo ln -s /usr/lib/x86_64-linux-gnu/libboost_unit_test_framework.so.1.65.1 /usr/lib/x86_64-linux-gnu/libboost_unit_test_framework.so
+#          sudo ln -s /usr/lib/x86_64-linux-gnu/libboost_system.so.1.65.1 /usr/lib/x86_64-linux-gnu/libboost_system.so
+#      - name: Configure
+#        run: |
+#          set -x
+#          mkdir Release
+#          cd Release
+#          cmake -DBOOST_LIBRARYDIR=/usr/lib/x86_64-linux-gnu/ ..
+#      - name: Build
+#        run: |
+#          cd Release
+#          make -j2 VERBOSE=1
+#      - name: Test
+#        run: |
+#          cd Release
+#          ctest -VV
 
 # do not waste github resources while we are figuring out things
-#  build_linux_mac:
+#  build_mac_clang:
 #    name: Build on macOS with Clang
 #    runs-on: macos-latest
 #    steps:
@@ -45,3 +45,19 @@ jobs:
 #      - name: Test
 #        run: |
 #          ctest -VV
+  build_win_msvc:
+    name: Build on Windows with MSVC
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Configure
+        run: |
+          mkdir Release && cd Release
+          cmake ..
+      - name: Build
+        run: |
+          cmake --build Release
+      - name: Test
+        run: |
+          cd Release
+          ctest -VV
