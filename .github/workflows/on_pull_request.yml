@@ -8,16 +8,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Install Dependencies
+        run: |
+          sudo apt-get install --force-yes libboost-filesystem1.65.1 libboost-test1.65.1 libboost-system1.65.1 libboost1.65-dev
       - name: Configure
         run: |
           set -x
           mkdir Release
           cd Release
-          find / -name "*boost*"
-          find /usr/lib -name "*boost*"
-          find /usr/local/share -name "*boost*"
-          find /usr/local/share -name "version.hpp"
-          cmake -DBOOST_ROOT=${BOOST_ROOT} -DBoost_ADDITIONAL_VERSIONS=1.69.0 ..
+          #cmake -DBOOST_ROOT=${BOOST_ROOT} -DBoost_ADDITIONAL_VERSIONS=1.69.0 ..
+          cmake ..
       - name: Build
         run: |
           cd Release
