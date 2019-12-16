@@ -59,6 +59,9 @@ jobs:
         run: |
           cmake --build Release --config Release -j2
       - name: Test
+        env:
+          PATH: ${{ env.PATH }}:${{ env.BOOST_ROOT }}/lib
         run: |
+          echo %PATH%
           cd Release
           ctest -VV -C Release
