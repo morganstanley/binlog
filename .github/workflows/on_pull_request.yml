@@ -57,7 +57,8 @@ jobs:
           cmake ..
       - name: Build
         run: |
-          cmake --build Release
+          cmake --build Release --config Release -j2
       - name: Test
         run: |
+          cd Release
           ctest -VV -C Release
