@@ -13,6 +13,7 @@ jobs:
           set -x
           mkdir Release
           cd Release
+          find / -name "*boost*"
           find /usr/lib -name "*boost*"
           find /usr/local/share -name "*boost*"
           find /usr/local/share -name "version.hpp"
