@@ -8,11 +8,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Build
+      - name: Configure
         run: |
           mkdir Release
           cd Release
+          find /usr/local/share -name "*boost*.so"
+          find /usr/local/share -name "version.hpp"
           cmake -DBOOST_ROOT=${BOOST_ROOT} -DBoost_ADDITIONAL_VERSIONS=1.69.0 ..
+      - name: Build
+        run: |
           make -j2 VERBOSE=1
       - name: Test
         run: |
