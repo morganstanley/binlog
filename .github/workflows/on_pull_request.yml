@@ -52,7 +52,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Configure
         run: |
-          mkdir Release && cd Release
+          mkdir Release
+          cd Release
           cmake ..
       - name: Build
         run: |
