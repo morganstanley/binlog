@@ -1,0 +1,63 @@
+name: On Pull Request
+
+on: pull_request
+
+jobs:
+  build_linux_gcc:
+    name: Build on Linux with GCC
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Dependencies
+        run: |
+          sudo apt-get install -y libboost-filesystem1.65.1 libboost-test1.65.1 libboost-system1.65.1 libboost1.65-dev
+          sudo ln -s /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.65.1 /usr/lib/x86_64-linux-gnu/libboost_filesystem.so
+          sudo ln -s /usr/lib/x86_64-linux-gnu/libboost_unit_test_framework.so.1.65.1 /usr/lib/x86_64-linux-gnu/libboost_unit_test_framework.so
+          sudo ln -s /usr/lib/x86_64-linux-gnu/libboost_system.so.1.65.1 /usr/lib/x86_64-linux-gnu/libboost_system.so
+      - name: Configure
+        run: |
+          set -x
+          mkdir Release
+          cd Release
+          cmake -DBOOST_LIBRARYDIR=/usr/lib/x86_64-linux-gnu/ ..
+      - name: Build
+        run: |
+          cd Release
+          make -j2 VERBOSE=1
+      - name: Test
+        run: |
+          cd Release
+          ctest -VV
+
+  # do not test on macOS: boost is not installed,
+  # installing it from brew takes too long
+  build_mac_clang:
+    name: Build on macOS with Clang
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build
+        run: |
+          mkdir Release
+          cd Release
+          cmake ..
+          make -j2 VERBOSE=1
+
+  build_win_msvc:
+    name: Build on Windows with MSVC
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Configure
+        run: |
+          mkdir Release
+          cd Release
+          cmake ..
+      - name: Build
+        run: |
+          cmake --build Release --config Release -j2
+      - name: Test
+        run: |
+          $Env:path += ";${env:BOOST_ROOT}\lib"
+          cd Release
+          ctest -VV -C Release
