@@ -231,7 +231,7 @@ if(Boost_FOUND)
     target_link_libraries(IntegrationTest headers)
 
   add_test(NAME IntegrationTest
-    COMMAND IntegrationTest --log_level=test_suite --color_output=true -- "$<TARGET_FILE:bread>" "${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}")
+    COMMAND IntegrationTest --log_level=test_suite --color_output=true -- "$<TARGET_FILE:bread>" "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}" "${PROJECT_SOURCE_DIR}")
 
   function(add_inttest name)
     add_executable(${name} test/integration/${name}.cpp $<$<CXX_COMPILER_ID:MSVC>:bin/binaryio.cpp>)
