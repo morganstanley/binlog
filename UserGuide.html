@@ -1,12 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="generator" content="binlog/doc/gendoc.py" />
     <title>User Guide | Binlog</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.0/css/bootstrap.min.css" integrity="sha384-SI27wrMjH3ZZ89r4o+fGIJtnzkAnFs3E4qz9DIYioCQ5l9Rd/7UAa8DHcaL8jkWt" crossorigin="anonymous">
-    <style>pre { background: #f5f5f5; } h1,h2 { margin-top: 1em; } div.navbar { padding: 8px 0; }</style>
+    <style>
+      pre { background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 0.6em 1em; }
+      h1,h2 { margin-top: 1em; }
+      div.navbar { padding: 8px 0; }
+      div.toc { float: right; }
+    </style>
   </head>
   <body>
     <div class="container">
@@ -17,6 +23,7 @@
             <a class="navbar-brand" href="index.html">Binlog</a>
           </div>
           <nav class="nav">
+            <a class="nav-link" href="https://github.com/Morgan-Stanley/binlog">GitHub</a>
             <a class="nav-link" href="UserGuide.html">UserGuide</a>
             <a class="nav-link" href="Mserialize.html">Mserialize</a>
           </nav>
@@ -49,7 +56,7 @@
 </ul>
 </div>
 <h1 id="hello-world"><a class="toclink" href="#hello-world">Hello World</a></h1>
-<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/binlog/binlog.hpp">binlog/binlog.hpp</a>&gt;
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/binlog/binlog.hpp">binlog/binlog.hpp</a>&gt;
 
 int main()
 {
@@ -193,7 +200,7 @@ BINLOG_ADAPT_ENUM(ScopedEnum, Epsilon, Phi)
 BINLOG_INFO("Scoped enum: {}", ScopedEnum::Epsilon);
 // Outputs: Scoped enum: Epsilon
 </code></pre>
-<p>The maximum number of enumerators is limited to 1024.</p>
+<p>The maximum number of enumerators is limited to 100.</p>
 <h2 id="logging-user-defined-structures"><a class="toclink" href="#logging-user-defined-structures">Logging User Defined Structures</a></h2>
 <p>User defined types outside the categories above can be still logged,
 if adapted:</p>
@@ -228,7 +235,7 @@ BINLOG_INFO("My foo: {}", Foo{1, "two"});
 <li>must always return the same value during the creation of a single log event</li>
 </ul>
 <p>The member list does not have to be exhaustive, e.g: mutex members can be omitted, those will not be logged.
-The member list can be empty. The maximum number of members is limited to 1024.
+The member list can be empty. The maximum number of members is limited to 100.
 <code>BINLOG_ADAPT_STRUCT</code> must be called in global scope, outside of any namespace.
 The type must not be recursive, e.g: <code>Foo</code> can't have a to be logged <code>Foo*</code> typed member.
 For more information and to make templates or recursive types loggable,
@@ -252,9 +259,9 @@ and writes the text to the standard output.</p>
 <p>The first section, <a href="#hello-world">Hello World</a> shows a very simple example,
 where the data flow might not be clear, due to the hidden state,
 which makes the example short. Consider the following, more explicit example:</p>
-<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/binlog/Session.hpp">binlog/Session.hpp</a>&gt;
-#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/binlog/SessionWriter.hpp">binlog/SessionWriter.hpp</a>&gt;
-#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/binlog/advanced_log_macros.hpp">binlog/advanced_log_macros.hpp</a>&gt;
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/binlog/Session.hpp">binlog/Session.hpp</a>&gt;
+#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/binlog/SessionWriter.hpp">binlog/SessionWriter.hpp</a>&gt;
+#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/binlog/advanced_log_macros.hpp">binlog/advanced_log_macros.hpp</a>&gt;
 
 #include &lt;fstream&gt;
 #include &lt;iostream&gt;
@@ -311,7 +318,7 @@ BINLOG_INFO_W(writer, "Hello named writer");
 <p>It might be desirable to change the verbosity of the logging runtime.
 Setting the minimum severity of the session disables production
 of events with lesser severities:</p>
-<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/binlog/Severity.hpp">binlog/Severity.hpp</a>&gt;
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/binlog/Severity.hpp">binlog/Severity.hpp</a>&gt;
 
 session.setMinSeverity(binlog::Severity::warning);
 // trace, debug, info severities are disabled
@@ -324,7 +331,7 @@ BINLOG_INFO("Call f: {}", f()); // f will not be called
 <h1 id="categories"><a class="toclink" href="#categories">Categories</a></h1>
 <p>To separate the log events coming from different components of the application,
 a category can be attached to them:</p>
-<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/tree/dev/include/binlog/advanced_log_macros.hpp">binlog/advanced_log_macros.hpp</a>&gt;
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/binlog/advanced_log_macros.hpp">binlog/advanced_log_macros.hpp</a>&gt;
 
 BINLOG_INFO_C(my_category, "This is a categorized event");
 // Outputs: my_category  This is a categorized event
@@ -367,7 +374,7 @@ or task can be an option.</p>
       <hr/>
       <footer class="text-center text-muted">
         Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a> |
-        Generated: 2019. 12. 09.
+        Generated: 2019. 12. 17.
       </footer>
       <hr/>
     </div>
