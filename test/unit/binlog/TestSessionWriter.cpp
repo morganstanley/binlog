@@ -7,6 +7,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <chrono>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -95,6 +96,30 @@ BOOST_AUTO_TEST_CASE(add_event_then_close)
   }
 
   BOOST_TEST(getEvents(session, "%m") == std::vector<std::string>{"a=456 b=foo"}, boost::test_tools::per_element());
+}
+
+BOOST_AUTO_TEST_CASE(consume_metadata_twice)
+{
+  binlog::Session session;
+  binlog::SessionWriter writer(session, 128);
+
+  binlog::EventSource eventSource{
+    0, binlog::Severity::info, "cat", "fun", "file", 123, "a={} b={}", "i[c"
+  };
+  eventSource.id = session.addEventSource(eventSource);
+
+  BOOST_TEST(writer.addEvent(eventSource.id, 0, 123, std::string("foo")));
+  getEvents(session, ""); // consume metadata and data
+
+  const auto now = std::chrono::system_clock::now();
+  const auto clock = std::uint64_t(now.time_since_epoch().count());
+  BOOST_TEST(writer.addEvent(eventSource.id, clock, 456, std::string("bar")));
+
+  std::stringstream stream;
+  session.reconsumeMetadata(stream); // add clock sync and event source
+  session.consume(stream); // consume the second event
+
+  BOOST_TEST(streamToEvents(stream, "%d %m") == std::vector<std::string>{timePointToString(now) + " a=456 b=bar"}, boost::test_tools::per_element());
 }
 
 BOOST_AUTO_TEST_CASE(sources_first)

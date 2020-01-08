@@ -278,3 +278,15 @@ estimated amount of data one iteration produces:
 
 For different kind of applications, calling `consume` periodically in a dedicated thread
 or task can be an option.
+
+# Log Rotation
+
+[Log rotation][] can be achieved by simply changing the output stream passed to `Session::consume`.
+`Session` does not know or care about the underlying device of the stream.
+However, metadata is not added automatically to the new file (as `Session` does not know
+that a rotation happened). To make the new file self contained (i.e: readable without the
+metadata in the old file), old metadata has to be added via `Session::reconsumeMetadata`:
+
+    [catchfile example/LogRotation.cpp rotate]
+
+[Log rotation]: https://en.wikipedia.org/wiki/Log_rotation

@@ -158,6 +158,7 @@ endfunction()
 add_example(HelloWorld)
 add_example(DetailedHelloWorld)
 add_example(ConsumeLoop)
+add_example(LogRotation)
 
 #---------------------------
 # Unit Test
