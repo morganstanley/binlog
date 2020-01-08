@@ -153,6 +153,7 @@ private:
 
   std::list<Channel> _channels;
   std::deque<EventSource> _sources;
+  std::size_t _numConsumedSources = 0;
   std::uint64_t _nextSourceId = 1;
 
   std::size_t _totalConsumedBytes = 0;
@@ -232,11 +233,10 @@ Session::ConsumeResult Session::consume(OutputStream& out)
   }
 
   // consume event sources before events
-  for (const EventSource& eventSource : _sources)
+  for (; _numConsumedSources < _sources.size(); ++_numConsumedSources)
   {
-    result.bytesConsumed += serializeSizePrefixedTagged(eventSource, out);
+    result.bytesConsumed += serializeSizePrefixedTagged(_sources[_numConsumedSources], out);
   }
-  _sources = {}; // consumed sources are no longer needed, release memory
 
   // consume some events
   for (auto it = _channels.begin(); it != _channels.end();)
