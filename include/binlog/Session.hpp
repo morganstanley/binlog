@@ -283,6 +283,7 @@ Session::ConsumeResult Session::consume(OutputStream& out)
   }
 
   _totalConsumedBytes += result.bytesConsumed;
+  result.totalBytesConsumed = _totalConsumedBytes;
 
   return result;
 }
