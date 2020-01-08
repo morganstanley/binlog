@@ -148,6 +148,23 @@ public:
   template <typename OutputStream>
   ConsumeResult consume(OutputStream& out);
 
+  /**
+   * Move already consumed metadata again to `out`.
+   *
+   * Already consumed EventSources and a new ClockSync are consumed.
+   * Not-yet consumed EventSources will not be consumed.
+   *
+   * Useful if `out` changes runtime, e.g: because of log rotation.
+   * Re-adding metadata makes the new logfile self contained.
+   *
+   * @requires OutputStream must model the mserialize::OutputStream concept
+   * @param out where the binary data will be written to.
+   *
+   * @returns description of the job done, see ConsumeResult.
+   */
+  template <typename OutputStream>
+  ConsumeResult reconsumeMetadata(OutputStream& out);
+
 private:
   std::mutex _mutex;
 
@@ -285,6 +302,28 @@ Session::ConsumeResult Session::consume(OutputStream& out)
   _totalConsumedBytes += result.bytesConsumed;
   result.totalBytesConsumed = _totalConsumedBytes;
 
+  return result;
+}
+
+template <typename OutputStream>
+Session::ConsumeResult Session::reconsumeMetadata(OutputStream& out)
+{
+  std::lock_guard<std::mutex> lock(_mutex);
+
+  ConsumeResult result;
+
+  // add clock sync
+  const ClockSync clockSync = systemClockSync();
+  result.bytesConsumed += serializeSizePrefixedTagged(clockSync, out);
+
+  // add consumed sources
+  for (std::size_t i = 0; i < _numConsumedSources; ++i)
+  {
+    result.bytesConsumed += serializeSizePrefixedTagged(_sources[i], out);
+  }
+
+  _totalConsumedBytes += result.bytesConsumed;
+  result.totalBytesConsumed = _totalConsumedBytes;
   return result;
 }
 
