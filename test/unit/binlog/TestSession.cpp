@@ -1,5 +1,7 @@
 #include <binlog/Session.hpp>
 
+#include <binlog/Entries.hpp>
+
 #include <boost/test/unit_test.hpp>
 
 #include <ios> // streamsize
@@ -70,6 +72,20 @@ BOOST_AUTO_TEST_CASE(min_severity)
   BOOST_TEST((session.minSeverity() == binlog::Severity::info));
 }
 
-// addEventSource and consume are tested in TestSessionWriter.cpp
+BOOST_AUTO_TEST_CASE(sources_consumed_once)
+{
+  binlog::Session session;
+  binlog::EventSource eventSource;
+  session.addEventSource(eventSource);
+
+  NullOstream out;
+  binlog::Session::ConsumeResult cr = session.consume(out);
+  BOOST_TEST(cr.bytesConsumed != 0);
+
+  cr = session.consume(out);
+  BOOST_TEST(cr.bytesConsumed == 0);
+}
+
+// addEventSource and consume are further tested in TestSessionWriter.cpp
 
 BOOST_AUTO_TEST_SUITE_END()
