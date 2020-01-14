@@ -1,8 +1,5 @@
 #include "getopt.hpp"
-
-#include <binlog/Entries.hpp> // Event
-#include <binlog/EventStream.hpp>
-#include <binlog/PrettyPrinter.hpp>
+#include "printers.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -19,17 +16,6 @@ std::istream& openFile(const std::string& path, std::ifstream& file)
 
   file.open(path, std::ios_base::in | std::ios_base::binary);
   return file;
-}
-
-void printEvents(std::istream& input, std::ostream& output, const std::string& format, const std::string& dateFormat)
-{
-  binlog::EventStream eventStream(input);
-  binlog::PrettyPrinter pp(format, dateFormat);
-
-  while (const binlog::Event* event = eventStream.nextEvent())
-  {
-    pp.printEvent(output, *event, eventStream.writerProp(), eventStream.clockSync());
-  }
 }
 
 void showHelp()

@@ -135,6 +135,7 @@ add_library(binlog OBJECT
 
 add_executable(bread
   bin/bread.cpp
+  bin/printers.cpp
   $<TARGET_OBJECTS:binlog>
   $<$<CXX_COMPILER_ID:MSVC>:bin/getopt.cpp bin/binaryio.cpp>
 )
@@ -192,6 +193,9 @@ if(Boost_FOUND)
     test/unit/binlog/TestArrayView.cpp
     test/unit/binlog/TestConstCharPtrIsString.cpp
 
+    bin/printers.cpp
+    test/unit/binlog/TestPrinters.cpp
+
     test/unit/binlog/test_utils.cpp
   )
     target_compile_definitions(UnitTest PRIVATE
@@ -202,6 +206,7 @@ if(Boost_FOUND)
     link_boost(UnitTest unit_test_framework)
     target_link_libraries(UnitTest headers)
     target_link_libraries(UnitTest Threads::Threads) # used by: TestQueue, TestSessionWriter, TestCreateSourceAndEvent
+    target_include_directories(UnitTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
   add_test(NAME UnitTest COMMAND UnitTest --log_level=test_suite --color_output=true)
 
