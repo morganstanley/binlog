@@ -184,6 +184,13 @@ The format of the text representation can be customized using command line switc
 
     $ bread -f "%S [%d] %n %m (%G:%L)" -d "%m/%d %H:%M:%S.%N" logfile.blog
 
+The events of the logfile can be sorted by their timestamp using `-s`.
+The sorting is approximate. It assumes that if event `A` comes before event `B` in the logfile,
+then event `B` is no more than 30 seconds older than event `A`.
+This is to allow online sorting of log streams, and memory efficient sorting of large logfiles.
+
+    $ bread -s logfile.blog
+
 To customize the output and for further options, see the builtin help:
 
     $ bread -h

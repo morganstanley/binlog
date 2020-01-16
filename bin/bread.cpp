@@ -24,7 +24,7 @@ void showHelp()
     "bread -- convert binary logfiles to human readable text\n"
     "\n"
     "Synopsis:\n"
-    "  bread filename [-f format] [-d date-format]\n"
+    "  bread filename [-f format] [-d date-format] [-s]\n"
     "\n"
     "Examples:\n"
     "  bread logfile.blog"                                 "\n"
@@ -40,6 +40,7 @@ void showHelp()
     "  -h             Show this help\n"
     "  -f             Set a custom format string to write events, see 'Event Format'\n"
     "  -d             Set a custom format string to write timestamps, see 'Date Format'\n"
+    "  -s             Sort events by time, see 'Sorting Events'\n"
     "\n"
     "Event Format\n"
     "  Log events are transformed to text by substituting placeholders"
@@ -81,6 +82,12 @@ void showHelp()
     "\n"
     "  Default date format string: \"%m/%d %H:%M:%S.%N\"\n"
     "\n"
+    "Sorting Events\n"
+    "  Input events can be sorted by their timestamp using `-s`.\n"
+    "The sorting is approximate. It assumes that if event `A` comes before event `B` in the logfile,\n"
+    "then event `B` is no more than 30 seconds older than event `A`.\n"
+    "This is to allow online sorting of log streams, and memory efficient sorting of large logfiles.\n"
+    "\n"
     "Report bugs to:\n"
     "  https://github.com/Morgan-Stanley/binlog/issues\n";
 }
@@ -92,9 +99,10 @@ int main(int argc, /*const*/ char* argv[])
   std::string inputPath = "-";
   std::string format = "%S %C [%d] %n %m (%G:%L)\n";
   std::string dateFormat = "%m/%d %H:%M:%S.%N";
+  bool sorted = false;
 
   int opt;
-  while ((opt = getopt(argc, argv, "f:d:h")) != -1)
+  while ((opt = getopt(argc, argv, "f:d:sh")) != -1)
   {
     switch (opt)
     {
@@ -104,6 +112,9 @@ int main(int argc, /*const*/ char* argv[])
       break;
     case 'd':
       dateFormat = optarg;
+      break;
+    case 's':
+      sorted = true;
       break;
     case 'h':
       showHelp();
@@ -132,7 +143,14 @@ int main(int argc, /*const*/ char* argv[])
 
   try
   {
-    printEvents(input, std::cout, format, dateFormat);
+    if (sorted)
+    {
+      printSortedEvents(input, std::cout, format, dateFormat);
+    }
+    else
+    {
+      printEvents(input, std::cout, format, dateFormat);
+    }
   }
   catch (const std::exception& ex)
   {
