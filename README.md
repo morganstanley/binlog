@@ -21,7 +21,10 @@ There's a lot of **redundancy** (the severity, the format string, the file path 
 **wasted space** (the timestamp is represented using 29 bytes, where 8 bytes of information would be plenty),
 and **loss of precision** (the originally computed floating point _result_ is lost, only its text representation
 remains). Furthermore, the log was **expensive to produce** (consider the string conversion of each timestamp
-and float value) and **not trivial to parse** using automated tools.
+and float value) and **not trivial to parse** using automated tools. Conventional log solutions also have to
+make a trade-off: either implement synchronous logging (possibly via slow locking) that ensures the
+log events are sorted by creation time, or asynchronous logging (without global locks) that usually
+produces **unsorted output**.
 
 Binlog solves these issues by using _structured binary logs_.
 The static parts (severity, format string, file and line, etc) are saved only once to the logfile.
@@ -38,6 +41,7 @@ without reverting to fragile text processing methods.
 
 _Binary logfiles_ are not human readable, but they can be converted to text using the `bread` program.
 The format of the text log is configurable, independent of the logfile.
+`bread` can also efficiently sort the logs by time, taking advantage of its structured nature.
 For further information, please refer to the [Documentation][].
 
 ## Features
@@ -55,6 +59,7 @@ For further information, please refer to the [Documentation][].
  - Format strings with `{}` placeholders
  - Vertical separation of logs via custom categories
  - Horizontal separation of logs via runtime configurable severities
+ - Sort logs by time while reading
 
 ## Performance
 

@@ -4,8 +4,13 @@
 #include <binlog/EventStream.hpp>
 #include <binlog/PrettyPrinter.hpp>
 
+#include <algorithm>
+#include <cstdint>
 #include <istream>
 #include <ostream>
+#include <sstream>
+#include <utility>
+#include <vector>
 
 void printEvents(std::istream& input, std::ostream& output, const std::string& format, const std::string& dateFormat)
 {
@@ -15,5 +20,31 @@ void printEvents(std::istream& input, std::ostream& output, const std::string& f
   while (const binlog::Event* event = eventStream.nextEvent())
   {
     pp.printEvent(output, *event, eventStream.writerProp(), eventStream.clockSync());
+  }
+}
+
+void printSortedEvents(std::istream& input, std::ostream& output, const std::string& format, const std::string& dateFormat)
+{
+  binlog::EventStream eventStream(input);
+  binlog::PrettyPrinter pp(format, dateFormat);
+
+  using Pair = std::pair<std::uint64_t /* clock */, std::string /* pretty printed event */>;
+  std::vector<Pair> buffer;
+  std::ostringstream stream;
+
+  // buffer every event in input
+  while (const binlog::Event* event = eventStream.nextEvent())
+  {
+    stream.str({}); // reset stream
+    pp.printEvent(stream, *event, eventStream.writerProp(), eventStream.clockSync());
+    buffer.emplace_back(event->clockValue, stream.str());
+  }
+
+  // sort and print the the buffer
+  const auto cmpClock = [](const Pair& p1, const Pair& p2) { return p1.first < p2.first; };
+  std::stable_sort(buffer.begin(), buffer.end(), cmpClock);
+  for (const Pair& p : buffer)
+  {
+    output << p.second;
   }
 }
