@@ -158,12 +158,13 @@ BOOST_AUTO_TEST_CASE(add_events_from_threads)
   std::atomic<bool> write_done{false};
   std::thread consumer([&session, &out, &write_done]()
   {
-    bool done = false;
-    while (! done)
+    while (! write_done.load())
     {
-      const binlog::Session::ConsumeResult cr = session.consume(out);
-      done = cr.channelsPolled == 0 && write_done.load();
+      session.consume(out);
     }
+
+    // consume events written after last consume but before the loop condition was tested
+    session.consume(out);
   });
 
   threadA.join();
