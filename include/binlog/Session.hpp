@@ -6,6 +6,7 @@
 #include <binlog/Time.hpp>
 #include <binlog/detail/Queue.hpp>
 #include <binlog/detail/QueueReader.hpp>
+#include <binlog/detail/VectorOutputStream.hpp>
 
 #include <atomic>
 #include <cstdint>
@@ -140,6 +141,9 @@ public:
    * appear out of order. Events consumed from a single channel
    * are always in order.
    *
+   * It is guaranteed that `out.write` always receives a sequence
+   * of complete entries - no partial entries are written.
+   *
    * @requires OutputStream must model the mserialize::OutputStream concept
    * @param out where the binary data will be written to.
    *
@@ -166,6 +170,9 @@ public:
   ConsumeResult reconsumeMetadata(OutputStream& out);
 
 private:
+  template <typename Entry, typename OutputStream>
+  std::size_t consumeSpecialEntry(const Entry& entry, OutputStream& out);
+
   std::mutex _mutex;
 
   std::list<Channel> _channels;
@@ -176,6 +183,8 @@ private:
   std::size_t _totalConsumedBytes = 0;
 
   std::atomic<Severity> _minSeverity = {Severity::trace};
+
+  detail::VectorOutputStream _specialEntryBuffer;
 };
 
 inline Session::Channel& Session::createChannel(std::size_t queueCapacity, WriterProp writerProp)
@@ -246,13 +255,13 @@ Session::ConsumeResult Session::consume(OutputStream& out)
   if (_totalConsumedBytes == 0)
   {
     const ClockSync clockSync = systemClockSync();
-    result.bytesConsumed += serializeSizePrefixedTagged(clockSync, out);
+    result.bytesConsumed += consumeSpecialEntry(clockSync, out);
   }
 
   // consume event sources before events
   for (; _numConsumedSources < _sources.size(); ++_numConsumedSources)
   {
-    result.bytesConsumed += serializeSizePrefixedTagged(_sources[_numConsumedSources], out);
+    result.bytesConsumed += consumeSpecialEntry(_sources[_numConsumedSources], out);
   }
 
   // consume some events
@@ -271,7 +280,7 @@ Session::ConsumeResult Session::consume(OutputStream& out)
     {
       // consume writerProp entry
       it->writerProp.batchSize = data.size();
-      result.bytesConsumed += serializeSizePrefixedTagged(it->writerProp, out);
+      result.bytesConsumed += consumeSpecialEntry(it->writerProp, out);
 
       // consume queue data
       out.write(data.buffer1, std::streamsize(data.size1));
@@ -325,6 +334,20 @@ Session::ConsumeResult Session::reconsumeMetadata(OutputStream& out)
   _totalConsumedBytes += result.bytesConsumed;
   result.totalBytesConsumed = _totalConsumedBytes;
   return result;
+}
+
+template <typename Entry, typename OutputStream>
+std::size_t Session::consumeSpecialEntry(const Entry& entry, OutputStream& out)
+{
+  // Write entry to `_specialEntryBuffer` first, only then to `out` in one go.
+  // This makes OutputStream logic simpler (if it parses the stream),
+  // as it does not have to deal with partial entries.
+  // (serializeSizePrefixedTagged serializes Entry field by field)
+  // This is also more efficient if OutputStream does unbuffered I/O.
+  _specialEntryBuffer.clear();
+  const std::size_t size = serializeSizePrefixedTagged(entry, _specialEntryBuffer);
+  out.write(_specialEntryBuffer.data(), _specialEntryBuffer.ssize());
+  return size;
 }
 
 } // namespace binlog
