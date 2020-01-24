@@ -195,6 +195,7 @@ if(Boost_FOUND)
     test/unit/binlog/TestConstCharPtrIsString.cpp
     test/unit/binlog/TestEntryStream.cpp
     test/unit/binlog/TestTextOutputStream.cpp
+    test/unit/binlog/TestEventFilter.cpp
 
     bin/printers.cpp
     test/unit/binlog/TestPrinters.cpp
