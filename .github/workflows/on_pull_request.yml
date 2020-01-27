@@ -19,7 +19,7 @@ jobs:
           set -x
           mkdir Release
           cd Release
-          cmake -DBOOST_ROOT=$BOOST_ROOT_1_69_0 -DBoost_ADDITIONAL_VERSIONS=1.69.0 ..
+          cmake -DBOOST_ROOT=$BOOST_ROOT_1_69_0 -DBoost_ADDITIONAL_VERSIONS=1.69.0 -DBINLOG_FORCE_TESTS=ON ..
       - name: Build
         run: |
           cd Release
@@ -52,7 +52,7 @@ jobs:
         run: |
           mkdir Release
           cd Release
-          cmake ..
+          cmake -DBINLOG_FORCE_TESTS=ON ..
       - name: Build
         run: |
           cmake --build Release --config Release -j2

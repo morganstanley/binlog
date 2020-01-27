@@ -24,7 +24,11 @@ include(ThreadSanitizer)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-find_package(Boost 1.64.0 COMPONENTS unit_test_framework filesystem system)
+if(BINLOG_FORCE_TESTS)
+  find_package(Boost 1.64.0 REQUIRED COMPONENTS unit_test_framework filesystem system)
+else()
+  find_package(Boost 1.64.0 COMPONENTS unit_test_framework filesystem system)
+endif()
 
 find_package(benchmark COMPONENTS benchmark)
 

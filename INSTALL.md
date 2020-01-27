@@ -53,6 +53,7 @@ To be used when invoking `cmake`.
  - `-DBINLOG_USE_ASAN`: use [address sanitizer][] (with gcc or clang)
  - `-DBINLOG_USE_TSAN`: use [thread sanitizer][] (with gcc or clang)
  - `-DBINLOG_GEN_COVERAGE`: generate coverage data
+ - `-DBINLOG_FORCE_TESTS`: fail during configuration if tests will not be built
  - `-DBOOST_ROOT`: specifies the path to an alternate boost installation (tests depend on boost)
 
 [address sanitizer]: https://github.com/google/sanitizers/wiki/AddressSanitizer
