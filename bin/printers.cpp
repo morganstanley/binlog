@@ -14,10 +14,10 @@
 
 void printEvents(std::istream& input, std::ostream& output, const std::string& format, const std::string& dateFormat)
 {
-  binlog::EventStream eventStream(input);
+  binlog::EventStream eventStream;
   binlog::PrettyPrinter pp(format, dateFormat);
 
-  while (const binlog::Event* event = eventStream.nextEvent())
+  while (const binlog::Event* event = eventStream.nextEvent(input))
   {
     pp.printEvent(output, *event, eventStream.writerProp(), eventStream.clockSync());
   }
@@ -25,7 +25,7 @@ void printEvents(std::istream& input, std::ostream& output, const std::string& f
 
 void printSortedEvents(std::istream& input, std::ostream& output, const std::string& format, const std::string& dateFormat)
 {
-  binlog::EventStream eventStream(input);
+  binlog::EventStream eventStream;
   binlog::PrettyPrinter pp(format, dateFormat);
 
   using Pair = std::pair<std::uint64_t /* clock */, std::string /* pretty printed event */>;
@@ -33,7 +33,7 @@ void printSortedEvents(std::istream& input, std::ostream& output, const std::str
   std::ostringstream stream;
 
   // buffer every event in input
-  while (const binlog::Event* event = eventStream.nextEvent())
+  while (const binlog::Event* event = eventStream.nextEvent(input))
   {
     stream.str({}); // reset stream
     pp.printEvent(stream, *event, eventStream.writerProp(), eventStream.clockSync());

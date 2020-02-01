@@ -14,10 +14,10 @@ std::vector<std::string> streamToEvents(std::istream& input, const char* eventFo
 {
   std::vector<std::string> result;
 
-  binlog::EventStream eventStream(input);
+  binlog::EventStream eventStream;
   binlog::PrettyPrinter pp(eventFormat, "%Y.%m.%d %H:%M:%S");
 
-  while (const binlog::Event* event = eventStream.nextEvent())
+  while (const binlog::Event* event = eventStream.nextEvent(input))
   {
     std::ostringstream str;
     pp.printEvent(str, *event, eventStream.writerProp(), eventStream.clockSync());
