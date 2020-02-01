@@ -149,15 +149,15 @@ BOOST_AUTO_TEST_CASE(read_event)
   serializeSizePrefixedTagged(eventSource, stream);
   serializeSizePrefixed(event, stream);
 
-  binlog::EventStream eventStream(stream);
+  binlog::EventStream eventStream;
 
-  const binlog::Event* e1 = eventStream.nextEvent();
+  const binlog::Event* e1 = eventStream.nextEvent(stream);
   BOOST_TEST_REQUIRE(e1 != nullptr);
   BOOST_TEST_REQUIRE(e1->source != nullptr);
   BOOST_TEST(*e1->source == eventSource);
   BOOST_TEST(e1->arguments.empty());
 
-  const binlog::Event* e2 = eventStream.nextEvent();
+  const binlog::Event* e2 = eventStream.nextEvent(stream);
   BOOST_TEST(e2 == nullptr);
 }
 
@@ -170,9 +170,9 @@ BOOST_AUTO_TEST_CASE(read_event_with_args)
   serializeSizePrefixedTagged(eventSource, stream);
   serializeSizePrefixed(event, stream);
 
-  binlog::EventStream eventStream(stream);
+  binlog::EventStream eventStream;
 
-  const binlog::Event* e1 = eventStream.nextEvent();
+  const binlog::Event* e1 = eventStream.nextEvent(stream);
   BOOST_TEST_REQUIRE(e1 != nullptr);
   BOOST_TEST_REQUIRE(e1->source != nullptr);
   BOOST_TEST(*e1->source == eventSource);
@@ -183,7 +183,7 @@ BOOST_AUTO_TEST_CASE(read_event_with_args)
   mserialize::visit(e1->source->argumentTags, visitor, arguments);
   BOOST_TEST(argStr.str() == "(789, true, foo)");
 
-  const binlog::Event* e2 = eventStream.nextEvent();
+  const binlog::Event* e2 = eventStream.nextEvent(stream);
   BOOST_TEST(e2 == nullptr);
 }
 
@@ -206,14 +206,14 @@ BOOST_AUTO_TEST_CASE(multiple_sources)
   serializeSizePrefixed(event3, stream);
   serializeSizePrefixed(event4, stream);
 
-  binlog::EventStream eventStream(stream);
+  binlog::EventStream eventStream;
 
   const std::array<const binlog::EventSource*, 4> sources{
     &eventSource1, &eventSource3, &eventSource2, &eventSource1
   };
   for (const binlog::EventSource* source : sources)
   {
-    const binlog::Event* e = eventStream.nextEvent();
+    const binlog::Event* e = eventStream.nextEvent(stream);
     BOOST_TEST_REQUIRE(e != nullptr);
     BOOST_TEST_REQUIRE(e->source != nullptr);
     BOOST_TEST(*e->source == *source);
@@ -231,9 +231,9 @@ BOOST_AUTO_TEST_CASE(override_event_source)
   serializeSizePrefixedTagged(eventSource2, stream);
   serializeSizePrefixed(event, stream);
 
-  binlog::EventStream eventStream(stream);
+  binlog::EventStream eventStream;
 
-  const binlog::Event* e1 = eventStream.nextEvent();
+  const binlog::Event* e1 = eventStream.nextEvent(stream);
   BOOST_TEST_REQUIRE(e1 != nullptr);
   BOOST_TEST_REQUIRE(e1->source != nullptr);
   BOOST_TEST(*e1->source == eventSource2);
@@ -248,9 +248,9 @@ BOOST_AUTO_TEST_CASE(read_event_invalid_source)
   serializeSizePrefixedTagged(eventSource, stream);
   serializeSizePrefixed(event, stream);
 
-  binlog::EventStream eventStream(stream);
+  binlog::EventStream eventStream;
 
-  BOOST_CHECK_THROW(eventStream.nextEvent(), std::runtime_error);
+  BOOST_CHECK_THROW(eventStream.nextEvent(stream), std::runtime_error);
 }
 
 BOOST_AUTO_TEST_CASE(continue_after_event_invalid_source)
@@ -264,11 +264,11 @@ BOOST_AUTO_TEST_CASE(continue_after_event_invalid_source)
   serializeSizePrefixed(event1, stream);
   serializeSizePrefixed(event2, stream);
 
-  binlog::EventStream eventStream(stream);
+  binlog::EventStream eventStream;
 
-  BOOST_CHECK_THROW(eventStream.nextEvent(), std::runtime_error);
+  BOOST_CHECK_THROW(eventStream.nextEvent(stream), std::runtime_error);
 
-  const binlog::Event* e = eventStream.nextEvent();
+  const binlog::Event* e = eventStream.nextEvent(stream);
   BOOST_TEST_REQUIRE(e != nullptr);
   BOOST_TEST_REQUIRE(e->source != nullptr);
   BOOST_TEST(*e->source == eventSource);
@@ -280,9 +280,9 @@ BOOST_AUTO_TEST_CASE(incomplete_size)
   stream.write("abcd", 4);
   stream.seekg(2);
 
-  binlog::EventStream eventStream(stream);
+  binlog::EventStream eventStream;
 
-  BOOST_CHECK_THROW(eventStream.nextEvent(), std::runtime_error);
+  BOOST_CHECK_THROW(eventStream.nextEvent(stream), std::runtime_error);
   BOOST_TEST(stream.tellg() == 2);
 }
 
@@ -300,16 +300,16 @@ BOOST_AUTO_TEST_CASE(incomplete_event)
   stream.str(content);
   stream.seekg(3);
 
-  binlog::EventStream eventStream(stream);
+  binlog::EventStream eventStream;
 
-  BOOST_CHECK_THROW(eventStream.nextEvent(), std::runtime_error);
+  BOOST_CHECK_THROW(eventStream.nextEvent(stream), std::runtime_error);
   BOOST_TEST(stream.tellg() == 3);
 }
 
 BOOST_AUTO_TEST_CASE(default_writer_prop)
 {
   std::stringstream stream;
-  binlog::EventStream eventStream(stream);
+  binlog::EventStream eventStream;
 
   BOOST_TEST(eventStream.writerProp() == binlog::WriterProp{});
 }
@@ -332,15 +332,15 @@ BOOST_AUTO_TEST_CASE(multiple_writerProps)
   serializeSizePrefixedTagged(writerProp1, stream);
   serializeSizePrefixed(event, stream);
 
-  binlog::EventStream eventStream(stream);
+  binlog::EventStream eventStream;
 
-  BOOST_TEST(eventStream.nextEvent() != nullptr);
+  BOOST_TEST(eventStream.nextEvent(stream) != nullptr);
   BOOST_TEST(eventStream.writerProp() == writerProp1);
-  BOOST_TEST(eventStream.nextEvent() != nullptr);
+  BOOST_TEST(eventStream.nextEvent(stream) != nullptr);
   BOOST_TEST(eventStream.writerProp() == writerProp2);
-  BOOST_TEST(eventStream.nextEvent() != nullptr);
+  BOOST_TEST(eventStream.nextEvent(stream) != nullptr);
   BOOST_TEST(eventStream.writerProp() == writerProp2);
-  BOOST_TEST(eventStream.nextEvent() != nullptr);
+  BOOST_TEST(eventStream.nextEvent(stream) != nullptr);
   BOOST_TEST(eventStream.writerProp() == writerProp1);
 }
 
@@ -361,14 +361,14 @@ BOOST_AUTO_TEST_CASE(continue_after_event_invalid_writer_prop)
   corruptSerializeSizePrefixedTagged(writerProp2, stream);
   serializeSizePrefixed(event2, stream);
 
-  binlog::EventStream eventStream(stream);
+  binlog::EventStream eventStream;
 
-  BOOST_TEST(eventStream.nextEvent() != nullptr);
+  BOOST_TEST(eventStream.nextEvent(stream) != nullptr);
   BOOST_TEST(eventStream.writerProp() == writerProp1);
-  BOOST_CHECK_THROW(eventStream.nextEvent(), std::runtime_error);
+  BOOST_CHECK_THROW(eventStream.nextEvent(stream), std::runtime_error);
 
   // after corrupt writerProp entry, progress can be made:
-  const binlog::Event* e = eventStream.nextEvent();
+  const binlog::Event* e = eventStream.nextEvent(stream);
   BOOST_TEST_REQUIRE(e != nullptr);
   BOOST_TEST_REQUIRE(e->source != nullptr);
   BOOST_TEST(*e->source == eventSource2);
@@ -380,7 +380,7 @@ BOOST_AUTO_TEST_CASE(continue_after_event_invalid_writer_prop)
 BOOST_AUTO_TEST_CASE(default_clockSync)
 {
   std::stringstream stream;
-  binlog::EventStream eventStream(stream);
+  binlog::EventStream eventStream;
 
   BOOST_TEST(eventStream.clockSync() == binlog::ClockSync{});
 }
@@ -399,11 +399,11 @@ BOOST_AUTO_TEST_CASE(multiple_clockSyncs)
   serializeSizePrefixedTagged(clockSync2, stream);
   serializeSizePrefixed(event, stream);
 
-  binlog::EventStream eventStream(stream);
+  binlog::EventStream eventStream;
 
-  BOOST_TEST(eventStream.nextEvent() != nullptr);
+  BOOST_TEST(eventStream.nextEvent(stream) != nullptr);
   BOOST_TEST(eventStream.clockSync() == clockSync1);
-  BOOST_TEST(eventStream.nextEvent() != nullptr);
+  BOOST_TEST(eventStream.nextEvent(stream) != nullptr);
   BOOST_TEST(eventStream.clockSync() == clockSync2);
 }
 
@@ -424,14 +424,14 @@ BOOST_AUTO_TEST_CASE(continue_after_event_invalid_clockSync)
   corruptSerializeSizePrefixedTagged(clockSync2, stream);
   serializeSizePrefixed(event2, stream);
 
-  binlog::EventStream eventStream(stream);
+  binlog::EventStream eventStream;
 
-  BOOST_TEST(eventStream.nextEvent() != nullptr);
+  BOOST_TEST(eventStream.nextEvent(stream) != nullptr);
   BOOST_TEST(eventStream.clockSync() == clockSync1);
-  BOOST_CHECK_THROW(eventStream.nextEvent(), std::runtime_error);
+  BOOST_CHECK_THROW(eventStream.nextEvent(stream), std::runtime_error);
 
   // after corrupt clockSync entry, progress can be made:
-  const binlog::Event* e = eventStream.nextEvent();
+  const binlog::Event* e = eventStream.nextEvent(stream);
   BOOST_TEST_REQUIRE(e != nullptr);
   BOOST_TEST_REQUIRE(e->source != nullptr);
   BOOST_TEST(*e->source == eventSource2);
@@ -456,9 +456,9 @@ BOOST_AUTO_TEST_CASE(unknown_specials_are_ignored)
   binlog::serializeSizePrefixedTagged(special, stream);
   serializeSizePrefixed(event, stream);
 
-  binlog::EventStream eventStream(stream);
+  binlog::EventStream eventStream;
 
-  const binlog::Event* e1 = eventStream.nextEvent();
+  const binlog::Event* e1 = eventStream.nextEvent(stream);
   BOOST_TEST_REQUIRE(e1 != nullptr);
   BOOST_TEST_REQUIRE(e1->source != nullptr);
   BOOST_TEST(*e1->source == eventSource);

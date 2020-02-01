@@ -13,10 +13,8 @@ namespace binlog {
 class EventStream
 {
 public:
-  explicit EventStream(std::istream& input);
-
   /**
-   * Get the next event from the stream.
+   * Get the next event from `input`.
    *
    * The returned pointer (and the objects reachable from it)
    * is valid until the next call to `nextEvent` and
@@ -34,11 +32,12 @@ public:
    * it is skipped, before an exception is thrown,
    * to allow consuming subsequent entries.
    *
+   * @param input contains binlog entries
    * @returns pointer to the next event
    *          or nullptr on EOF.
    * @throws std::runtime_error on error.
    */
-  const Event* nextEvent();
+  const Event* nextEvent(std::istream& input);
 
   /**
    * @return the most recent writer properties consumed from
@@ -55,7 +54,7 @@ public:
   const ClockSync& clockSync() const { return _clockSync; }
 
 private:
-  Range nextSizePrefixedRange();
+  Range nextSizePrefixedRange(std::istream& input);
 
   void readEventSource(Range range);
 
@@ -65,7 +64,6 @@ private:
 
   void readEvent(std::uint64_t eventSourceId, Range range);
 
-  std::istream& _input;
   std::vector<char> _buffer; // TODO(benedek) perf: use input buffer directly
   std::map<std::uint64_t, EventSource> _eventSources; // TODO(benedek) perf: use SegmentedMap
   WriterProp _writerProp;

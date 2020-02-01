@@ -20,15 +20,11 @@ void rewindIstream(std::istream& input, std::size_t n)
 
 namespace binlog {
 
-EventStream::EventStream(std::istream& input)
-  :_input(input)
-{}
-
-const Event* EventStream::nextEvent()
+const Event* EventStream::nextEvent(std::istream& input)
 {
   while (true)
   {
-    Range range = nextSizePrefixedRange();
+    Range range = nextSizePrefixedRange(input);
     if (range.empty()) { return nullptr; }
 
     const std::uint64_t tag = range.read<std::uint64_t>();
@@ -59,10 +55,10 @@ const Event* EventStream::nextEvent()
   }
 }
 
-Range EventStream::nextSizePrefixedRange()
+Range EventStream::nextSizePrefixedRange(std::istream& input)
 {
   std::uint32_t size = 0;
-  const std::size_t readSize1 = readIstream(_input, &size, sizeof(size));
+  const std::size_t readSize1 = readIstream(input, &size, sizeof(size));
   if (readSize1 == 0)
   {
     return {}; // eof
@@ -70,7 +66,7 @@ Range EventStream::nextSizePrefixedRange()
 
   if (readSize1 != sizeof(size))
   {
-    rewindIstream(_input, readSize1);
+    rewindIstream(input, readSize1);
     throw std::runtime_error("Failed to read range size from file, only got "
       + std::to_string(readSize1) + " bytes, expected " + std::to_string(sizeof(size)));
   }
@@ -78,11 +74,11 @@ Range EventStream::nextSizePrefixedRange()
   // TODO(benedek) protect agains bad alloc by limiting size?
 
   _buffer.resize(size);
-  const std::size_t readSize2 = readIstream(_input, _buffer.data(), size);
+  const std::size_t readSize2 = readIstream(input, _buffer.data(), size);
 
   if (readSize2 != size)
   {
-    rewindIstream(_input, readSize1 + readSize2);
+    rewindIstream(input, readSize1 + readSize2);
     throw std::runtime_error("Failed to read range from file, only got "
       + std::to_string(readSize2) + " bytes, expected " + std::to_string(size));
   }
