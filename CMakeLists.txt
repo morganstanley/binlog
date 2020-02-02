@@ -125,6 +125,7 @@ add_library(binlog OBJECT
   include/binlog/Time.cpp
   include/binlog/ToStringVisitor.cpp
   include/binlog/PrettyPrinter.cpp
+  include/binlog/EntryStream.cpp
 )
   # before cmake 3.12, OBJECT libraries can't link
   if(CMAKE_VERSION VERSION_GREATER 3.12)
@@ -196,6 +197,7 @@ if(Boost_FOUND)
     test/unit/binlog/TestBasicLogMacros.cpp
     test/unit/binlog/TestArrayView.cpp
     test/unit/binlog/TestConstCharPtrIsString.cpp
+    test/unit/binlog/TestEntryStream.cpp
 
     bin/printers.cpp
     test/unit/binlog/TestPrinters.cpp

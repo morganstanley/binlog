@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE(loop)
     BINLOG_CREATE_SOURCE_AND_EVENT(writer, binlog::Severity::info, category, 0, "{}", i);
   }
 
-  std::stringstream stream;
+  TestStream stream;
   session.consume(stream);
 
   // Make sure only one event source was added
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(two_threads)
   threadA.join();
   threadB.join();
 
-  std::stringstream stream;
+  TestStream stream;
   session.consume(stream);
 
   // Exact number of event sources is not specified:

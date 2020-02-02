@@ -7,11 +7,12 @@
 #include <mserialize/serialize.hpp>
 #include <mserialize/visit.hpp>
 
+#include "test_utils.hpp"
+
 #include <boost/test/unit_test.hpp>
 
 #include <array>
 #include <cstdint>
-#include <ostream>
 #include <sstream>
 #include <string>
 #include <tuple>
@@ -19,7 +20,7 @@
 namespace {
 
 template <typename Entry>
-void serializeSizePrefixed(const Entry& entry, std::ostream& out)
+void serializeSizePrefixed(const Entry& entry, TestStream& out)
 {
   const std::uint32_t size = std::uint32_t(mserialize::serialized_size(entry));
   mserialize::serialize(size, out);
@@ -27,18 +28,16 @@ void serializeSizePrefixed(const Entry& entry, std::ostream& out)
 }
 
 template <typename Entry>
-void corruptSerializeSizePrefixedTagged(const Entry& entry, std::ostream& out)
+void corruptSerializeSizePrefixedTagged(const Entry& entry, TestStream& out)
 {
   const auto tag = Entry::Tag;
   const std::uint32_t size = std::uint32_t(mserialize::serialized_size(entry) + sizeof(tag) - 1);
   mserialize::serialize(size, out);
   mserialize::serialize(tag, out);
+  mserialize::serialize(entry, out);
 
   // drop the last byte
-  std::ostringstream out2;
-  mserialize::serialize(entry, out2);
-  const std::string entryStr = out2.str();
-  out.write(entryStr.data(), std::streamsize(entryStr.size() - 1));
+  out.buffer.pop_back();
 }
 
 template <typename... Args>
@@ -145,7 +144,7 @@ BOOST_AUTO_TEST_CASE(read_event)
   const binlog::EventSource eventSource = testEventSource(123);
   const TestEvent<> event{123, 0, {}};
 
-  std::stringstream stream;
+  TestStream stream;
   serializeSizePrefixedTagged(eventSource, stream);
   serializeSizePrefixed(event, stream);
 
@@ -166,7 +165,7 @@ BOOST_AUTO_TEST_CASE(read_event_with_args)
   const binlog::EventSource eventSource = testEventSource(123, "foobar", "(iy[c)");
   const TestEvent<int, bool, std::string> event{123, 0, {789, true, "foo"}};
 
-  std::stringstream stream;
+  TestStream stream;
   serializeSizePrefixedTagged(eventSource, stream);
   serializeSizePrefixed(event, stream);
 
@@ -197,7 +196,7 @@ BOOST_AUTO_TEST_CASE(multiple_sources)
   const TestEvent<> event3{0, 0, {}};
   const TestEvent<> event4{123, 0, {}};
 
-  std::stringstream stream;
+  TestStream stream;
   serializeSizePrefixedTagged(eventSource1, stream);
   serializeSizePrefixedTagged(eventSource2, stream);
   serializeSizePrefixedTagged(eventSource3, stream);
@@ -226,7 +225,7 @@ BOOST_AUTO_TEST_CASE(override_event_source)
   const binlog::EventSource eventSource2 = testEventSource(123, "bar");
   const TestEvent<> event{123, 0, {}};
 
-  std::stringstream stream;
+  TestStream stream;
   serializeSizePrefixedTagged(eventSource1, stream);
   serializeSizePrefixedTagged(eventSource2, stream);
   serializeSizePrefixed(event, stream);
@@ -244,7 +243,7 @@ BOOST_AUTO_TEST_CASE(read_event_invalid_source)
   const binlog::EventSource eventSource = testEventSource(123);
   const TestEvent<> event{124, 0, {}};
 
-  std::stringstream stream;
+  TestStream stream;
   serializeSizePrefixedTagged(eventSource, stream);
   serializeSizePrefixed(event, stream);
 
@@ -259,7 +258,7 @@ BOOST_AUTO_TEST_CASE(continue_after_event_invalid_source)
   const TestEvent<> event1{124, 0, {}};
   const TestEvent<> event2{123, 0, {}};
 
-  std::stringstream stream;
+  TestStream stream;
   serializeSizePrefixedTagged(eventSource, stream);
   serializeSizePrefixed(event1, stream);
   serializeSizePrefixed(event2, stream);
@@ -274,43 +273,9 @@ BOOST_AUTO_TEST_CASE(continue_after_event_invalid_source)
   BOOST_TEST(*e->source == eventSource);
 }
 
-BOOST_AUTO_TEST_CASE(incomplete_size)
-{
-  std::stringstream stream;
-  stream.write("abcd", 4);
-  stream.seekg(2);
-
-  binlog::EventStream eventStream;
-
-  BOOST_CHECK_THROW(eventStream.nextEvent(stream), std::runtime_error);
-  BOOST_TEST(stream.tellg() == 2);
-}
-
-BOOST_AUTO_TEST_CASE(incomplete_event)
-{
-  std::stringstream stream;
-  stream.write("abc", 3);
-
-  const binlog::EventSource eventSource = testEventSource(123);
-  serializeSizePrefixedTagged(eventSource, stream);
-
-  // drop last byte of stream
-  std::string content = stream.str();
-  content.resize(content.size() - 1);
-  stream.str(content);
-  stream.seekg(3);
-
-  binlog::EventStream eventStream;
-
-  BOOST_CHECK_THROW(eventStream.nextEvent(stream), std::runtime_error);
-  BOOST_TEST(stream.tellg() == 3);
-}
-
 BOOST_AUTO_TEST_CASE(default_writer_prop)
 {
-  std::stringstream stream;
   binlog::EventStream eventStream;
-
   BOOST_TEST(eventStream.writerProp() == binlog::WriterProp{});
 }
 
@@ -321,7 +286,7 @@ BOOST_AUTO_TEST_CASE(multiple_writerProps)
   const binlog::WriterProp writerProp2{1, "bar", 0};
   const TestEvent<> event{123, 0, {}};
 
-  std::stringstream stream;
+  TestStream stream;
   serializeSizePrefixedTagged(eventSource, stream);
   serializeSizePrefixedTagged(writerProp2, stream);
   serializeSizePrefixedTagged(writerProp1, stream);
@@ -353,7 +318,7 @@ BOOST_AUTO_TEST_CASE(continue_after_event_invalid_writer_prop)
   const TestEvent<> event1{123, 0, {}};
   const TestEvent<> event2{124, 0, {}};
 
-  std::stringstream stream;
+  TestStream stream;
   serializeSizePrefixedTagged(eventSource1, stream);
   serializeSizePrefixedTagged(eventSource2, stream);
   serializeSizePrefixedTagged(writerProp1, stream);
@@ -379,9 +344,7 @@ BOOST_AUTO_TEST_CASE(continue_after_event_invalid_writer_prop)
 
 BOOST_AUTO_TEST_CASE(default_clockSync)
 {
-  std::stringstream stream;
   binlog::EventStream eventStream;
-
   BOOST_TEST(eventStream.clockSync() == binlog::ClockSync{});
 }
 
@@ -392,7 +355,7 @@ BOOST_AUTO_TEST_CASE(multiple_clockSyncs)
   const binlog::ClockSync clockSync2{5, 6, 7, 8, "bar"};
   const TestEvent<> event{123, 0, {}};
 
-  std::stringstream stream;
+  TestStream stream;
   serializeSizePrefixedTagged(eventSource, stream);
   serializeSizePrefixedTagged(clockSync1, stream);
   serializeSizePrefixed(event, stream);
@@ -416,7 +379,7 @@ BOOST_AUTO_TEST_CASE(continue_after_event_invalid_clockSync)
   const TestEvent<> event1{123, 0, {}};
   const TestEvent<> event2{124, 0, {}};
 
-  std::stringstream stream;
+  TestStream stream;
   serializeSizePrefixedTagged(eventSource1, stream);
   serializeSizePrefixedTagged(eventSource2, stream);
   serializeSizePrefixedTagged(clockSync1, stream);
@@ -451,7 +414,7 @@ BOOST_AUTO_TEST_CASE(unknown_specials_are_ignored)
   const UnknownSpecial special{"ignore", "me"};
   const TestEvent<> event{123, 0, {}};
 
-  std::stringstream stream;
+  TestStream stream;
   serializeSizePrefixedTagged(eventSource, stream);
   binlog::serializeSizePrefixedTagged(special, stream);
   serializeSizePrefixed(event, stream);

@@ -50,6 +50,9 @@ public:
   /** @returns the number of bytes viewed */
   std::size_t size() const { return std::size_t(_end - _begin); }
 
+  /** @returns true if not empty() */
+  explicit operator bool() const { return _begin != _end; }
+
   /**
    * From the viewed bytes, construct a T object by memcopy.
    *

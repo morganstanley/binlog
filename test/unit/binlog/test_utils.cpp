@@ -7,10 +7,26 @@
 #include <boost/test/unit_test.hpp>
 
 #include <ctime>
-#include <istream>
 #include <sstream>
 
-std::vector<std::string> streamToEvents(std::istream& input, const char* eventFormat)
+TestStream& TestStream::write(const char* data, std::streamsize size)
+{
+  buffer.insert(buffer.end(), data, data + size);
+  return *this;
+}
+
+binlog::Range TestStream::nextEntryPayload()
+{
+  binlog::Range input(buffer.data() + readPos, buffer.data() + buffer.size());
+  if (input.empty()) { return {}; }
+
+  const std::uint32_t size = input.read<std::uint32_t>();
+  binlog::Range result(input.view(size), size);
+  readPos += sizeof(size) + size;
+  return result;
+}
+
+std::vector<std::string> streamToEvents(TestStream& input, const char* eventFormat)
 {
   std::vector<std::string> result;
 
@@ -24,17 +40,14 @@ std::vector<std::string> streamToEvents(std::istream& input, const char* eventFo
     result.push_back(str.str());
   }
 
-  input.clear();
-  input.seekg(0);
-
   return result;
 }
 
 std::vector<std::string> getEvents(binlog::Session& session, const char* eventFormat)
 {
-  std::stringstream stream;
+  TestStream stream;
   const binlog::Session::ConsumeResult cr = session.consume(stream);
-  BOOST_TEST(stream.tellp() == cr.bytesConsumed);
+  BOOST_TEST(stream.buffer.size() == cr.bytesConsumed);
   return streamToEvents(stream, eventFormat);
 }
 
@@ -47,25 +60,18 @@ std::string timePointToString(std::chrono::system_clock::time_point tp)
   return buffer;
 }
 
-std::size_t countTags(std::istream& input, std::uint64_t tagToCount)
+std::size_t countTags(TestStream& input, std::uint64_t tagToCount)
 {
-  std::uint32_t size = 0;
-  std::uint64_t tag = 0;
-
   std::size_t result = 0;
+  const std::size_t oldReadPos = input.readPos;
 
-  while (
-    input.read(reinterpret_cast<char*>(&size), sizeof(size))
-         .read(reinterpret_cast<char*>(&tag), sizeof(tag))
-    && size >= sizeof(tag)
-  )
+  while (binlog::Range payload = input.nextEntryPayload())
   {
+    const std::uint64_t tag = payload.read<std::uint64_t>();
     if (tag == tagToCount) { ++result; }
-    input.ignore(std::streamsize(size - sizeof(tag)));
   }
 
-  input.clear();
-  input.seekg(0);
+  input.readPos = oldReadPos;
 
   return result;
 }
