@@ -45,4 +45,15 @@ void IstreamEntryStream::rewind(std::streamsize size)
   _input.seekg(-1 * size, std::ios_base::cur);
 }
 
+RangeEntryStream::RangeEntryStream(Range input)
+  :_input(input)
+{}
+
+Range RangeEntryStream::nextEntryPayload()
+{
+  if (_input.empty()) { return {}; } // eof
+  const std::uint32_t size = _input.read<std::uint32_t>();
+  return Range{_input.view(size), size};
+}
+
 } // namespace binlog

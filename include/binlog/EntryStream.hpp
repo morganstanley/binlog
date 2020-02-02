@@ -56,6 +56,27 @@ private:
   std::istream& _input;
 };
 
+/** Entry stream with a Range (sequence of bytes) as the underlying device */
+class RangeEntryStream : public EntryStream
+{
+public:
+  /**
+   * The buffer referenced by `input` must remain valid
+   * as long as *this is valid.
+   */
+  explicit RangeEntryStream(Range input);
+
+  /**
+   * @see EntryStream::nextEntryPayload
+   *
+   * On error, *this remains in an unspecified but valid state.
+   */
+  Range nextEntryPayload() override;
+
+private:
+  Range _input;
+};
+
 } // namespace binlog
 
 #endif // BINLOG_ENTRY_STREAM_HPP
