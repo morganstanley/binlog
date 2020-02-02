@@ -2,6 +2,7 @@
 #define BINLOG_EVENT_STREAM_HPP
 
 #include <binlog/Entries.hpp>
+#include <binlog/EntryStream.hpp>
 #include <binlog/Range.hpp>
 
 #include <istream>
@@ -18,26 +19,18 @@ public:
    *
    * The returned pointer (and the objects reachable from it)
    * is valid until the next call to `nextEvent` and
-   * as long as `*this` is valid.
+   * as long as `*this` and the entry given by `input` is valid.
    *
-   * If the next entry cannot be consumed from
-   * the input stream because it is incomplete,
-   * before signalling error via exception,
-   * the read position will be reset, allowing
-   * the writer of the stream, if any, to complete
-   * the entry.
-   *
-   * If the next entry can be consumed, but contains
-   * errors, the entry is irrecoverable, therefore
-   * it is skipped, before an exception is thrown,
-   * to allow consuming subsequent entries.
+   * If an entry given by `input` is invalid,
+   * it is droppend, *this remains unchanged
+   * and an exception is thrown.
    *
    * @param input contains binlog entries
    * @returns pointer to the next event
-   *          or nullptr on EOF.
+   *          or nullptr on `input` returns an empty entry
    * @throws std::runtime_error on error.
    */
-  const Event* nextEvent(std::istream& input);
+  const Event* nextEvent(EntryStream& input);
 
   /**
    * @return the most recent writer properties consumed from
@@ -54,8 +47,6 @@ public:
   const ClockSync& clockSync() const { return _clockSync; }
 
 private:
-  Range nextSizePrefixedRange(std::istream& input);
-
   void readEventSource(Range range);
 
   void readWriterProp(Range range);
@@ -64,7 +55,6 @@ private:
 
   void readEvent(std::uint64_t eventSourceId, Range range);
 
-  std::vector<char> _buffer; // TODO(benedek) perf: use input buffer directly
   std::map<std::uint64_t, EventSource> _eventSources; // TODO(benedek) perf: use SegmentedMap
   WriterProp _writerProp;
   ClockSync _clockSync;

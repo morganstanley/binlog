@@ -13,9 +13,9 @@ namespace {
 
 std::vector<std::string> getEventsFromDefaultSession(const char* eventFormat)
 {
-  std::stringstream stream;
+  TestStream stream;
   const binlog::Session::ConsumeResult cr = binlog::consume(stream);
-  BOOST_TEST(stream.tellp() == cr.bytesConsumed);
+  BOOST_TEST(stream.buffer.size() == cr.bytesConsumed);
   return streamToEvents(stream, eventFormat);
 }
 

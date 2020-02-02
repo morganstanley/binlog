@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(consume_metadata_twice)
   const auto clock = std::uint64_t(now.time_since_epoch().count());
   BOOST_TEST(writer.addEvent(eventSource.id, clock, 456, std::string("bar")));
 
-  std::stringstream stream;
+  TestStream stream;
   session.reconsumeMetadata(stream); // add clock sync and event source
   session.consume(stream); // consume the second event
 
@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE(add_events_from_threads)
   std::thread threadA(writeEvents, std::ref(session), "A");
   std::thread threadB(writeEvents, std::ref(session), "B");
 
-  std::stringstream out;
+  TestStream out;
   std::atomic<bool> write_done{false};
   std::thread consumer([&session, &out, &write_done]()
   {
@@ -251,7 +251,7 @@ BOOST_AUTO_TEST_CASE(queue_is_full)
     expectedEvents.push_back(s.str());
   }
 
-  std::stringstream stream;
+  TestStream stream;
   const binlog::Session::ConsumeResult cr = session.consume(stream);
 
   // make sure old channels are closed
