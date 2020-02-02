@@ -126,6 +126,7 @@ add_library(binlog STATIC
   include/binlog/ToStringVisitor.cpp
   include/binlog/PrettyPrinter.cpp
   include/binlog/EntryStream.cpp
+  include/binlog/TextOutputStream.cpp
 )
   target_link_libraries(binlog PUBLIC headers)
 
@@ -159,6 +160,8 @@ add_example(HelloWorld)
 add_example(DetailedHelloWorld)
 add_example(ConsumeLoop)
 add_example(LogRotation)
+add_example(TextOutput)
+  target_link_libraries(TextOutput binlog)
 
 #---------------------------
 # Unit Test
@@ -191,6 +194,7 @@ if(Boost_FOUND)
     test/unit/binlog/TestArrayView.cpp
     test/unit/binlog/TestConstCharPtrIsString.cpp
     test/unit/binlog/TestEntryStream.cpp
+    test/unit/binlog/TestTextOutputStream.cpp
 
     bin/printers.cpp
     test/unit/binlog/TestPrinters.cpp

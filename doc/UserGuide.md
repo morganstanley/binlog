@@ -294,4 +294,14 @@ metadata in the old file), old metadata has to be added via `Session::reconsumeM
 
     [catchfile example/LogRotation.cpp rotate]
 
+# Text Output
+
+The key feature of Binlog is producing structured, binary logfiles.
+However, in some cases, writing text output directly might be still desirable.
+This is easy to do using `TextOutputStream`:
+
+    [catchfile example/TextOutput.cpp]
+
+`TextOutputStream` requires the Binlog library to be linked to the application.
+
 [Log rotation]: https://en.wikipedia.org/wiki/Log_rotation
