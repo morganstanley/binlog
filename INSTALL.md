@@ -1,10 +1,11 @@
 # Install
 
 Binlog comes with complete CMake support.
-Binlog consits of two main components:
+Binlog consist of three main components:
 
  - A header only part for producing logs
  - A compiled executable to read the logs
+ - A compiled library to read the logs programmatically
 
 In addition, as an **optional** dependency, **tests** depend on Boost 1.64.0 or higher,
 and performance tests on [Google Benchmark][].
