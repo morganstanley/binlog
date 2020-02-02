@@ -120,19 +120,14 @@ add_library(headers INTERFACE)
     target_link_libraries(headers INTERFACE -lrt)
   endif()
 
-add_library(binlog OBJECT
+add_library(binlog STATIC
   include/binlog/EventStream.cpp
   include/binlog/Time.cpp
   include/binlog/ToStringVisitor.cpp
   include/binlog/PrettyPrinter.cpp
   include/binlog/EntryStream.cpp
 )
-  # before cmake 3.12, OBJECT libraries can't link
-  if(CMAKE_VERSION VERSION_GREATER 3.12)
-    target_link_libraries(binlog PUBLIC headers)
-  else()
-    target_include_directories(binlog PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-  endif()
+  target_link_libraries(binlog PUBLIC headers)
 
 #---------------------------
 # bread
@@ -141,10 +136,9 @@ add_library(binlog OBJECT
 add_executable(bread
   bin/bread.cpp
   bin/printers.cpp
-  $<TARGET_OBJECTS:binlog>
   $<$<CXX_COMPILER_ID:MSVC>:bin/getopt.cpp bin/binaryio.cpp>
 )
-  target_link_libraries(bread PRIVATE headers)
+  target_link_libraries(bread PRIVATE binlog)
 
 #---------------------------
 # Documentation
@@ -183,7 +177,6 @@ if(Boost_FOUND)
     test/unit/mserialize/visit.cpp
     test/unit/mserialize/documentation.cpp
 
-    $<TARGET_OBJECTS:binlog>
     test/unit/binlog/TestEventStream.cpp
     test/unit/binlog/TestTime.cpp
     test/unit/binlog/TestToStringVisitor.cpp
@@ -210,7 +203,7 @@ if(Boost_FOUND)
     )
     include_boost(UnitTest)
     link_boost(UnitTest unit_test_framework)
-    target_link_libraries(UnitTest headers)
+    target_link_libraries(UnitTest binlog)
     target_link_libraries(UnitTest Threads::Threads) # used by: TestQueue, TestSessionWriter, TestCreateSourceAndEvent
     target_include_directories(UnitTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
@@ -320,9 +313,10 @@ install(
 )
 
 install(
-  TARGETS bread headers
+  TARGETS bread headers binlog
   EXPORT binlogTargets
   RUNTIME DESTINATION bin
+  ARCHIVE DESTINATION lib
 )
 
 install(
