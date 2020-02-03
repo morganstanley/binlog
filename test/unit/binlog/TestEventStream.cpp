@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(read_event)
 BOOST_AUTO_TEST_CASE(read_event_with_args)
 {
   const binlog::EventSource eventSource = testEventSource(123, "foobar", "(iy[c)");
-  const TestEvent<int, bool, std::string> event{123, 0, {789, true, "foo"}};
+  const TestEvent<int, bool, std::string> event{123, 0, std::make_tuple(789, true, "foo")};
 
   TestStream stream;
   serializeSizePrefixedTagged(eventSource, stream);
