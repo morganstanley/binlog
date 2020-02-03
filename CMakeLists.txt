@@ -236,6 +236,7 @@ if(Boost_FOUND)
     link_boost(IntegrationTest filesystem)
     link_boost(IntegrationTest system)
     target_link_libraries(IntegrationTest headers)
+    target_link_libraries(IntegrationTest Threads::Threads) # Boost.Process -> ASIO -> pthread_join as of 1.70 f2cf918b
 
   add_test(NAME IntegrationTest
     COMMAND IntegrationTest --log_level=test_suite --color_output=true -- "$<TARGET_FILE:bread>" "$<TARGET_FILE_DIR:IntegrationTest>" "${PROJECT_SOURCE_DIR}")
