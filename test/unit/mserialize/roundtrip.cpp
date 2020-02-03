@@ -263,8 +263,9 @@ using CharIntTuple = std::tuple<char, int>;
 BOOST_AUTO_TEST_CASE_TEMPLATE(sequence_of_tuples, T, sequence_types<CharIntTuple>)
 {
   const T in{
-    CharIntTuple{'1',2}, {'3',4}, {'5',6}, {'7',8}, {'9',10},
-    {'A',12}, {'C',14}, {'E',15}, {'G',17}, {'I',19}
+    CharIntTuple{'1',2}, CharIntTuple{'3',4}, CharIntTuple{'5',6},
+    CharIntTuple{'7',8}, CharIntTuple{'9',10}, CharIntTuple{'A',12},
+    CharIntTuple{'C',14}, CharIntTuple{'E',15}, CharIntTuple{'G',17}, CharIntTuple{'I',19}
   };
   T out;
   roundtrip_into(in, out);
@@ -334,7 +335,7 @@ BOOST_AUTO_TEST_CASE(tuples)
     const std::tuple<
       std::tuple<int, int>,
       std::tuple<int, int>
-    > in{{1,2}, {3,4}};
+    > in{std::tuple<int, int>{1,2}, std::tuple<int, int>{3,4}};
     const auto out = roundtrip(in);
     BOOST_TEST((in == out));
   }

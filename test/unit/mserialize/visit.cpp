@@ -229,7 +229,8 @@ BOOST_AUTO_TEST_CASE(tuple_of_int8_uint8)
 
 BOOST_AUTO_TEST_CASE(vector_of_tuple_of_int_bool)
 {
-  const std::vector<std::tuple<int, bool>> in{{123, true}, {456, false}, {789, true}};
+  using Tuple = std::tuple<int, bool>;
+  const std::vector<Tuple> in{Tuple{123, true}, Tuple{456, false}, Tuple{789, true}};
   const std::string out = serialize_and_visit<ToString>(in);
   BOOST_TEST(out == "SB(3,(iy))[ TB(iy)( 123 true ) TB(iy)( 456 false ) TB(iy)( 789 true ) ] ");
 }
