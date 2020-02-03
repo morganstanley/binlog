@@ -162,6 +162,8 @@ add_example(ConsumeLoop)
 add_example(LogRotation)
 add_example(TextOutput)
   target_link_libraries(TextOutput binlog)
+add_example(MultiOutput)
+  target_link_libraries(MultiOutput binlog)
 
 #---------------------------
 # Unit Test

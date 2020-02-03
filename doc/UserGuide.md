@@ -304,4 +304,19 @@ This is easy to do using `TextOutputStream`:
 
 `TextOutputStream` requires the Binlog library to be linked to the application.
 
+# Multiple Output
+
+`Session::consume` takes a single target only, but it is easy to multiplex the log stream
+to produce multiple output streams. With `EventFilter`, it is possible to route
+different kinds of events to different outputs, efficiently. In this example,
+the complete binary log is written to a logfile, but high severity events are also
+written to the standard error as text:
+
+    [catchfile example/MultiOutput.cpp ostream]
+
+Usage is like before:
+
+    [catchfile example/MultiOutput.cpp usage]
+
+
 [Log rotation]: https://en.wikipedia.org/wiki/Log_rotation
