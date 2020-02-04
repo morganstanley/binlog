@@ -40,10 +40,7 @@ namespace binlog {
 class PrettyPrinter
 {
 public:
-  explicit PrettyPrinter(
-    std::string eventFormat = "%S [%d] %n %m (%G:%L)\n",
-    std::string timeFormat = "%m/%d %H:%M:%S.%N"
-  );
+  PrettyPrinter(std::string eventFormat, std::string timeFormat);
 
   /**
    * Print `event` using `writerProp` and `clockSync`
