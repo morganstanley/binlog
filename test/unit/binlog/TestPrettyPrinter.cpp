@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_SUITE(PrettyPrinter)
 
 BOOST_FIXTURE_TEST_CASE(empty_fmt, TestcaseBase)
 {
-  binlog::PrettyPrinter pp("");
+  binlog::PrettyPrinter pp("", "");
   BOOST_TEST(print(pp) == "");
 }
 
@@ -87,7 +87,7 @@ BOOST_FIXTURE_TEST_CASE(reverse_full_fmt, TestcaseBase)
 
 BOOST_FIXTURE_TEST_CASE(empty_clock_sync, TestcaseBase)
 {
-  binlog::PrettyPrinter pp("%d %u %r");
+  binlog::PrettyPrinter pp("%d %u %r", "");
 
   clockSync = binlog::ClockSync{};
 
@@ -96,7 +96,7 @@ BOOST_FIXTURE_TEST_CASE(empty_clock_sync, TestcaseBase)
 
 BOOST_FIXTURE_TEST_CASE(filename, TestcaseBase)
 {
-  binlog::PrettyPrinter pp("%G");
+  binlog::PrettyPrinter pp("%G", "");
 
   eventSource.file = "";
   BOOST_TEST(print(pp) == "");
@@ -133,7 +133,7 @@ BOOST_FIXTURE_TEST_CASE(tzoffset, TestcaseBase)
 
 BOOST_FIXTURE_TEST_CASE(corrupt_argument_tags, TestcaseBase)
 {
-  binlog::PrettyPrinter pp("%m");
+  binlog::PrettyPrinter pp("%m", "");
 
   eventSource.argumentTags = "[c[c";
   BOOST_CHECK_THROW(print(pp), std::runtime_error);
@@ -141,7 +141,7 @@ BOOST_FIXTURE_TEST_CASE(corrupt_argument_tags, TestcaseBase)
 
 BOOST_FIXTURE_TEST_CASE(corrupt_argument_buffer, TestcaseBase)
 {
-  binlog::PrettyPrinter pp("%m");
+  binlog::PrettyPrinter pp("%m", "");
 
   event.arguments.read<char>(); // drop one byte
   BOOST_CHECK_THROW(print(pp), std::runtime_error);
@@ -149,7 +149,7 @@ BOOST_FIXTURE_TEST_CASE(corrupt_argument_buffer, TestcaseBase)
 
 BOOST_FIXTURE_TEST_CASE(corrupt_event_source_format, TestcaseBase)
 {
-  binlog::PrettyPrinter pp("%m");
+  binlog::PrettyPrinter pp("%m", "");
 
   eventSource.formatString = "{}_{}_{}";
 
@@ -158,7 +158,7 @@ BOOST_FIXTURE_TEST_CASE(corrupt_event_source_format, TestcaseBase)
 
 BOOST_FIXTURE_TEST_CASE(curlies_in_event_source_format, TestcaseBase)
 {
-  binlog::PrettyPrinter pp("%m");
+  binlog::PrettyPrinter pp("%m", "");
 
   eventSource.formatString = "{ {}_{{}_ {";
 
