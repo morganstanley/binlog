@@ -1,8 +1,8 @@
 #include <binlog/EventFilter.hpp>
 
-#include <binlog/advanced_log_macros.hpp>
 #include <binlog/Session.hpp>
 #include <binlog/SessionWriter.hpp>
+#include <binlog/advanced_log_macros.hpp>
 
 #include "test_utils.hpp"
 

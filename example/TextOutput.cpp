@@ -1,5 +1,5 @@
-#include <binlog/binlog.hpp>
 #include <binlog/TextOutputStream.hpp> // requires binlog library to be linked
+#include <binlog/binlog.hpp>
 
 #include <iostream>
 
