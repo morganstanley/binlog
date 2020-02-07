@@ -3,7 +3,6 @@
 
 #include <atomic>
 #include <cstddef>
-#include <memory>
 
 namespace binlog {
 namespace detail {
@@ -20,7 +19,8 @@ namespace detail {
  * is that it allows efficient, consistent
  * write and read of batches of bytes:
  *
- *    Queue q(1024); // queue of 1024 bytes
+ *    char buffer[1024];
+ *    Queue q(buffer, sizeof(buffer)); // queue of 1024 bytes
  *
  *    QueueWriter w(q);
  *    if (w.beginWrite(32))
@@ -41,6 +41,9 @@ namespace detail {
  *      r.endRead(); // make consumed bytes available for writing
  *    }
  *    // else: queue is empty
+ *
+ * Queue does not manage the lifetime of the underlying buffer,
+ * to allow fine grained buffer placement.
  *
  * Internally, the Queue maintains 3 shared indices:
  *  - W: next index to write
@@ -90,11 +93,16 @@ namespace detail {
 class Queue
 {
 public:
-  explicit Queue(std::size_t capacity)
+  /**
+   * Construct a queue using the provided `buffer`.
+   *
+   * @pre [buffer,buffer+capacity) must be valid
+   */
+  explicit Queue(char* buffer, std::size_t capacity)
     :_writeIndex(0),
      _dataEnd(0),
      _capacity(capacity),
-     _buffer(new char[capacity]),
+     _buffer(buffer),
      _readIndex(0)
   {}
 
@@ -105,14 +113,14 @@ private:
   friend class QueueWriter;
   friend class QueueReader;
 
-  char* buffer()       { return _buffer.get(); }
-  char* buffer() const { return _buffer.get(); }
+  char*       buffer()       { return _buffer; }
+  const char* buffer() const { return _buffer; }
 
   // members written by Writer
   std::atomic<std::size_t> _writeIndex; /**< Next index to write */
   std::size_t _dataEnd;                 /**< No valid data after this index */
   std::size_t _capacity;                /**< Buffer size */
-  std::unique_ptr<char[]> _buffer;
+  char* _buffer;                        /**< Unmanaged underlying buffer */
 
   // members written by Reader
   std::atomic<std::size_t> _readIndex;  /**< Next index to read */

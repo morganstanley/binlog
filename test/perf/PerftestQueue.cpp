@@ -7,6 +7,7 @@
 #include <atomic>
 #include <cstring> // memcpy
 #include <thread>
+#include <vector>
 
 namespace {
 
@@ -54,7 +55,8 @@ void BM_queueWrite(benchmark::State& state)
   const std::size_t bufSize = std::size_t(state.range(0));
   const std::vector<char> buf(bufSize);
 
-  binlog::detail::Queue q(1 << 20);
+  std::vector<char> buffer(1 << 20);
+  binlog::detail::Queue q(buffer.data(), buffer.size());
 
   g_done = false;
   std::thread reader(readQueue, std::ref(q), std::ref(state));
