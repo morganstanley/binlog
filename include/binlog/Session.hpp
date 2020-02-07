@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <deque>
 #include <list>
+#include <memory>
 #include <mutex>
 #include <utility> // move
 
@@ -48,11 +49,13 @@ public:
   struct Channel
   {
     explicit Channel(std::size_t queueCapacity, WriterProp writerProp = {})
-      :queue(queueCapacity),
+      :queueBuffer(new char[queueCapacity]),
+       queue(queueBuffer.get(), queueCapacity),
        closed(false),
        writerProp(std::move(writerProp))
     {}
 
+    std::unique_ptr<char> queueBuffer; /**< Underlying buffer of `queue` */
     detail::Queue queue;        /**< Holds log events */
     std::atomic<bool> closed;   /**< True, if queue will be no longer written */
     WriterProp writerProp;      /**< Describes the writer of this channel (optional) */

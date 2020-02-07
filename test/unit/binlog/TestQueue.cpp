@@ -10,6 +10,7 @@
 #include <cstring> // memcmp
 #include <random>
 #include <thread>
+#include <vector>
 
 namespace bdata = boost::unit_test::data;
 
@@ -125,7 +126,8 @@ BOOST_AUTO_TEST_SUITE(Queue)
 
 BOOST_AUTO_TEST_CASE(capacity)
 {
-  binlog::detail::Queue q(1024);
+  char buffer[1024];
+  binlog::detail::Queue q(buffer, 1024);
   BOOST_TEST(q.capacity() == 1024);
 
   binlog::detail::QueueWriter w(q);
@@ -137,7 +139,8 @@ BOOST_AUTO_TEST_CASE(capacity)
 
 BOOST_AUTO_TEST_CASE(full_capacity)
 {
-  binlog::detail::Queue q(1024);
+  char buffer[1024];
+  binlog::detail::Queue q(buffer, 1024);
   binlog::detail::QueueWriter w(q);
 
   BOOST_TEST(w.writeCapacity() == 0);
@@ -175,7 +178,8 @@ BOOST_AUTO_TEST_CASE(full_capacity_almost)
   //  - it is running in production for a long time
   //  - this limitation does not affect logging
 
-  binlog::detail::Queue q(1024);
+  char buffer[1024];
+  binlog::detail::Queue q(buffer, 1024);
   binlog::detail::QueueWriter w(q);
   binlog::detail::QueueReader r(q);
 
@@ -194,7 +198,8 @@ BOOST_AUTO_TEST_CASE(full_capacity_almost)
 
 BOOST_AUTO_TEST_CASE(unread_write_size)
 {
-  binlog::detail::Queue q(1000);
+  char buffer[1000];
+  binlog::detail::Queue q(buffer, 1000);
   binlog::detail::QueueWriter w(q);
   binlog::detail::QueueReader r(q);
 
@@ -221,7 +226,8 @@ BOOST_AUTO_TEST_CASE(unread_write_size)
 
 BOOST_AUTO_TEST_CASE(transmit_one)
 {
-  binlog::detail::Queue q(1000);
+  char buffer[1000];
+  binlog::detail::Queue q(buffer, 1000);
   binlog::detail::QueueWriter w(q);
   binlog::detail::QueueReader r(q);
 
@@ -254,7 +260,8 @@ BOOST_DATA_TEST_CASE(transmit_more,
   bdata::make({1000U, 1024U, 1U << 20}) * bdata::make({32u, 64u, 128u}),
   queue_size,                             max_msg_size)
 {
-  binlog::detail::Queue q(queue_size);
+  std::vector<char> buffer(queue_size);
+  binlog::detail::Queue q(buffer.data(), queue_size);
   binlog::detail::QueueReader r(q);
   binlog::detail::QueueWriter w(q);
 
