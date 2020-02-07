@@ -49,13 +49,11 @@ public:
   {
     explicit Channel(std::size_t queueCapacity, WriterProp writerProp = {})
       :queue(queueCapacity),
-       reader(queue),
        closed(false),
        writerProp(std::move(writerProp))
     {}
 
     detail::Queue queue;        /**< Holds log events */
-    detail::QueueReader reader; /**< Reads log events from `queue` */
     std::atomic<bool> closed;   /**< True, if queue will be no longer written */
     WriterProp writerProp;      /**< Describes the writer of this channel (optional) */
   };
@@ -275,7 +273,8 @@ Session::ConsumeResult Session::consume(OutputStream& out)
     //  - Consumer finds queue is closed, removes it -> data loss
     const bool isClosed = it->closed;
 
-    const detail::QueueReader::ReadResult data = it->reader.beginRead();
+    detail::QueueReader reader(it->queue);
+    const detail::QueueReader::ReadResult data = reader.beginRead();
     if (data.size())
     {
       // consume writerProp entry
@@ -290,7 +289,7 @@ Session::ConsumeResult Session::consume(OutputStream& out)
         out.write(data.buffer2, std::streamsize(data.size2));
       }
 
-      it->reader.endRead();
+      reader.endRead();
       result.bytesConsumed += data.size();
     }
 
