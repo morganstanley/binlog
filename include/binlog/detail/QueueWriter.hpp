@@ -7,6 +7,7 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring> // memcpy
+#include <ios> // streamsize
 
 namespace binlog {
 namespace detail {
