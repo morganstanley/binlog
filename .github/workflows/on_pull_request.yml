@@ -63,6 +63,33 @@ jobs:
           cd ThreadSanitized
           ctest -VV
 
+  build_on_linux_clang_tidy:
+    name: Build in Linux with Clang+Tidy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Dependencies
+        run: |
+          # remove broken packages installed by default
+          sudo apt-get remove -y clang-6.0 libclang-common-6.0-dev libclang1-6.0 libllvm6.0
+          sudo apt-get install -y clang clang-tidy
+      - name: Configure
+        run: |
+          set -x
+          mkdir Clang
+          cd Clang
+          export CC=$(which clang)
+          export CXX=$(which clang++)
+          cmake -DBOOST_ROOT=$BOOST_ROOT_1_69_0 -DBoost_ARCHITECTURE=-x64 -DBINLOG_FORCE_TESTS=ON -DBINLOG_USE_CLANG_TIDY=On ..
+      - name: Build
+        run: |
+          cd Clang
+          make -j2 VERBOSE=1
+      - name: Test
+        run: |
+          cd Clang
+          ctest -VV
+
   # do not test on macOS: boost is not installed,
   # installing it from brew takes too long
   build_mac_clang:
