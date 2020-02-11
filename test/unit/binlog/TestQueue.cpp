@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(capacity)
 {
   char buffer[1024];
   binlog::detail::Queue q(buffer, 1024);
-  BOOST_TEST(q.capacity() == 1024);
+  BOOST_TEST(q.capacity == 1024);
 
   binlog::detail::QueueWriter w(q);
   BOOST_TEST(w.capacity() == 1024);

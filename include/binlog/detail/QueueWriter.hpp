@@ -27,7 +27,7 @@ public:
   {}
 
   /** @returns the maximum number of bytes the queue can store */
-  std::size_t capacity() const { return _queue->capacity(); }
+  std::size_t capacity() const { return _queue->capacity; }
 
   /** @returns the number of bytes currently available for write */
   std::size_t writeCapacity() const
@@ -38,12 +38,12 @@ public:
   /** @returns the number of committed bytes not yet consumed by the reader */
   std::size_t unreadWriteSize() const
   {
-    const std::size_t w = _queue->_writeIndex.load(std::memory_order_relaxed);
-    const std::size_t r = _queue->_readIndex.load(std::memory_order_acquire);
+    const std::size_t w = _queue->writeIndex.load(std::memory_order_relaxed);
+    const std::size_t r = _queue->readIndex.load(std::memory_order_acquire);
 
     return (r <= w)
       ? std::size_t(w - r)
-      : std::size_t(_queue->_dataEnd - r + w);
+      : std::size_t(_queue->dataEnd - r + w);
   }
 
   /**
@@ -90,7 +90,7 @@ public:
   void endWrite()
   {
     const std::size_t newW = std::size_t(_writePos - buffer());
-    _queue->_writeIndex.store(newW, std::memory_order_release);
+    _queue->writeIndex.store(newW, std::memory_order_release);
   }
 
 private:
@@ -106,8 +106,8 @@ private:
    */
   std::size_t maximizeWriteCapacity()
   {
-    const std::size_t w = _queue->_writeIndex.load(std::memory_order_relaxed);
-    const std::size_t r = _queue->_readIndex.load(std::memory_order_acquire);
+    const std::size_t w = _queue->writeIndex.load(std::memory_order_relaxed);
+    const std::size_t r = _queue->readIndex.load(std::memory_order_acquire);
 
     if (w < r) // [####W.....R###E..]
     {
@@ -116,7 +116,7 @@ private:
     }
     else // [...R###W......]
     {
-      const std::int64_t rightSize = std::int64_t(_queue->_capacity - w);
+      const std::int64_t rightSize = std::int64_t(_queue->capacity - w);
       const std::int64_t leftSize = std::int64_t(r) - 1;
 
       if (rightSize >= leftSize)
@@ -126,7 +126,7 @@ private:
       }
       else
       {
-        _queue->_dataEnd = w;
+        _queue->dataEnd = w;
         _writePos = buffer();
         _writeEnd = buffer() + leftSize;
       }
@@ -135,7 +135,7 @@ private:
     return writeCapacity();
   }
 
-  char* buffer() { return _queue->buffer(); }
+  char* buffer() { return _queue->buffer; }
 
   Queue* _queue;
 
