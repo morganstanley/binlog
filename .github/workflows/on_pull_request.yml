@@ -23,6 +23,46 @@ jobs:
           cd Release
           ctest -VV
 
+  build_linux_gcc_asan:
+    name: Build on Linux with GCC+ASAN
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Configure
+        run: |
+          set -x
+          mkdir AddressSanitized
+          cd AddressSanitized
+          cmake -DBOOST_ROOT=$BOOST_ROOT_1_69_0 -DBoost_ARCHITECTURE=-x64 -DBINLOG_FORCE_TESTS=ON -DBINLOG_USE_ASAN=On ..
+      - name: Build
+        run: |
+          cd AddressSanitized
+          make -j2 VERBOSE=1
+      - name: Test
+        run: |
+          cd AddressSanitized
+          ctest -VV
+
+  build_linux_gcc_tsan:
+    name: Build on Linux with GCC+TSAN
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Configure
+        run: |
+          set -x
+          mkdir ThreadSanitized
+          cd ThreadSanitized
+          cmake -DBOOST_ROOT=$BOOST_ROOT_1_69_0 -DBoost_ARCHITECTURE=-x64 -DBINLOG_FORCE_TESTS=ON -DBINLOG_USE_TSAN=On ..
+      - name: Build
+        run: |
+          cd ThreadSanitized
+          make -j2 VERBOSE=1
+      - name: Test
+        run: |
+          cd ThreadSanitized
+          ctest -VV
+
   # do not test on macOS: boost is not installed,
   # installing it from brew takes too long
   build_mac_clang:
