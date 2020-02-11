@@ -52,7 +52,7 @@ namespace detail {
  *
  * Invariants are:
  *  - Queue is empty if R == W
- *  - Queue is full if (W+1 == R) or (W == capacity() and R == 0)
+ *  - Queue is full if (W+1 == R) or (W == capacity and R == 0)
  *
  * The bytes in the queue are either empty (.) or written (#).
  *
@@ -90,40 +90,29 @@ namespace detail {
  * The reader will notice that E is reached, so it will
  * also wrap around, starting again from the beginning.
  */
-class Queue
+struct Queue
 {
-public:
   /**
    * Construct a queue using the provided `buffer`.
    *
    * @pre [buffer,buffer+capacity) must be valid
    */
   explicit Queue(char* buffer, std::size_t capacity)
-    :_writeIndex(0),
-     _dataEnd(0),
-     _capacity(capacity),
-     _buffer(buffer),
-     _readIndex(0)
+    :writeIndex(0),
+     dataEnd(0),
+     capacity(capacity),
+     buffer(buffer),
+     readIndex(0)
   {}
 
-  /** @returns the maximum number of bytes the queue can store */
-  std::size_t capacity() const { return _capacity; }
-
-private:
-  friend class QueueWriter;
-  friend class QueueReader;
-
-  char*       buffer()       { return _buffer; }
-  const char* buffer() const { return _buffer; }
-
   // members written by Writer
-  std::atomic<std::size_t> _writeIndex; /**< Next index to write */
-  std::size_t _dataEnd;                 /**< No valid data after this index */
-  std::size_t _capacity;                /**< Buffer size */
-  char* _buffer;                        /**< Unmanaged underlying buffer */
+  std::atomic<std::size_t> writeIndex; /**< Next index to write */
+  std::size_t dataEnd;                 /**< No valid data after this index */
+  std::size_t capacity;                /**< Buffer size */
+  char* buffer;                        /**< Unmanaged underlying buffer */
 
   // members written by Reader
-  std::atomic<std::size_t> _readIndex;  /**< Next index to read */
+  std::atomic<std::size_t> readIndex;  /**< Next index to read */
 };
 
 } // namespace detail

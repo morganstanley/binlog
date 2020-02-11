@@ -28,7 +28,7 @@ public:
   {}
 
   /** @returns the maximum number of bytes the queue can store */
-  std::size_t capacity() const { return _queue->capacity(); }
+  std::size_t capacity() const { return _queue->capacity; }
 
   /**
    * Access the currently readable parts of the queue.
@@ -43,8 +43,8 @@ public:
    */
   ReadResult beginRead()
   {
-    const std::size_t w = _queue->_writeIndex.load(std::memory_order_acquire);
-    const std::size_t r = _queue->_readIndex.load(std::memory_order_relaxed);
+    const std::size_t w = _queue->writeIndex.load(std::memory_order_acquire);
+    const std::size_t r = _queue->readIndex.load(std::memory_order_relaxed);
 
     _readEnd = w;
 
@@ -53,10 +53,10 @@ public:
       return ReadResult{buffer() + r, w - r, nullptr, 0};
     }
 
-    if (r < _queue->_dataEnd)  // [###W...R###E..]
+    if (r < _queue->dataEnd)  // [###W...R###E..]
     {
       return ReadResult{
-        buffer() + r, _queue->_dataEnd - r,
+        buffer() + r, _queue->dataEnd - r,
         buffer(), w
       };
     }
@@ -68,11 +68,11 @@ public:
   /** Make the consumed parts of the internal buffer available to write. */
   void endRead()
   {
-    _queue->_readIndex.store(_readEnd, std::memory_order_release);
+    _queue->readIndex.store(_readEnd, std::memory_order_release);
   }
 
 private:
-  char* buffer() { return _queue->buffer(); }
+  char* buffer() { return _queue->buffer; }
 
   Queue* _queue;
   std::size_t _readEnd = 0;
