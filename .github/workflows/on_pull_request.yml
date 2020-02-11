@@ -8,18 +8,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Install Dependencies
-        run: |
-          cd $BOOST_ROOT_1_69_0/lib/
-          sudo ln -s libboost_filesystem-mt-x64.so libboost_filesystem.so
-          sudo ln -s libboost_unit_test_framework-mt-x64.so libboost_unit_test_framework.so
-          sudo ln -s libboost_system-mt-x64.so libboost_system.so
       - name: Configure
         run: |
           set -x
           mkdir Release
           cd Release
-          cmake -DBOOST_ROOT=$BOOST_ROOT_1_69_0 -DBoost_ADDITIONAL_VERSIONS=1.69.0 -DBINLOG_FORCE_TESTS=ON ..
+          cmake -DBOOST_ROOT=$BOOST_ROOT_1_69_0 -DBoost_ARCHITECTURE=-x64 -DBINLOG_FORCE_TESTS=ON ..
       - name: Build
         run: |
           cd Release
