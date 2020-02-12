@@ -54,6 +54,11 @@ function(link_boost target library)
   endif()
 endfunction()
 
+# do not use -rdynamic, make binaries smaller
+if(POLICY CMP0065)
+  cmake_policy(SET CMP0065 NEW)
+endif()
+
 #---------------------------
 # Build type
 #---------------------------
