@@ -99,6 +99,16 @@ if(NOT HAS_CLOCK_GETTIME)
   set(HAS_CLOCK_GETTIME 1)
 endif()
 
+# Interprocedural Optimization (LTO)
+if(POLICY CMP0069)
+  cmake_policy(SET CMP0069 NEW)
+  include(CheckIPOSupported) # fails if policy 69 is not set
+  check_ipo_supported(RESULT BINLOG_HAS_IPO)
+  if(BINLOG_HAS_IPO)
+    message(STATUS "Use interprocedural optimization")
+  endif()
+endif()
+
 #---------------------------
 # clang-tidy
 #---------------------------
@@ -112,6 +122,9 @@ if(BINLOG_USE_CLANG_TIDY)
     if (CLANG_TIDY_EXE)
       message(STATUS "Use clang-tidy: ${CLANG_TIDY_EXE}")
       set(CMAKE_CXX_CLANG_TIDY  "${CLANG_TIDY_EXE}" -warnings-as-errors=*)
+
+      message(STATUS "Disable interprocedural optimization because of clang-tidy")
+      set(BINLOG_HAS_IPO OFF)
     else()
       message(SEND_ERROR "clang-tidy executable not found")
     endif()
@@ -142,6 +155,7 @@ add_library(binlog STATIC
   include/binlog/TextOutputStream.cpp
 )
   target_link_libraries(binlog PUBLIC headers)
+  set_property(TARGET binlog PROPERTY INTERPROCEDURAL_OPTIMIZATION ${BINLOG_HAS_IPO})
 
 #---------------------------
 # bread
@@ -153,6 +167,7 @@ add_executable(bread
   $<$<CXX_COMPILER_ID:MSVC>:bin/getopt.cpp bin/binaryio.cpp>
 )
   target_link_libraries(bread PRIVATE binlog)
+  set_property(TARGET bread  PROPERTY INTERPROCEDURAL_OPTIMIZATION ${BINLOG_HAS_IPO})
 
 #---------------------------
 # brecovery
