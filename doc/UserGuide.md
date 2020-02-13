@@ -189,6 +189,17 @@ The complete input is consumed first, then sorted and printed in one go.
 
     $ bread -s logfile.blog
 
+If no input file is specified, or it is `-`, `bread` reads from the standard input,
+acting like a filter that converts a binary log stream to text. This allows reading
+compressed logfiles:
+
+    $ zcat logfile.blog.gz | bread
+
+With piping, a live logfile that is being written by the application can be read,
+even if log rotation is configured:
+
+    $ tail -c0 -F logfile.blog | bread
+
 To customize the output and for further options, see the builtin help:
 
     $ bread -h

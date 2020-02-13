@@ -138,6 +138,41 @@ BOOST_AUTO_TEST_CASE(DateFormat)
   compareVectors(expected, actual);
 }
 
+BOOST_AUTO_TEST_CASE(Pipe)
+{
+  // to make sure that piping works, used in scenarios like
+  // `zcat log.blog.gz|bread` and `tail -c0 -f log.blog|bread`
+  // pipe dateformat.blog byte by byte to bread, convert to text, check result
+  namespace bp = boost::process;
+
+  std::ifstream blog(g_src_dir + "data/dateformat.blog", std::ios_base::in|std::ios_base::binary);
+
+  bp::opstream binary;
+  bp::ipstream text;
+  bp::child bread(g_bread_path, "-f", "%m", bp::std_in < binary, bp::std_out > text);
+
+  // pipe input byte by byte to bread
+  char byte = 0;
+  while (blog.get(byte))
+  {
+    binary.put(byte);
+    binary.flush(); // inefficient by design: allow bread to be scheduled
+  }
+
+  binary.pipe().close(); // so getline will not hang when the pipe is fully consumed
+
+  // read bread output
+  std::vector<std::string> actual;
+  for (std::string line; std::getline(text, line);)
+  {
+    actual.push_back(std::move(line));
+  }
+
+  bread.wait();
+
+  compareVectors({"Hello"}, actual);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 bool initMasterSuite()
