@@ -153,6 +153,7 @@ add_library(binlog STATIC
   include/binlog/PrettyPrinter.cpp
   include/binlog/EntryStream.cpp
   include/binlog/TextOutputStream.cpp
+  include/binlog/detail/OstreamBuffer.cpp
 )
   target_link_libraries(binlog PUBLIC headers)
   set_property(TARGET binlog PROPERTY INTERPROCEDURAL_OPTIMIZATION ${BINLOG_HAS_IPO})
@@ -236,6 +237,7 @@ if(Boost_FOUND)
     test/unit/binlog/TestEntryStream.cpp
     test/unit/binlog/TestTextOutputStream.cpp
     test/unit/binlog/TestEventFilter.cpp
+    test/unit/binlog/detail/TestOstreamBuffer.cpp
 
     bin/printers.cpp
     test/unit/binlog/TestPrinters.cpp

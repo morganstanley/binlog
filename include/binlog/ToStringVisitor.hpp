@@ -1,10 +1,11 @@
 #ifndef BINLOG_TO_STRING_VISITOR_HPP
 #define BINLOG_TO_STRING_VISITOR_HPP
 
+#include <binlog/detail/OstreamBuffer.hpp>
+
 #include <mserialize/Visitor.hpp>
 
 #include <cstdint>
-#include <ostream>
 
 namespace binlog {
 
@@ -17,13 +18,14 @@ namespace binlog {
  * Usage:
  *
  *    std::ostringstream str;
- *    ToStringVisitor visitor(str);
+ *    binlog::detail::OstreamBuffer buf(str);
+ *    ToStringVisitor visitor(buf);
  *    mserialize::visit(tag, visitor, istream);
  */
 class ToStringVisitor
 {
 public:
-  explicit ToStringVisitor(std::ostream& out);
+  explicit ToStringVisitor(detail::OstreamBuffer& out);
 
   // catch all for arithmetic types
   template <typename T>
@@ -70,7 +72,7 @@ private:
   State _state;
   int _seqDepth;
   bool _emptyStruct;
-  std::ostream& _out;
+  detail::OstreamBuffer& _out;
 };
 
 } // namespace binlog

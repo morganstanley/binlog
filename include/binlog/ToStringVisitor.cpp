@@ -2,18 +2,15 @@
 
 #include <mserialize/detail/tag_util.hpp> // remove_prefix_before
 
-#include <ios> // boolalpha
 
 namespace binlog {
 
-ToStringVisitor::ToStringVisitor(std::ostream& out)
+ToStringVisitor::ToStringVisitor(detail::OstreamBuffer& out)
   :_state(State::Normal),
    _seqDepth(0),
    _emptyStruct(false),
    _out(out)
-{
-  _out << std::boolalpha;
-}
+{}
 
 // avoid displaying int8_t and uint8_t as a character
 void ToStringVisitor::visit(std::int8_t v)
@@ -103,7 +100,7 @@ void ToStringVisitor::visit(mserialize::Visitor::StructEnd)
   }
   else
   {
-    _out.write(" }", 2);
+    _out << " }";
     leaveSeq();
   }
 }
@@ -131,7 +128,7 @@ void ToStringVisitor::comma()
   }
   else if (_state == State::Seq)
   {
-    _out.write(", ", 2);
+    _out << ", ";
   }
 }
 

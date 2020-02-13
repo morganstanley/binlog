@@ -3,6 +3,7 @@
 
 #include <binlog/Entries.hpp>
 #include <binlog/Time.hpp>
+#include <binlog/detail/OstreamBuffer.hpp>
 
 #include <cstdint>
 #include <iosfwd>
@@ -44,7 +45,7 @@ public:
 
   /**
    * Print `event` using `writerProp` and `clockSync`
-   * to `out`, according the the format specified in the consturctor.
+   * to `ostr`, according to the format specified in the consturctor.
    *
    * If clockSync.clockFrequency is zero,
    * broken down timestamps (%d and %u) are shown
@@ -54,7 +55,7 @@ public:
    * @pre event.source must be valid
    */
   void printEvent(
-    std::ostream& out,
+    std::ostream& ostr,
     const Event& event,
     const WriterProp& writerProp = {},
     const ClockSync& clockSync = {}
@@ -62,20 +63,20 @@ public:
 
 private:
   void printEventField(
-    std::ostream& out,
+    detail::OstreamBuffer& out,
     char spec,
     const Event& event,
     const WriterProp& writerProp,
     const ClockSync& clockSync
   ) const;
 
-  void printEventMessage(std::ostream& out, const Event& event) const;
+  void printEventMessage(detail::OstreamBuffer& out, const Event& event) const;
 
-  void printProducerLocalTime(std::ostream& out, const ClockSync& clockSync, std::uint64_t clockValue) const;
-  void printUTCTime(std::ostream& out, const ClockSync& clockSync, std::uint64_t clockValue) const;
+  void printProducerLocalTime(detail::OstreamBuffer& out, const ClockSync& clockSync, std::uint64_t clockValue) const;
+  void printUTCTime(detail::OstreamBuffer& out, const ClockSync& clockSync, std::uint64_t clockValue) const;
 
-  void printTime(std::ostream& out, BrokenDownTime& bdt, int tzoffset, const char* tzname) const;
-  void printTimeField(std::ostream& out, char spec, BrokenDownTime& bdt, int tzoffset, const char* tzname) const;
+  void printTime(detail::OstreamBuffer& out, BrokenDownTime& bdt, int tzoffset, const char* tzname) const;
+  void printTimeField(detail::OstreamBuffer& out, char spec, BrokenDownTime& bdt, int tzoffset, const char* tzname) const;
 
   std::string _eventFormat;
   std::string _timeFormat;
