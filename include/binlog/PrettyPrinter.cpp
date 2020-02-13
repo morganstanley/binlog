@@ -8,6 +8,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <cstdio>
 #include <cstdlib> // abs
 #include <iomanip> // setw
 #include <ostream>
@@ -16,31 +17,39 @@ namespace {
 
 // Given path=foo/bar/baz.cpp, write baz.cpp to out,
 // or the full path if no path separator (/ or \) found.
-void printFilename(std::ostream& out, const std::string& path)
+void printFilename(binlog::detail::OstreamBuffer& out, const std::string& path)
 {
   const std::size_t i = path.find_last_of("/\\", std::string::npos, 2) + 1;
-  out.write(path.data() + i, std::streamsize(path.size() - i));
+  out.write(path.data() + i, path.size() - i);
 }
 
-void printTwoDigits(std::ostream& out, int i)
+void printTwoDigits(binlog::detail::OstreamBuffer& out, int i)
 {
   assert(0 <= i && i < 100);
   const int b = i % 10;
   const int a = (i - b) / 10;
-  out.put(char('0' + a));
-  out.put(char('0' + b));
+  const char digits[2]{char('0' + a), char('0' + b)};
+  out.write(digits, 2);
+}
+
+void printNineDigits(binlog::detail::OstreamBuffer& out, int i)
+{
+  char buf[16];
+  snprintf(buf, sizeof(buf), "%.9d", i);
+  out.write(buf, 9);
 }
 
 // print `seconds` as TZ offset in the ISO 8601 format (e.g: +0340 or -0430)
-void printTimeZoneOffset(std::ostream& out, int seconds)
+// @pre out.fill() == '0'
+void printTimeZoneOffset(binlog::detail::OstreamBuffer& out, int seconds)
 {
   const char sign = (seconds >= 0) ? '+' : '-';
   const int psecs = std::abs(seconds);
   const int hours = psecs / 3600;
   const int mins  = (psecs / 60) - 60 * hours;
   out.put(sign);
-  printTwoDigits(out, hours);
-  printTwoDigits(out, mins);
+  printTwoDigits(out, hours < 100 ? hours : 0);
+  printTwoDigits(out, mins < 100 ? mins : 0);
 }
 
 } // namespace
@@ -53,13 +62,13 @@ PrettyPrinter::PrettyPrinter(std::string eventFormat, std::string timeFormat)
 {}
 
 void PrettyPrinter::printEvent(
-  std::ostream& out,
+  std::ostream& ostr,
   const Event& event,
   const WriterProp& writerProp,
   const ClockSync& clockSync
 ) const
 {
-  // TODO(benedek) perf: write local buffer instead of ostream directly
+  detail::OstreamBuffer out(ostr);
 
   for (std::size_t i = 0; i < _eventFormat.size(); ++i)
   {
@@ -77,7 +86,7 @@ void PrettyPrinter::printEvent(
 }
 
 void PrettyPrinter::printEventField(
-  std::ostream& out,
+  detail::OstreamBuffer& out,
   char spec,
   const Event& event,
   const WriterProp& writerProp,
@@ -140,10 +149,8 @@ void PrettyPrinter::printEventField(
   }
 }
 
-void PrettyPrinter::printEventMessage(std::ostream& out, const Event& event) const
+void PrettyPrinter::printEventMessage(detail::OstreamBuffer& out, const Event& event) const
 {
-  // TODO(benedek) perf: write local buffer instead of ostream directly
-
   mserialize::string_view tags = event.source->argumentTags;
   Range args = event.arguments;
   ToStringVisitor visitor(out);
@@ -165,7 +172,7 @@ void PrettyPrinter::printEventMessage(std::ostream& out, const Event& event) con
   }
 }
 
-void PrettyPrinter::printProducerLocalTime(std::ostream& out, const ClockSync& clockSync, std::uint64_t clockValue) const
+void PrettyPrinter::printProducerLocalTime(detail::OstreamBuffer& out, const ClockSync& clockSync, std::uint64_t clockValue) const
 {
   // TODO(benedek) perf: cache bdt, update instead of complete recompute
 
@@ -183,7 +190,7 @@ void PrettyPrinter::printProducerLocalTime(std::ostream& out, const ClockSync& c
   }
 }
 
-void PrettyPrinter::printUTCTime(std::ostream& out, const ClockSync& clockSync, std::uint64_t clockValue) const
+void PrettyPrinter::printUTCTime(detail::OstreamBuffer& out, const ClockSync& clockSync, std::uint64_t clockValue) const
 {
   // TODO(benedek) perf: cache bdt, update instead of complete recompute
 
@@ -200,10 +207,8 @@ void PrettyPrinter::printUTCTime(std::ostream& out, const ClockSync& clockSync, 
   }
 }
 
-void PrettyPrinter::printTime(std::ostream& out, BrokenDownTime& bdt, int tzoffset, const char* tzname) const
+void PrettyPrinter::printTime(detail::OstreamBuffer& out, BrokenDownTime& bdt, int tzoffset, const char* tzname) const
 {
-  const char oldFill = out.fill('0');
-
   for (std::size_t i = 0; i < _timeFormat.size(); ++i)
   {
     const char c = _timeFormat[i];
@@ -217,11 +222,9 @@ void PrettyPrinter::printTime(std::ostream& out, BrokenDownTime& bdt, int tzoffs
       out.put(c);
     }
   }
-
-  out.fill(oldFill);
 }
 
-void PrettyPrinter::printTimeField(std::ostream& out, char spec, BrokenDownTime& bdt, int tzoffset, const char* tzname) const
+void PrettyPrinter::printTimeField(detail::OstreamBuffer& out, char spec, BrokenDownTime& bdt, int tzoffset, const char* tzname) const
 {
   switch (spec)
   {
@@ -253,7 +256,7 @@ void PrettyPrinter::printTimeField(std::ostream& out, char spec, BrokenDownTime&
     out << tzname;
     break;
   case 'N':
-    out << std::setw(9) << bdt.tm_nsec;
+    printNineDigits(out, bdt.tm_nsec);
     break;
   default:
     out << '%' << spec;

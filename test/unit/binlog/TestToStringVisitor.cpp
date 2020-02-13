@@ -1,5 +1,7 @@
 #include <binlog/ToStringVisitor.hpp>
 
+#include <binlog/detail/OstreamBuffer.hpp>
+
 #include <mserialize/Visitor.hpp>
 
 #include <boost/mpl/list.hpp>
@@ -21,9 +23,14 @@ struct TestcaseBase
   using V = mserialize::Visitor;
 
   std::ostringstream str;
-  binlog::ToStringVisitor visitor{str};
+  binlog::detail::OstreamBuffer buf{str};
+  binlog::ToStringVisitor visitor{buf};
 
-  std::string result() const { return str.str(); }
+  std::string result()
+  {
+    buf.flush();
+    return str.str();
+  }
 };
 
 } // namespace

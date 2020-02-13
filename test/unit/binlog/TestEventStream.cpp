@@ -177,9 +177,12 @@ BOOST_AUTO_TEST_CASE(read_event_with_args)
   BOOST_TEST(*e1->source == eventSource);
 
   std::stringstream argStr;
-  binlog::ToStringVisitor visitor(argStr);
-  binlog::Range arguments(e1->arguments);
-  mserialize::visit(e1->source->argumentTags, visitor, arguments);
+  {
+    binlog::detail::OstreamBuffer buf{argStr};
+    binlog::ToStringVisitor visitor(buf);
+    binlog::Range arguments(e1->arguments);
+    mserialize::visit(e1->source->argumentTags, visitor, arguments);
+  }
   BOOST_TEST(argStr.str() == "(789, true, foo)");
 
   const binlog::Event* e2 = eventStream.nextEvent(stream);
