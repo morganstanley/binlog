@@ -122,7 +122,7 @@ private:
 inline SessionWriter::SessionWriter(Session& session, std::size_t queueCapacity, std::uint64_t id, std::string name)
   :_session(& session),
    _channel(& session.createChannel(queueCapacity)),
-   _qw(_channel->queue)
+   _qw(_channel->queue())
 {
   if (id != 0) { setId(id); }
   if (! name.empty()) { setName(std::move(name)); }
@@ -201,7 +201,7 @@ inline bool SessionWriter::replaceChannel(std::size_t minQueueCapacity) noexcept
   {
     WriterProp wp{_channel->writerProp.id, _channel->writerProp.name, 0}; // avoid racing on the last field
     Session::Channel& newChannel = _session->createChannel(newCapacity, std::move(wp));
-    _qw = detail::QueueWriter(newChannel.queue);
+    _qw = detail::QueueWriter(newChannel.queue());
     _channel->closed = true;
     _channel = &newChannel;
   }
