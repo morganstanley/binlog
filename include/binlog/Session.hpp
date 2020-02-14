@@ -182,8 +182,8 @@ private:
   std::mutex _mutex;
 
   std::list<Channel> _channels;
-  std::deque<EventSource> _sources;
-  std::size_t _numConsumedSources = 0;
+  detail::VectorOutputStream _sources;
+  std::streamsize _sourcesConsumePos = 0;
   std::uint64_t _nextSourceId = 1;
 
   std::size_t _totalConsumedBytes = 0;
@@ -261,7 +261,7 @@ inline std::uint64_t Session::addEventSource(EventSource eventSource)
   std::lock_guard<std::mutex> lock(_mutex);
 
   eventSource.id = _nextSourceId;
-  _sources.emplace_back(std::move(eventSource));
+  serializeSizePrefixedTagged(eventSource, _sources);
   return _nextSourceId++;
 }
 
@@ -282,7 +282,7 @@ Session::ConsumeResult Session::consume(OutputStream& out)
   //  - Ensures only a single consumer is running at a time
   //  - Ensures safe read of _channels
   //  - Ensures safe read of Channel::writerProp (written by setChannelWriterName)
-  //  - Ensures safe read/write of _sources
+  //  - Ensures safe read of _sources
   //  - Ensures no new EventSource can be added to _sources while consuming
   //
   // Without this lock, the following becomes possible:
@@ -306,10 +306,10 @@ Session::ConsumeResult Session::consume(OutputStream& out)
   }
 
   // consume event sources before events
-  for (; _numConsumedSources < _sources.size(); ++_numConsumedSources)
-  {
-    result.bytesConsumed += consumeSpecialEntry(_sources[_numConsumedSources], out);
-  }
+  const std::streamsize sourceWriteSize = _sources.ssize() - _sourcesConsumePos;
+  out.write(_sources.data() + _sourcesConsumePos, sourceWriteSize);
+  _sourcesConsumePos += sourceWriteSize;
+  result.bytesConsumed += std::size_t(sourceWriteSize);
 
   // consume some events
   for (auto it = _channels.begin(); it != _channels.end();)
@@ -374,10 +374,8 @@ Session::ConsumeResult Session::reconsumeMetadata(OutputStream& out)
   result.bytesConsumed += serializeSizePrefixedTagged(clockSync, out);
 
   // add consumed sources
-  for (std::size_t i = 0; i < _numConsumedSources; ++i)
-  {
-    result.bytesConsumed += serializeSizePrefixedTagged(_sources[i], out);
-  }
+  out.write(_sources.data(), _sourcesConsumePos);
+  result.bytesConsumed += std::size_t(_sourcesConsumePos);
 
   _totalConsumedBytes += result.bytesConsumed;
   result.totalBytesConsumed = _totalConsumedBytes;
