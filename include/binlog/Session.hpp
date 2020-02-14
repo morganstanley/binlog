@@ -48,17 +48,22 @@ class Session
 public:
   struct Channel
   {
-    explicit Channel(std::size_t queueCapacity, WriterProp writerProp = {})
-      :queueBuffer(new char[queueCapacity]),
-       queue(queueBuffer.get(), queueCapacity),
-       closed(false),
-       writerProp(std::move(writerProp))
-    {}
+    explicit Channel(Session& session, std::size_t queueCapacity, WriterProp writerProp = {});
+    ~Channel();
 
-    std::unique_ptr<char> queueBuffer; /**< Underlying buffer of `queue` */
-    detail::Queue queue;        /**< Holds log events */
-    std::atomic<bool> closed;   /**< True, if queue will be no longer written */
-    WriterProp writerProp;      /**< Describes the writer of this channel (optional) */
+    Channel(const Channel&) = delete;
+    void operator=(const Channel&) = delete;
+
+    Channel(Channel&&) = delete;
+    void operator=(Channel&&) = delete;
+
+    detail::Queue& queue();
+
+    std::atomic<bool> closed;   /**< True, if queue will be no longer written */        // NOLINT
+    WriterProp writerProp;      /**< Describes the writer of this channel (optional) */ // NOLINT
+
+  private:
+    std::unique_ptr<char[]> _queue; /**< Magic, Queue, and the underlying buffer of `queue` */
   };
 
   /** Describe the result of a consume call */
@@ -188,11 +193,52 @@ private:
   detail::VectorOutputStream _specialEntryBuffer;
 };
 
+inline Session::Channel::Channel(Session& session, std::size_t queueCapacity, WriterProp writerProp)
+  :closed(false),
+   writerProp(std::move(writerProp)),
+   _queue(new char[sizeof(std::uint64_t) + sizeof(Session*) + sizeof(detail::Queue) + queueCapacity])
+{
+  // To be able to recover unconsumed queue data from memory dumps,
+  // put a magic number, a pointer to the owning session, the queue and the queue buffer
+  // next to each other.
+  char* buffer = _queue.get();
+
+  // The magic number is used to indentify the queue in the memory dump
+  new (buffer) std::uint64_t(0xFE213F716D34BCBC);
+  buffer += sizeof(std::uint64_t);
+
+  // Session* is used to separate the queues of different sessions of the program
+  new (buffer) Session*(&session);
+  buffer += sizeof(Session*);
+
+  // Queue is used normally to store log events, and also during recovery,
+  // to determine the unconsumed parts of the buffer.
+  static_assert(alignof(detail::Queue) <= alignof(std::uint64_t), "");
+  static_assert(alignof(detail::Queue) <= alignof(Session*), "");
+  char* queueBuffer = buffer + sizeof(detail::Queue);
+  new (buffer) detail::Queue(queueBuffer, queueCapacity);
+}
+
+inline Session::Channel::~Channel()
+{
+  // clear magic number - do not recover invalid data
+  std::uint64_t magic = 0;
+  memcpy(_queue.get(), &magic, sizeof(magic));
+
+  // destroy queue
+  queue().~Queue();
+}
+
+inline detail::Queue& Session::Channel::queue()
+{
+  return *reinterpret_cast<detail::Queue*>(_queue.get() + sizeof(std::uint64_t) + sizeof(Session*));
+}
+
 inline Session::Channel& Session::createChannel(std::size_t queueCapacity, WriterProp writerProp)
 {
   std::lock_guard<std::mutex> lock(_mutex);
 
-  _channels.emplace_back(queueCapacity, std::move(writerProp));
+  _channels.emplace_back(*this, queueCapacity, std::move(writerProp));
   return _channels.back();
 }
 
@@ -276,7 +322,7 @@ Session::ConsumeResult Session::consume(OutputStream& out)
     //  - Consumer finds queue is closed, removes it -> data loss
     const bool isClosed = it->closed;
 
-    detail::QueueReader reader(it->queue);
+    detail::QueueReader reader(it->queue());
     const detail::QueueReader::ReadResult data = reader.beginRead();
     if (data.size())
     {
