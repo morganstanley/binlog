@@ -24,6 +24,7 @@ include(ThreadSanitizer)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
+SET(Boost_USE_STATIC_LIBS OFF)
 if(BINLOG_FORCE_TESTS)
   find_package(Boost 1.64.0 REQUIRED COMPONENTS unit_test_framework filesystem system)
 else()
@@ -212,8 +213,9 @@ if(Boost_FOUND)
     test/unit/binlog/test_utils.cpp
   )
     target_compile_definitions(UnitTest PRIVATE
-      BOOST_TEST_DYN_LINK
       BOOST_TEST_NO_MAIN
+      BOOST_ALL_DYN_LINK
+      BOOST_ALL_NO_LIB
     )
     include_boost(UnitTest)
     link_boost(UnitTest unit_test_framework)
@@ -237,8 +239,8 @@ if(Boost_FOUND)
 
   add_executable(IntegrationTest test/integration/IntegrationTest.cpp)
     target_compile_definitions(IntegrationTest PRIVATE
-      BOOST_TEST_DYN_LINK
       BOOST_TEST_NO_MAIN
+      BOOST_ALL_DYN_LINK
       BOOST_ALL_NO_LIB
     )
     include_boost(IntegrationTest)
