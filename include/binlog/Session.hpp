@@ -182,7 +182,7 @@ private:
   std::mutex _mutex;
 
   std::list<Channel> _channels;
-  detail::VectorOutputStream _sources;
+  detail::RecoverableVectorOutputStream _sources = {0xFE214F726E35BDBC, this};
   std::streamsize _sourcesConsumePos = 0;
   std::uint64_t _nextSourceId = 1;
 
