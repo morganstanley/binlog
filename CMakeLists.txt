@@ -150,6 +150,16 @@ add_executable(bread
   target_link_libraries(bread PRIVATE binlog)
 
 #---------------------------
+# brecovery
+#---------------------------
+
+add_executable(brecovery
+  bin/brecovery.cpp
+  $<$<CXX_COMPILER_ID:MSVC>:bin/binaryio.cpp>
+)
+  target_link_libraries(brecovery PRIVATE binlog)
+
+#---------------------------
 # Documentation
 #---------------------------
 
@@ -272,6 +282,15 @@ if(Boost_FOUND)
   add_inttest(NamedWriters)
   add_inttest(SeverityControl)
   add_inttest(Categories)
+  add_inttest(Shell)
+
+  if(BINLOG_USE_ASAN OR BINLOG_USE_TSAN)
+    # Crash recovery test creates a coredump of Shell.
+    # Make sure it is not compiled with any sanitizer,
+    # to avoid dumping a multi TB shadow memory.
+    target_compile_options(Shell PRIVATE "-fno-sanitize=all")
+    target_link_options(Shell PRIVATE "-fno-sanitize=all")
+  endif()
 
 else()
   message(STATUS "Boost not found, will not build integration tests")
