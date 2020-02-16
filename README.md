@@ -24,7 +24,7 @@ remains). Furthermore, the log was **expensive to produce** (consider the string
 and float value) and **not trivial to parse** using automated tools. Conventional log solutions also have to
 make a trade-off: either implement synchronous logging (possibly via slow locking) that ensures the
 log events are sorted by creation time, or asynchronous logging (without global locks) that usually
-produces **unsorted output**.
+produces **unsorted output** and typically prone to data loss if the application crashes.
 
 Binlog solves these issues by using _structured binary logs_.
 The static parts (severity, format string, file and line, etc) are saved only once to the logfile.
@@ -43,6 +43,9 @@ _Binary logfiles_ are not human readable, but they can be converted to text usin
 The format of the text log is configurable, independent of the logfile.
 `bread` can also efficiently sort the logs by time, taking advantage of its structured nature.
 For further information, please refer to the [Documentation][].
+_Asynchronous logging_ saves cycles on the hot path, but allows log events to remain in the
+internal buffers if the application crashes. Binlog solves this by providing a recovery tool,
+`brecovery`, that recovers stuck data from coredumps in a platform agnostic way.
 
 ## Features
 
@@ -60,6 +63,7 @@ For further information, please refer to the [Documentation][].
  - Vertical separation of logs via custom categories
  - Horizontal separation of logs via runtime configurable severities
  - Sort logs by time while reading
+ - Recover buffered log events from coredumps
 
 ## Performance
 

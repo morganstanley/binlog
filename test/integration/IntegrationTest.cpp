@@ -1,11 +1,17 @@
 #include <boost/test/unit_test.hpp>
 
+#include <boost/process/detail/traits/wchar_t.hpp>
+#include <boost/process/env.hpp>
+#include <boost/process/environment.hpp>
 #include <boost/process/io.hpp>
+#include <boost/process/search_path.hpp>
 #include <boost/process/system.hpp>
 
 #include <mserialize/string_view.hpp>
 
+#include <algorithm> // sort
 #include <cctype> // isspace
+#include <cstdio> // remove
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -170,6 +176,80 @@ BOOST_AUTO_TEST_CASE(Pipe)
   bread.wait();
 
   compareVectors({"Hello"}, actual);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(Brecovery)
+
+BOOST_AUTO_TEST_CASE(RecoverMetadataAndData)
+{
+  namespace bp = boost::process;
+
+  // find gdb
+  const auto gdbpath = bp::search_path("gdb");
+  if (gdbpath.empty())
+  {
+    BOOST_TEST_MESSAGE("gdb not found, skip this test");
+    return;
+  }
+
+  // run shell in gdb, create a corefile
+  const std::string shell = g_inttest_dir + "Shell" + extension();
+  const std::string corepath = "shell." + std::to_string(boost::this_process::get_id()) + ".core";
+
+  bp::child gdb(
+    gdbpath,
+    "-q", "-iex", "set auto-load python-scripts off",
+    "-nx", "-batch", "-ex",
+    "print \"THIS IS A TEST. CRASH THE TEST PROGRAM\"", // make the test output less scary
+    "-ex", "run", "-ex", "gcore " + corepath, "--args", shell,
+    "log w1 hello w1",
+    "log w2 hello w2",
+    "log w1 bye w1",
+    "log w2 bye w2",
+    "terminate",
+    bp::std_in < bp::null
+  );
+  gdb.wait();
+
+  // check the core
+  std::ifstream core(corepath);
+  if (! core)
+  {
+    BOOST_TEST_MESSAGE("Could not generate corefile, skip this test");
+    return;
+  }
+
+  // recover data from the core
+  bp::pipe binary;
+
+  // dance around boost::process bug
+  auto env = boost::this_process::environment();
+  env.set("ASAN_OPTIONS", "allocator_may_return_null=1"); // we expect bad_alloc
+
+  bp::child brecovery(
+    g_inttest_dir + "brecovery" + extension(),
+    corepath,
+    bp::std_out > binary,
+    env
+  );
+
+  bp::ipstream text;
+  bp::child bread(g_bread_path, "-f", "%m", bp::std_in < binary, bp::std_out > text);
+
+  std::vector<std::string> actual = toVector(text);
+  std::sort(actual.begin(), actual.end()); // order of recovered events is unspecified
+
+  brecovery.wait();
+  binary.close();
+  bread.wait();
+
+  const std::vector<std::string> expected{"bye w1", "bye w2", "hello w1", "hello w2"};
+
+  compareVectors(expected, actual);
+
+  std::remove(corepath.data());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

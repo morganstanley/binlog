@@ -204,6 +204,21 @@ To customize the output and for further options, see the builtin help:
 
     $ bread -h
 
+## brecovery
+
+If the application crashes, because of the asynchronous logging employed by
+Binlog, it is possible that the most interesting log events, those directly
+preceding the crash, are still in the intermediate queues, waiting to be
+consumed and flushed to the logfile. The `brecovery` program takes a coredump
+(memory dump, crash dump, the memory image of the application at the time of the
+crash), searches for metadata and log queues, and writes recovered content to the specified file:
+
+    $ brecovery application.core recovered.blog
+
+The recovered logfile is a binary logfile, that can be read using `bread`:
+
+    $ bread recovered.blog
+
 # A More Elaborate Greeting of the World
 
 The first section, [Hello World](#hello-world) shows a very simple example,
