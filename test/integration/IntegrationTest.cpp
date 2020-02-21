@@ -63,6 +63,17 @@ std::vector<std::string> expectedDataFromSource(const std::string& name)
   return result;
 }
 
+std::vector<std::string> toVector(std::istream& input)
+{
+  std::vector<std::string> v;
+  for (std::string line; std::getline(input, line);)
+  {
+    v.push_back(std::move(line));
+  }
+
+  return v;
+}
+
 void compareVectors(const std::vector<std::string>& expected, const std::vector<std::string>& actual)
 {
   BOOST_TEST(actual == expected);
@@ -85,11 +96,7 @@ void runReadDiff(const std::string& name, const std::string& format)
   bp::child inttest(g_inttest_dir + name + extension(), bp::std_out > p);
   bp::child bread(g_bread_path, "-f", format, "-", bp::std_in < p, bp::std_out > text);
 
-  std::vector<std::string> actual;
-  for (std::string line; std::getline(text, line);)
-  {
-    actual.push_back(std::move(line));
-  }
+  const std::vector<std::string> actual = toVector(text);
 
   bread.wait();
   inttest.wait();
@@ -125,11 +132,7 @@ BOOST_AUTO_TEST_CASE(DateFormat)
   bp::ipstream text;
   bp::child bread(g_bread_path, "-f", "%u %m", "-d", "%Y-%m-%dT%H:%M:%S.%NZ", blogPath, bp::std_out > text);
 
-  std::vector<std::string> actual;
-  for (std::string line; std::getline(text, line);)
-  {
-    actual.push_back(std::move(line));
-  }
+  const std::vector<std::string> actual = toVector(text);
 
   bread.wait();
 
@@ -162,11 +165,7 @@ BOOST_AUTO_TEST_CASE(Pipe)
   binary.pipe().close(); // so getline will not hang when the pipe is fully consumed
 
   // read bread output
-  std::vector<std::string> actual;
-  for (std::string line; std::getline(text, line);)
-  {
-    actual.push_back(std::move(line));
-  }
+  const std::vector<std::string> actual = toVector(text);
 
   bread.wait();
 
