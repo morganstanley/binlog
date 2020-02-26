@@ -69,6 +69,9 @@ int main(int argc, const char* argv[])
   std::string command;
   while (std::getline(std::cin, command))
   {
+    // drop trailing \r on windows
+    if (! command.empty() && command.back() == '\r') { command.pop_back(); }
+
     execute(command);
     std::cout << "> " << std::flush;
   }
