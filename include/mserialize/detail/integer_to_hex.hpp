@@ -24,6 +24,13 @@ constexpr std::size_t hex_string_size(Integer v)
   return size;
 }
 
+#ifdef _MSC_VER
+  // "unary minus operator applied to unsigned type, result still unsigned"
+  // The referenced line will be never reached if Integer is unsigned.
+  #pragma warning(push)
+  #pragma warning(disable : 4146)
+#endif
+
 template <typename Integer>
 constexpr char* write_integer_as_hex(Integer v, char* end)
 {
@@ -53,6 +60,10 @@ constexpr char* write_integer_as_hex(Integer v, char* end)
 
   return end;
 }
+
+#ifdef _MSC_VER
+  #pragma warning(pop)
+#endif
 
 constexpr char* write_integer_as_hex(bool v, char* end)
 {
