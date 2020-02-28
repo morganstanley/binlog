@@ -184,7 +184,7 @@ add_executable(brecovery
 # Documentation
 #---------------------------
 
-markdown_to_html_group(Documentation UserGuide Mserialize)
+markdown_to_html_group(Documentation UserGuide Internals Mserialize)
 
 #---------------------------
 # Examples
