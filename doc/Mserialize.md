@@ -402,20 +402,26 @@ concatenated tags of the `T...` pack.
   <tr><td>Variant of <code>T...</code></td><td><code>&lt;t...&gt;</code></td></tr>
   <tr><td><code>void</code> (only to indicate empty state of a variant)</td>      <td><code>0</code></td></tr>
   <tr><td>Adapted <code>enum E : T { a, b = 123, c}</code></td><td>
-    <code>/t`E'0`a'7B`b'7C`c'\</code>, i.e:
-    <pre>EnumTag = / UnderlyingTypeTag EnumName Enumerator* \
-UnderlyingTypeTag = b|s|i|l|B|S|I|L
-EnumName = `Typename'
-Enumerator = ValueInHex `EnumeratorName' </pre>
+  <code>/t`E'0`a'7B`b'7C`c'\</code> (see below)
   </td></tr>
   <tr><td>Adapted <code>struct Foo { T1 a; T2 b; }</code></td><td>
-  <code>{Foo`a't1`b't2}</code>, i.e:
-  <pre>StructTag = { StructName StructField* }
-StructName = `Typename'
-StructField = `FieldName' FieldTag</pre>
+  <code>{Foo`a't1`b't2}</code> (see below)
   </td></tr>
 </tbody>
 </table>
+
+### Type tag of Adapted Enum
+
+    <EnumTag> ::= /<UnderlyingTypeTag><EnumName><Enumerator>*\
+    <UnderlyingTypeTag> ::= b|s|i|l|B|S|I|L
+    <EnumName> ::= `Typename'
+    <Enumerator> ::= ValueInHex `EnumeratorName'
+
+### Type tag of Adapted Struct
+
+    <StructTag> ::= {<StructName><StructField>*}
+    <StructName> ::= `Typename'
+    <StructField> ::= `FieldName' FieldTag
 
 ## Serialized format
 
