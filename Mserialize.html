@@ -56,7 +56,11 @@
 </ul>
 </li>
 <li><a href="#references">References</a><ul>
-<li><a href="#type-tags">Type tags</a></li>
+<li><a href="#type-tags">Type tags</a><ul>
+<li><a href="#type-tag-of-adapted-enum">Type tag of Adapted Enum</a></li>
+<li><a href="#type-tag-of-adapted-struct">Type tag of Adapted Struct</a></li>
+</ul>
+</li>
 <li><a href="#serialized-format">Serialized format</a></li>
 </ul>
 </li>
@@ -541,21 +545,25 @@ concatenated tags of the <code>T...</code> pack.</p>
   <tr><td>Variant of <code>T...</code></td><td><code>&lt;t...&gt;</code></td></tr>
   <tr><td><code>void</code> (only to indicate empty state of a variant)</td>      <td><code>0</code></td></tr>
   <tr><td>Adapted <code>enum E : T { a, b = 123, c}</code></td><td>
-    <code>/t`E'0`a'7B`b'7C`c'\</code>, i.e:
-    <pre>EnumTag = / UnderlyingTypeTag EnumName Enumerator* \
-UnderlyingTypeTag = b|s|i|l|B|S|I|L
-EnumName = `Typename'
-Enumerator = ValueInHex `EnumeratorName' </pre>
+  <code>/t`E'0`a'7B`b'7C`c'\</code> (see below)
   </td></tr>
   <tr><td>Adapted <code>struct Foo { T1 a; T2 b; }</code></td><td>
-  <code>{Foo`a't1`b't2}</code>, i.e:
-  <pre>StructTag = { StructName StructField* }
-StructName = `Typename'
-StructField = `FieldName' FieldTag</pre>
+  <code>{Foo`a't1`b't2}</code> (see below)
   </td></tr>
 </tbody>
 </table>
 
+<h3 id="type-tag-of-adapted-enum"><a class="toclink" href="#type-tag-of-adapted-enum">Type tag of Adapted Enum</a></h3>
+<pre><code>&lt;EnumTag&gt; ::= /&lt;UnderlyingTypeTag&gt;&lt;EnumName&gt;&lt;Enumerator&gt;*\
+&lt;UnderlyingTypeTag&gt; ::= b|s|i|l|B|S|I|L
+&lt;EnumName&gt; ::= `Typename'
+&lt;Enumerator&gt; ::= ValueInHex `EnumeratorName'
+</code></pre>
+<h3 id="type-tag-of-adapted-struct"><a class="toclink" href="#type-tag-of-adapted-struct">Type tag of Adapted Struct</a></h3>
+<pre><code>&lt;StructTag&gt; ::= {&lt;StructName&gt;&lt;StructField&gt;*}
+&lt;StructName&gt; ::= `Typename'
+&lt;StructField&gt; ::= `FieldName' FieldTag
+</code></pre>
 <h2 id="serialized-format"><a class="toclink" href="#serialized-format">Serialized format</a></h2>
 <p>By default, serializable types are mapped to type tags,
 and serialized according to that type tag, as described below.
@@ -589,7 +597,7 @@ not described here.</p>
       <hr/>
       <footer class="text-center text-muted">
         Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a> |
-        Generated: 2019. 12. 17.
+        Generated: 2020. 02. 28.
       </footer>
       <hr/>
     </div>
