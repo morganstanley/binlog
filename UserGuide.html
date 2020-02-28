@@ -24,6 +24,7 @@
           </div>
           <nav class="nav">
             <a class="nav-link" href="UserGuide.html">UserGuide</a>
+            <a class="nav-link" href="Internals.html">Internals</a>
             <a class="nav-link" href="Mserialize.html">Mserialize</a>
             <a class="nav-link" href="https://github.com/Morgan-Stanley/binlog">GitHub</a>
           </nav>
@@ -46,6 +47,7 @@
 </li>
 <li><a href="#tools">Tools</a><ul>
 <li><a href="#bread">bread</a></li>
+<li><a href="#brecovery">brecovery</a></li>
 </ul>
 </li>
 <li><a href="#a-more-elaborate-greeting-of-the-world">A More Elaborate Greeting of the World</a></li>
@@ -53,6 +55,9 @@
 <li><a href="#severity-control">Severity Control</a></li>
 <li><a href="#categories">Categories</a></li>
 <li><a href="#consume-logs">Consume Logs</a></li>
+<li><a href="#log-rotation">Log Rotation</a></li>
+<li><a href="#text-output">Text Output</a></li>
+<li><a href="#multiple-output">Multiple Output</a></li>
 </ul>
 </div>
 <h1 id="hello-world"><a class="toclink" href="#hello-world">Hello World</a></h1>
@@ -252,8 +257,33 @@ and writes the text to the standard output.</p>
 <p>The format of the text representation can be customized using command line switches:</p>
 <pre><code>$ bread -f "%S [%d] %n %m (%G:%L)" -d "%m/%d %H:%M:%S.%N" logfile.blog
 </code></pre>
+<p>The events of the logfile can be sorted by their timestamp using <code>-s</code>.
+The complete input is consumed first, then sorted and printed in one go.</p>
+<pre><code>$ bread -s logfile.blog
+</code></pre>
+<p>If no input file is specified, or it is <code>-</code>, <code>bread</code> reads from the standard input,
+acting like a filter that converts a binary log stream to text. This allows reading
+compressed logfiles:</p>
+<pre><code>$ zcat logfile.blog.gz | bread
+</code></pre>
+<p>With piping, a live logfile that is being written by the application can be read,
+even if log rotation is configured:</p>
+<pre><code>$ tail -c0 -F logfile.blog | bread
+</code></pre>
 <p>To customize the output and for further options, see the builtin help:</p>
 <pre><code>$ bread -h
+</code></pre>
+<h2 id="brecovery"><a class="toclink" href="#brecovery">brecovery</a></h2>
+<p>If the application crashes, because of the asynchronous logging employed by
+Binlog, it is possible that the most interesting log events, those directly
+preceding the crash, are still in the intermediate queues, waiting to be
+consumed and flushed to the logfile. The <code>brecovery</code> program takes a coredump
+(memory dump, crash dump, the memory image of the application at the time of the
+crash), searches for metadata and log queues, and writes recovered content to the specified file:</p>
+<pre><code>$ brecovery application.core recovered.blog
+</code></pre>
+<p>The recovered logfile is a binary logfile, that can be read using <code>bread</code>:</p>
+<pre><code>$ bread recovered.blog
 </code></pre>
 <h1 id="a-more-elaborate-greeting-of-the-world"><a class="toclink" href="#a-more-elaborate-greeting-of-the-world">A More Elaborate Greeting of the World</a></h1>
 <p>The first section, <a href="#hello-world">Hello World</a> shows a very simple example,
@@ -370,11 +400,99 @@ while (std::getline(std::cin, input))
 </code></pre>
 <p>For different kind of applications, calling <code>consume</code> periodically in a dedicated thread
 or task can be an option.</p>
+<h1 id="log-rotation"><a class="toclink" href="#log-rotation">Log Rotation</a></h1>
+<p><a href="https://en.wikipedia.org/wiki/Log_rotation">Log rotation</a> can be achieved by simply changing the output stream passed to <code>Session::consume</code>.
+<code>Session</code> does not know or care about the underlying device of the stream.
+However, metadata is not added automatically to the new file (as <code>Session</code> does not know
+that a rotation happened). To make the new file self contained (i.e: readable without the
+metadata in the old file), old metadata has to be added via <code>Session::reconsumeMetadata</code>:</p>
+<pre><code>if (std::rename("rotate.blog", "rotate.1.blog") != 0)
+{
+  std::cerr &lt;&lt; "Failed to rename rotate.blog to rotate.1.blog\n";
+  return 2;
+}
+
+logfile.close();
+logfile.open("rotate.blog", std::ofstream::out|std::ofstream::binary);
+
+// Metadata is now moved to rotate.1.blog, rotate.blog is empty.
+// To make rotate.blog stand alone, re-add metadata:
+binlog::default_session().reconsumeMetadata(logfile);
+</code></pre>
+<h1 id="text-output"><a class="toclink" href="#text-output">Text Output</a></h1>
+<p>The key feature of Binlog is producing structured, binary logfiles.
+However, in some cases, writing text output directly might be still desirable.
+This is easy to do using <code>TextOutputStream</code>:</p>
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/binlog/TextOutputStream.hpp">binlog/TextOutputStream.hpp</a>&gt; // requires binlog library to be linked
+#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/binlog/binlog.hpp">binlog/binlog.hpp</a>&gt;
+
+#include &lt;iostream&gt;
+
+int main()
+{
+  BINLOG_INFO("Hello Text Output!");
+
+  binlog::TextOutputStream output(std::cout);
+  binlog::consume(output);
+
+  return 0;
+}
+</code></pre>
+<p><code>TextOutputStream</code> requires the Binlog library to be linked to the application.</p>
+<h1 id="multiple-output"><a class="toclink" href="#multiple-output">Multiple Output</a></h1>
+<p><code>Session::consume</code> takes a single target only, but it is easy to multiplex the log stream
+to produce multiple output streams. With <code>EventFilter</code>, it is possible to route
+different kinds of events to different outputs, efficiently. In this example,
+the complete binary log is written to a logfile, but high severity events are also
+written to the standard error as text:</p>
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/binlog/EventFilter.hpp">binlog/EventFilter.hpp</a>&gt;
+#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/binlog/TextOutputStream.hpp">binlog/TextOutputStream.hpp</a>&gt; // requires binlog library to be linked
+
+// Write complete binlog output to `binary`,
+// and also write error and above events to `text` - as text.
+class MultiOutputStream
+{
+public:
+  MultiOutputStream(std::ostream& binary, std::ostream& text)
+    :_binary(binary),
+     _text(text),
+     _filter([](const binlog::EventSource& source) {
+        return source.severity &gt;= binlog::Severity::error;
+     })
+  {}
+
+  MultiOutputStream& write(const char* buffer, std::streamsize size)
+  {
+    _binary.write(buffer, size);
+
+    try
+    {
+      _filter.writeAllowed(buffer, std::size_t(size), _text);
+    }
+    catch (const std::runtime_error& ex)
+    {
+      std::cerr &lt;&lt; "Failed to convert buffer to text: " &lt;&lt; ex.what() &lt;&lt; "\n";
+    }
+
+    return *this;
+  }
+
+private:
+  std::ostream& _binary;
+  binlog::TextOutputStream _text;
+  binlog::EventFilter _filter;
+};
+</code></pre>
+<p>Usage is like before:</p>
+<pre><code>std::ofstream logfile(path, std::ofstream::out|std::ofstream::binary);
+MultiOutputStream output(logfile, std::cerr);
+binlog::consume(output);
+</code></pre>
 
       <hr/>
       <footer class="text-center text-muted">
         Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a> |
-        Generated: 2019. 12. 17.
+        Generated: 2020. 02. 28.
       </footer>
       <hr/>
     </div>

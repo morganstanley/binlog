@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="generator" content="binlog/doc/gendoc.py" />
+    <title>Internals | Binlog</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.0/css/bootstrap.min.css" integrity="sha384-SI27wrMjH3ZZ89r4o+fGIJtnzkAnFs3E4qz9DIYioCQ5l9Rd/7UAa8DHcaL8jkWt" crossorigin="anonymous">
+    <style>
+      pre { background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 0.6em 1em; }
+      h1,h2 { margin-top: 1em; }
+      div.navbar { padding: 8px 0; }
+      div.toc { float: right; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+
+      <div class="navbar-wrapper">
+        <div class="navbar" role="navigation">
+          <div class="navbar-header">
+            <a class="navbar-brand" href="index.html">Binlog</a>
+          </div>
+          <nav class="nav">
+            <a class="nav-link" href="UserGuide.html">UserGuide</a>
+            <a class="nav-link" href="Internals.html">Internals</a>
+            <a class="nav-link" href="Mserialize.html">Mserialize</a>
+            <a class="nav-link" href="https://github.com/Morgan-Stanley/binlog">GitHub</a>
+          </nav>
+        </div>
+      </div>
+
+      <h1>Binlog Internals</h1>
+      <p>Explaining how Binlog works, and why it is so fast.</p>
+<div class="toc">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#glossary">Glossary</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#life-of-an-event">Life of an Event</a></li>
+<li><a href="#binary-log-schema">Binary log schema</a></li>
+</ul>
+</div>
+<h1 id="introduction"><a class="toclink" href="#introduction">Introduction</a></h1>
+<p>The design goal of Binlog is correctness, ease of use and high performance.
+Flexibility and ease of change is preferred over a large number of features.</p>
+<p>Ease of use is achieved by supporting the logging of a <a href="UserGuide.html#logging">wide variety of types</a> out of the box,
+while also allowing simple adaption of custom <a href="UserGuide.html#logging-enums">enums</a> and <a href="UserGuide.html#logging-user-defined-structures">structures</a>.</p>
+<p>Regular, text based logfiles are redundant, expensive to produce, not trivial to parse - but easy to use.
+Binlog solves these issues by using binary logs, at the cost of adding an extra binary-to-text step
+to the reading of the logs.</p>
+<p>The binary log reduces redundancy by separating metadata (severity, category, format string, function, file, line)
+from data (timestamp and arguments). The performance is improved by not converting binary values to text
+in the application, only later, while reading the logs. Given the well defined format of the binary logfile,
+it is more efficient and less error prone to parse programmatically.
+The serialized format of the <a href="UserGuide.html#logging-user-defined-structures">adapted structures</a> integrates into this format, further strengthening
+the typed contract between the binary log writer and reader.</p>
+<h1 id="glossary"><a class="toclink" href="#glossary">Glossary</a></h1>
+<ul>
+<li><strong>Entry</strong>: A size prefixed binary blob. See Entries.hpp</li>
+<li><strong>Event</strong>: A kind of <strong>Entry</strong>, that corresponds to one log line in a text log</li>
+<li><strong>EventSource</strong>: A piece of code that produces <strong>Event</strong>s, can created by macros, e.g: <code>BINLOG_INFO</code></li>
+<li><strong>Session</strong>: A concurrently writable and readable log stream</li>
+<li><strong>SessionWriter</strong>: A (non-concurrently) writable handle of a <strong>Session</strong> for adding <strong>Event</strong>s</li>
+<li><strong>Producer</strong>: An actor (thread, coroutine, fiber, etc.) that uses a <strong>SessionWriter</strong> to produce <strong>Event</strong>s</li>
+<li><strong>OutputStream</strong>: The destination of metadata and data consumed from a <strong>Session</strong></li>
+<li><strong>Consumer</strong>: An actor that moves <strong>Entries</strong> from a <strong>Session</strong> to an <strong>OutputStream</strong></li>
+</ul>
+<h1 id="architecture"><a class="toclink" href="#architecture">Architecture</a></h1>
+<pre><code>+---------------+  addEvent
+| SessionWriter |-----------&gt;( Channel )----+
++---------------+                           |
+                                            |
++---------------+            ( Channel )    |   +---------+  consume  +--------------+
+| SessionWriter |-----------&gt;( Channel )----+--&gt;| Session |----------&gt;| OutputStream |
++---------------+                           |   +---------+           +--------------+
+       |                                    |        ^
+       |                     ( Channel )----+        |
+       |                                             |
+       +---------------------------------------------+
+                        addEventSource
+</code></pre>
+<p>The data flow of Binlog entries in a simple application is shown above.
+Each Producer owns a SessionWriter. Through the SessionWriter, Producers
+add EventSources (metadata) directly to the Session, and write Events (data) to a single-producer,
+single-consumer queue, wrapped by a Channel. Every Channel is owned by a Session.
+The Consumer reads the metadata from the Session, and the data from the Channels of the Session,
+and writes them to the OutputStream. The Producers ands the Consumer can be any user defined actor
+(thread, coroutine, fiber, etc.) - there's no hidden actor run by the Binlog library.</p>
+<p>If a SessionWriter fills up the queue of its Channel, by default, it allocates a new Channel,
+and closes the old one (see the second SessionWriter above).
+The Consumer, after fully consuming the closed Channel, will deallocate it.</p>
+<p>When a SessionWriter is destroyed, the owned Channel becomes closed.
+Like before, the Consumer, after fully consuming the closed Channel, will deallocate it.
+On the diagram above, such an orphan Channel can be seen, waiting to be fully consumed
+and deallocated.</p>
+<p>The asynchronous logging (i.e: SessionWriter does write OutputStream directly, but through the Channel)
+saves cycles for the Producer (the hot path) to reduce latency. The cost of asynchronous logging is manifold:
+First, Consumer task must be running periodically. Second, to restore the order of concurrently added
+Events, <a href="UserGuide.html#bread">bread</a> must do extra work. Third, if the application crashes, the remaining Events in the Channels
+must be <a href="UserGuide.html#brecovery">recovered from the core dump</a>.</p>
+<h1 id="life-of-an-event"><a class="toclink" href="#life-of-an-event">Life of an Event</a></h1>
+<p>The life of an Event begins with the creation of an EventSource.
+The EventSource describes the static properties of an Event,
+e.g: severity, category, function, file, line, format string and <a href="Mserialize.html#visiting-serialized-values">argument tags</a>.
+The newly created EventSource is added to the Session associated with the given SessionWriter.
+The Session assigns a unique identifier to the source, that will be used by the events produced
+by the source, and saves a copy of the EventSource. This happens only once for each EventSource.</p>
+<p>After the source is created, space for an Event is allocated in the queue of the Channel
+associated with the given SessionWriter. If the allocation fails, a new Channel is created,
+and the old one becomes closed.
+Now there is enough space, the Event fields are serialized into the queue:
+size, EventSource identifier, clock value (the timestamp of the Event), and the log arguments
+(the values the will be substitute the <code>{}</code> placeholders in the format string later).
+The arguments are serialized by <a href="Mserialize.html">Mserialize</a>, that means they are mostly copied directly
+(no binary to text conversion), with very little decoration.
+The number of arguments must match the number of placeholders in the format string,
+and this is enforced compile time.</p>
+<p>Following the serialization, the written data is committed to the queue.
+The commit is atomic: the event will be either completely visible to the Consumer of the Session,
+or it is not visible. Partial entries cannot be observed.
+After the commit, the hot path of the Producer ends.</p>
+<p>The periodically running Consumer first reads the metadata from the Session
+(EventSources and ClockSync, if needed) and writes it to the OutputStream.
+After the available metadata is fully consumed, it proceeds to poll each Channel.
+Data (batch of Events) read from a Channel, preceded by a WriterProp kind of metadata, that
+describes the SessionWriter is written to the OutputStream.</p>
+<p>By design, the OutputStream is not owned by the Session, and only constrained by
+a <a href="Mserialize.html#outputstream">simple concept</a>, to make extensions simple: log rotation,
+a syslog or custom monitoring backend, a network target are easy to add.</p>
+<h1 id="binary-log-schema"><a class="toclink" href="#binary-log-schema">Binary log schema</a></h1>
+<p>The Binlog logfile is an append only stream of Binlog entries.
+Entries can represent metadata (e.g: EventSource, WriterProp, ClockSync),
+or data (i.e: log events). Metadata entries always precede data entries
+that reference them.</p>
+<pre><code>&lt;BinlogStream&gt; ::= &lt;Entry&gt;*
+&lt;Entry&gt;        ::= &lt;EntrySize&gt; &lt;EntryPayload&gt;
+&lt;EntrySize&gt;    ::= uint32
+&lt;EntryPayload&gt; ::= &lt;EventSource&gt; | &lt;WriterProp&gt; | &lt;ClockSync&gt; | &lt;Event&gt;
+
+&lt;EventSource&gt; ::= &lt;EventSourceTag&gt; &lt;EventSourceId&gt; &lt;Severity&gt; &lt;Category&gt; &lt;Function&gt; &lt;File&gt; &lt;Line&gt; &lt;FormatString&gt; &lt;ArgumentTags&gt;
+&lt;EventSourceTag&gt; ::= uint64(-1)
+&lt;EventSourceId&gt;  ::= uint64
+&lt;Severity&gt;       ::= uint16
+&lt;Category&gt;       ::= &lt;String&gt;
+&lt;Function&gt;       ::= &lt;String&gt;
+&lt;File&gt;           ::= &lt;String&gt;
+&lt;Line&gt;           ::= uint64
+&lt;FormatString&gt;   ::= &lt;String&gt;
+&lt;ArgumentTags&gt;   ::= &lt;String&gt;
+
+&lt;WriterProp&gt; ::= &lt;WriterPropTag&gt; &lt;WriterPropId&gt; &lt;WriterPropName&gt; &lt;BatchSize&gt;
+&lt;WriterPropTag&gt;  ::= uint64(-2)
+&lt;WriterPropId&gt;   ::= uint64
+&lt;WriterPropName&gt; ::= &lt;String&gt;
+&lt;BatchSize&gt;      ::= uint64
+
+&lt;ClockSync&gt; ::= &lt;ClockSyncTag&gt; &lt;ClockValue&gt; &lt;ClockFrequency&gt; &lt;NsSinceEpoch&gt; &lt;TzOffset&gt; &lt;TzName&gt;
+&lt;ClockSyncTag&gt;   ::= uint64(-3)
+&lt;ClockValue&gt;     ::= uint64
+&lt;ClockFrequency&gt; ::= uint64
+&lt;NsSinceEpoch&gt;   ::= uint64
+&lt;TzOffset&gt;       ::= int32
+&lt;TzName&gt;         ::= &lt;String&gt;
+
+&lt;Event&gt; ::= &lt;EventSourceId&gt; &lt;ClockValue&gt; &lt;Arguments&gt;
+&lt;Arguments&gt; ::= byte*   # serialized values according to the mserialize format
+
+&lt;String&gt; ::= &lt;SequenceSize&gt; char*
+</code></pre>
+<p>The semantic meaning of the fields is described in Entries.hpp.
+Numbers are serialized according to the byte order of the producing host.
+Tags with their most significant bit set indicate a metadata entry.
+To ensure backward compatibility, a new field can be added only to the end
+of any specific entry type. Adding a new metadata entry type is allowed,
+as long as it is not required to parse the data.
+To ensure forward compatibility, it is not an error if an entry has
+extra payload after the last field (as long as the size field indicates that),
+and unknown metadata entries are ignored.</p>
+
+      <hr/>
+      <footer class="text-center text-muted">
+        Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a> |
+        Generated: 2020. 02. 28.
+      </footer>
+      <hr/>
+    </div>
+  </body>
+</html>
+
