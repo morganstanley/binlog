@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(location)
   BOOST_TEST(getEvents(session, "%M %F %L %m") == std::vector<std::string>{msg.str()}, boost::test_tools::per_element());
 }
 
-BOOST_AUTO_TEST_CASE(writer)
+BOOST_AUTO_TEST_CASE(writer_name)
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);

@@ -48,7 +48,7 @@ class Session
 public:
   struct Channel
   {
-    explicit Channel(Session& session, std::size_t queueCapacity, WriterProp writerProp = {});
+    explicit Channel(Session& session, std::size_t queueCapacity, WriterProp writerProp_ = {});
     ~Channel();
 
     Channel(const Channel&) = delete;
@@ -193,9 +193,9 @@ private:
   detail::VectorOutputStream _specialEntryBuffer;
 };
 
-inline Session::Channel::Channel(Session& session, std::size_t queueCapacity, WriterProp writerProp)
+inline Session::Channel::Channel(Session& session, std::size_t queueCapacity, WriterProp writerProp_)
   :closed(false),
-   writerProp(std::move(writerProp)),
+   writerProp(std::move(writerProp_)),
    _queue(new char[sizeof(std::uint64_t) + sizeof(Session*) + sizeof(detail::Queue) + queueCapacity])
 {
   // To be able to recover unconsumed queue data from memory dumps,

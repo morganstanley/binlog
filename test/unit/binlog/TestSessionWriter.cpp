@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(add_events_from_threads)
   };
   eventSource.id = session.addEventSource(eventSource);
 
-  auto writeEvents = [&eventSource](binlog::Session& session, const char* name)
+  auto writeEvents = [&eventSource, &session](const char* name)
   {
     binlog::SessionWriter writer(session, 4096);
     writer.setName(name);
@@ -176,8 +176,8 @@ BOOST_AUTO_TEST_CASE(add_events_from_threads)
     }
   };
 
-  std::thread threadA(writeEvents, std::ref(session), "A");
-  std::thread threadB(writeEvents, std::ref(session), "B");
+  std::thread threadA(writeEvents, "A");
+  std::thread threadB(writeEvents, "B");
 
   TestStream out;
   std::atomic<bool> write_done{false};

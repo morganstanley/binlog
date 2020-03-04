@@ -615,14 +615,14 @@ struct Pair
   void b(B b) { _b = b; }
 
   Pair() = default; // NOLINT(cppcoreguidelines-pro-type-member-init)
-  Pair(A a, B b) :a(std::move(a)), _b(std::move(b)) {}
+  Pair(A a_, B b) :a(std::move(a_)), _b(std::move(b)) {}
 
 private:
   B _b;
 
-  friend bool operator==(const Pair& a, const Pair& b)
+  friend bool operator==(const Pair& x, const Pair& y)
   {
-    return a.a == b.a && a._b == b._b;
+    return x.a == y.a && x._b == y._b;
   }
 
   friend std::ostream& operator<<(std::ostream& out, const Pair& p)
@@ -642,9 +642,9 @@ struct NsPair
   A a{};
   B b{};
 
-  friend bool operator==(const NsPair& a, const NsPair& b)
+  friend bool operator==(const NsPair& x, const NsPair& y)
   {
-    return a.a == b.a && a.b == b.b;
+    return x.a == y.a && x.b == y.b;
   }
 };
 
@@ -656,9 +656,9 @@ struct Array
   std::array<T, N> a;
 
 private:
-  friend bool operator==(const Array& a, const Array& b)
+  friend bool operator==(const Array& x, const Array& y)
   {
-    return a.a == b.a;
+    return x.a == y.a;
   }
 };
 

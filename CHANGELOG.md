@@ -1,5 +1,11 @@
 # Changelog
 
+## Upcoming Release
+
+### Fixed
+
+ - Use -Wshadow on supporting compilers, fix warnings
+
 ## 2020-02-29
 
 First stable release.
