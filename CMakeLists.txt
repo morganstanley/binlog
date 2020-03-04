@@ -84,7 +84,7 @@ if (MSVC)
   add_compile_options(/W4)
 else ()
   add_compile_options(-Wall -Wextra -Werror -pedantic)
-  add_optional_compile_options(-Wconversion -Wsign-conversion -Wold-style-cast -Wsuggest-override)
+  add_optional_compile_options(-Wconversion -Wsign-conversion -Wold-style-cast -Wsuggest-override -Wshadow)
 endif ()
 
 #---------------------------

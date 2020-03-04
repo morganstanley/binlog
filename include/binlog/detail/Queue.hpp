@@ -97,11 +97,11 @@ struct Queue
    *
    * @pre [buffer,buffer+capacity) must be valid
    */
-  explicit Queue(char* buffer, std::size_t capacity)
+  explicit Queue(char* buffer_, std::size_t capacity_)
     :writeIndex(0),
      dataEnd(0),
-     capacity(capacity),
-     buffer(buffer),
+     capacity(capacity_),
+     buffer(buffer_),
      readIndex(0)
   {}
 
