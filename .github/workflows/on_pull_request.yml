@@ -27,6 +27,13 @@ jobs:
           mkdir SubdirTest && cd SubdirTest
           cmake ../test/cmake/subdir
           make -j2 VERBOSE=1
+      - name: Test Depending on Install
+        run: |
+          make -C Release install DESTDIR=install
+          export CMAKE_PREFIX_PATH=$(pwd)/Release/install/usr/local/lib/cmake
+          mkdir InstallTest && cd InstallTest
+          cmake ../test/cmake/install
+          make -j2 VERBOSE=1
 
   build_linux_gcc_asan:
     name: Build on Linux with GCC+ASAN
