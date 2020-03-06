@@ -24,7 +24,7 @@ include(ThreadSanitizer)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-SET(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_STATIC_LIBS OFF)
 if(BINLOG_FORCE_TESTS)
   find_package(Boost 1.64.0 REQUIRED COMPONENTS unit_test_framework filesystem system)
 else()
@@ -138,10 +138,17 @@ endif()
 #---------------------------
 
 add_library(headers INTERFACE)
-  target_include_directories(headers INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-  )
+  if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
+    target_include_directories(headers INTERFACE
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:include>
+    )
+  else()
+    target_include_directories(headers SYSTEM INTERFACE
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:include>
+    )
+  endif()
   if(CLOCK_GETTIME_IN_LIBRT)
     target_link_libraries(headers INTERFACE -lrt)
   endif()
@@ -157,6 +164,12 @@ add_library(binlog STATIC
 )
   target_link_libraries(binlog PUBLIC headers)
   set_property(TARGET binlog PROPERTY INTERPROCEDURAL_OPTIMIZATION ${BINLOG_HAS_IPO})
+
+# make add_subdirectory usage consistent with find_package
+if(NOT(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME}))
+  add_library(binlog::headers ALIAS headers)
+  add_library(binlog::binlog  ALIAS binlog)
+endif()
 
 #---------------------------
 # bread
