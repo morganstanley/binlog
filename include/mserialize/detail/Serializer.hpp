@@ -122,6 +122,8 @@ struct BuiltinSerializer<Sequence, enable_spec_if<
   }
 
 private:
+  using value_type = sequence_value_t<Sequence>;
+
   template <typename OutputStream>
   static void serialize_elems(
     std::false_type /* no batch copy */,
@@ -130,7 +132,7 @@ private:
   {
     for (auto&& elem : s)
     {
-      mserialize::serialize(elem, ostream);
+      mserialize::serialize<value_type>(elem, ostream);
     }
   }
 
@@ -153,7 +155,7 @@ private:
     std::size_t result = 0;
     for (auto&& elem : s)
     {
-      result += mserialize::serialized_size(elem);
+      result += mserialize::serialized_size<value_type>(elem);
     }
     return result;
   }
