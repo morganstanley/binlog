@@ -90,19 +90,39 @@ jobs:
           cd Clang
           ctest -VV
 
-  # do not test on macOS: boost is not installed,
-  # installing it from brew takes too long
   build_mac_clang:
     name: Build on macOS with Clang
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Cache Boost
+        id: cache-boost
+        uses: actions/cache@v1
+        with:
+          path: boost_1_72_0/installdir
+          key: osx-boost_1_72_0
+      - name: Install Boost
+        if: steps.cache-boost.outputs.cache-hit != 'true'
+        run: |
+          wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.gz -Oboost.tar.gz
+          tar -zxf boost.tar.gz
+          cd boost_1_72_0
+          mkdir -p installdir
+          ./bootstrap.sh --prefix=./installdir --with-libraries=filesystem,system,test
+          ./b2 install
       - name: Build
         run: |
+          cd boost_1_72_0/installdir
+          BOOST_ROOT=$(pwd)
+          cd ../../
           mkdir Release
           cd Release
-          cmake ..
+          cmake -DBOOST_ROOT=${BOOST_ROOT} -DBoost_ARCHITECTURE=-x64 -DBINLOG_FORCE_TESTS=ON ..
           make -j2 VERBOSE=1
+      - name: Test
+        run: |
+          cd Release
+          ctest -VV
 
   build_win_msvc:
     name: Build on Windows with MSVC
