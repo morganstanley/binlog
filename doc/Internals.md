@@ -56,15 +56,16 @@ the typed contract between the binary log writer and reader.
 The data flow of Binlog entries in a simple application is shown above.
 Each Producer owns a SessionWriter. Through the SessionWriter, Producers
 add EventSources (metadata) directly to the Session, and write Events (data) to a single-producer,
-single-consumer queue, wrapped by a Channel. Every Channel is owned by a Session.
+single-consumer queue, wrapped by a Channel. Every Channel is co-owned by a Session and a SessionWriter.
 The Consumer reads the metadata from the Session, and the data from the Channels of the Session,
 and writes them to the OutputStream. The Producers ands the Consumer can be any user defined actor
 (thread, coroutine, fiber, etc.) - there's no hidden actor run by the Binlog library.
 
 If a SessionWriter fills up the queue of its Channel, by default, it allocates a new Channel,
-and closes the old one (see the second SessionWriter above).
+and closes the old one (see the second SessionWriter above), by dropping the owning reference to it.
 The Consumer, after fully consuming the closed Channel, will deallocate it.
 
+A Channel is said to be closed, if it is exclusively owned by a Session.
 When a SessionWriter is destroyed, the owned Channel becomes closed.
 Like before, the Consumer, after fully consuming the closed Channel, will deallocate it.
 On the diagram above, such an orphan Channel can be seen, waiting to be fully consumed
@@ -90,7 +91,7 @@ by the source, and saves a copy of the EventSource. This happens only once for e
 
 After the source is created, space for an Event is allocated in the queue of the Channel
 associated with the given SessionWriter. If the allocation fails, a new Channel is created,
-and the old one becomes closed.
+and the old one becomes closed (as the writer drops its reference to it).
 Now there is enough space, the Event fields are serialized into the queue:
 size, EventSource identifier, clock value (the timestamp of the Event), and the log arguments
 (the values the will be substitute the `{}` placeholders in the format string later).

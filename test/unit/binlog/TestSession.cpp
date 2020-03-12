@@ -27,24 +27,24 @@ BOOST_AUTO_TEST_CASE(channel_lifecycle)
   BOOST_TEST(cr.channelsPolled == 0);
   BOOST_TEST(cr.channelsRemoved == 0);
 
-  binlog::Session::Channel& ch1 = session.createChannel(128);
+  std::shared_ptr<binlog::Session::Channel> ch1 = session.createChannel(128);
 
   cr = session.consume(out);
   BOOST_TEST(cr.channelsPolled == 1);
   BOOST_TEST(cr.channelsRemoved == 0);
 
-  binlog::Session::Channel& ch2 = session.createChannel(128);
+  std::shared_ptr<binlog::Session::Channel> ch2 = session.createChannel(128);
 
   cr = session.consume(out);
   BOOST_TEST(cr.channelsPolled == 2);
   BOOST_TEST(cr.channelsRemoved == 0);
 
-  ch1.closed = true;
+  ch1.reset();
   cr = session.consume(out);
   BOOST_TEST(cr.channelsPolled == 2);
   BOOST_TEST(cr.channelsRemoved == 1);
 
-  ch2.closed = true;
+  ch2.reset();
   cr = session.consume(out);
   BOOST_TEST(cr.channelsPolled == 1);
   BOOST_TEST(cr.channelsRemoved == 1);
@@ -57,10 +57,10 @@ BOOST_AUTO_TEST_CASE(channel_lifecycle)
 BOOST_AUTO_TEST_CASE(set_channel_name)
 {
   binlog::Session session;
-  binlog::Session::Channel& ch = session.createChannel(128);
+  std::shared_ptr<binlog::Session::Channel> ch = session.createChannel(128);
 
-  session.setChannelWriterName(ch, "Sio");
-  BOOST_TEST(ch.writerProp.name == "Sio");
+  session.setChannelWriterName(*ch, "Sio");
+  BOOST_TEST(ch->writerProp.name == "Sio");
 }
 
 BOOST_AUTO_TEST_CASE(min_severity)

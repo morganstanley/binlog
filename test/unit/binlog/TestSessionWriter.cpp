@@ -313,4 +313,18 @@ BOOST_AUTO_TEST_CASE(move_assign)
   BOOST_TEST(getEvents(session, "%n %m") == expectedEvents, boost::test_tools::per_element());
 }
 
+BOOST_AUTO_TEST_CASE(swap_writers_of_different_sessions)
+{
+  binlog::Session sa;
+  binlog::SessionWriter wa(sa, 128);
+
+  binlog::Session sb;
+  binlog::SessionWriter wb(sb, 128);
+
+  std::swap(wa, wb);
+  // at this point, wa references a channel of sb,
+  // but sb is destructed first. ASAN will detect
+  // if wa accesses a destructed channel.
+}
+
 BOOST_AUTO_TEST_SUITE_END()
