@@ -269,6 +269,7 @@ if(Boost_FOUND)
     target_include_directories(UnitTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
   add_test(NAME UnitTest COMMAND UnitTest --log_level=test_suite --color_output=true)
+  set_property(TEST UnitTest PROPERTY ENVIRONMENT ASAN_OPTIONS=detect_leaks=1)
 
 else()
   message(STATUS "Boost not found, will not build unit tests")
@@ -297,6 +298,7 @@ if(Boost_FOUND)
 
   add_test(NAME IntegrationTest
     COMMAND IntegrationTest --log_level=test_suite --color_output=true -- "$<TARGET_FILE:bread>" "$<TARGET_FILE_DIR:IntegrationTest>" "${PROJECT_SOURCE_DIR}")
+  set_property(TEST IntegrationTest PROPERTY ENVIRONMENT ASAN_OPTIONS=detect_leaks=1)
 
   function(add_inttest name)
     add_executable(${name} test/integration/${name}.cpp $<$<CXX_COMPILER_ID:MSVC>:bin/binaryio.cpp>)
