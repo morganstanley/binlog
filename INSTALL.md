@@ -51,7 +51,7 @@ To be used when invoking `cmake`.
 
  - `-DBINLOG_USE_CLANG_TIDY`: runs clang-tidy on built sources. Requires cmake 3.6 or greater.
  - `-DBINLOG_SOURCE_BROWSER_URL`: if specified, links to code in documentation will use this prefix
- - `-DBINLOG_USE_ASAN`: use [address sanitizer][] (with gcc or clang)
+ - `-DBINLOG_USE_ASAN`: use [address sanitizer][] (with gcc or clang) - also enables the Leak Sanitizer
  - `-DBINLOG_USE_TSAN`: use [thread sanitizer][] (with gcc or clang)
  - `-DBINLOG_GEN_COVERAGE`: generate coverage data
  - `-DBINLOG_FORCE_TESTS`: fail during configuration if tests will not be built
