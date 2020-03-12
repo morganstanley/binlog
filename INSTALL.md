@@ -53,12 +53,14 @@ To be used when invoking `cmake`.
  - `-DBINLOG_SOURCE_BROWSER_URL`: if specified, links to code in documentation will use this prefix
  - `-DBINLOG_USE_ASAN`: use [address sanitizer][] (with gcc or clang) - also enables the Leak Sanitizer
  - `-DBINLOG_USE_TSAN`: use [thread sanitizer][] (with gcc or clang)
+ - `-DBINLOG_USE_UBSAN`: use [undefined behavior sanitizer][] (with gcc or clang)
  - `-DBINLOG_GEN_COVERAGE`: generate coverage data
  - `-DBINLOG_FORCE_TESTS`: fail during configuration if tests will not be built
  - `-DBOOST_ROOT`: specifies the path to an alternate boost installation (tests depend on boost)
 
 [address sanitizer]: https://github.com/google/sanitizers/wiki/AddressSanitizer
 [thread sanitizer]: https://github.com/google/sanitizers/wiki/ThreadSanitizerCppManual
+[undefined behavior sanitizer]: https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
 
 ## Different Build Flavours
 
