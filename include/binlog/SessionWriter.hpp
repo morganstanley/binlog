@@ -8,6 +8,7 @@
 
 #include <algorithm> // max
 #include <cstddef>
+#include <memory> // shared_ptr
 #include <utility> // move
 
 namespace binlog {
@@ -35,14 +36,14 @@ public:
   explicit SessionWriter(Session& session, std::size_t queueCapacity = 1 << 20, std::uint64_t id = {}, std::string name = {});
 
   /** Marks the underlying channel closed. */
-  ~SessionWriter();
+  ~SessionWriter() = default;
 
   SessionWriter(const SessionWriter&) = delete;
   SessionWriter& operator=(const SessionWriter&) = delete;
 
   // Moved-from objects can be assigned to or destructed
-  SessionWriter(SessionWriter&& rhs) noexcept;
-  SessionWriter& operator=(SessionWriter&& rhs) noexcept;
+  SessionWriter(SessionWriter&& rhs) noexcept = default;
+  SessionWriter& operator=(SessionWriter&& rhs) noexcept = default;
 
   /** @return a reference to the session it is attached to */
   Session& session() { return *_session; }
@@ -115,42 +116,17 @@ private:
   bool replaceChannel(std::size_t minQueueCapacity) noexcept;
 
   Session* _session;
-  Session::Channel* _channel;
+  std::shared_ptr<Session::Channel> _channel;
   detail::QueueWriter _qw;
 };
 
 inline SessionWriter::SessionWriter(Session& session, std::size_t queueCapacity, std::uint64_t id, std::string name)
   :_session(& session),
-   _channel(& session.createChannel(queueCapacity)),
+   _channel(session.createChannel(queueCapacity)),
    _qw(_channel->queue())
 {
   if (id != 0) { setId(id); }
   if (! name.empty()) { setName(std::move(name)); }
-}
-
-inline SessionWriter::~SessionWriter()
-{
-  if (_channel != nullptr)
-  {
-    _channel->closed = true;
-  }
-  // else: moved from object
-}
-
-inline SessionWriter::SessionWriter(SessionWriter&& rhs) noexcept
-  :_session(rhs._session),
-   _channel(rhs._channel),
-   _qw(rhs._qw)
-{
-  rhs._channel = nullptr; // do not close channel when rhs is destructed
-}
-
-inline SessionWriter& SessionWriter::operator=(SessionWriter&& rhs) noexcept
-{
-  _qw = rhs._qw;
-  std::swap(_session, rhs._session);
-  std::swap(_channel, rhs._channel);
-  return *this;
 }
 
 inline void SessionWriter::setId(std::uint64_t id)
@@ -200,10 +176,8 @@ inline bool SessionWriter::replaceChannel(std::size_t minQueueCapacity) noexcept
   try
   {
     WriterProp wp{_channel->writerProp.id, _channel->writerProp.name, 0}; // avoid racing on the last field
-    Session::Channel& newChannel = _session->createChannel(newCapacity, std::move(wp));
-    _qw = detail::QueueWriter(newChannel.queue());
-    _channel->closed = true;
-    _channel = &newChannel;
+    _channel = _session->createChannel(newCapacity, std::move(wp));
+    _qw = detail::QueueWriter(_channel->queue());
   }
   catch (...)
   {
