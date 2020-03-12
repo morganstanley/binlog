@@ -36,7 +36,7 @@ jobs:
           make -j2 VERBOSE=1
 
   build_linux_gcc_asan:
-    name: Build on Linux with GCC+ASAN
+    name: Build on Linux with GCC+ASAN+UBSAN
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -45,7 +45,7 @@ jobs:
           set -x
           mkdir AddressSanitized
           cd AddressSanitized
-          cmake -DBOOST_ROOT=$BOOST_ROOT_1_69_0 -DBoost_ARCHITECTURE=-x64 -DBINLOG_FORCE_TESTS=ON -DBINLOG_USE_ASAN=On ..
+          cmake -DBOOST_ROOT=$BOOST_ROOT_1_69_0 -DBoost_ARCHITECTURE=-x64 -DBINLOG_FORCE_TESTS=ON -DBINLOG_USE_ASAN=On -DBINLOG_USE_UBSAN=On ..
       - name: Build
         run: |
           cd AddressSanitized

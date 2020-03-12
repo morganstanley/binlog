@@ -31,6 +31,9 @@ constexpr std::size_t hex_string_size(Integer v)
   #pragma warning(disable : 4146)
 #endif
 
+// static_cast below: writing v /= 16 triggers GCC ubsan error:
+// error: conversion from 'int' to 'unsigned char' may change value [-Werror=conversion]
+
 template <typename Integer>
 constexpr char* write_integer_as_hex(Integer v, char* end)
 {
@@ -45,7 +48,7 @@ constexpr char* write_integer_as_hex(Integer v, char* end)
     while (v != 0)
     {
       *--end = digits[v % 16];
-      v /= 16;
+      v = static_cast<Integer>(v / 16);
     }
   }
   else
@@ -53,7 +56,7 @@ constexpr char* write_integer_as_hex(Integer v, char* end)
     while (v != 0)
     {
       *--end = digits[-(v % 16)];
-      v /= 16;
+      v = static_cast<Integer>(v / 16);
     }
     *--end = '-';
   }

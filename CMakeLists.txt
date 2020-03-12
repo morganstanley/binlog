@@ -16,6 +16,7 @@ include(Coverage)
 include(MarkdownToHtml)
 include(OptionalCompileOption)
 include(ThreadSanitizer)
+include(UndefinedSanitizer)
 
 #---------------------------
 # Depencencies
