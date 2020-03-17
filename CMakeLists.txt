@@ -73,7 +73,7 @@ endif()
 # C++ standard
 #---------------------------
 
-set(CMAKE_CXX_STANDARD 14)            # -std=c++14
+set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ standard (11/14/17/20/...)") # -std=c++14
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)         # no gnu++14
 

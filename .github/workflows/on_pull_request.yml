@@ -35,6 +35,26 @@ jobs:
           cmake ../test/cmake/install
           make -j2 VERBOSE=1
 
+  build_linux_gcc_cpp17:
+    name: Build on Linux with GCC, C++17
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Configure
+        run: |
+          set -x
+          mkdir Release
+          cd Release
+          cmake -DBOOST_ROOT=$BOOST_ROOT_1_69_0 -DBoost_ARCHITECTURE=-x64 -DBINLOG_FORCE_TESTS=ON -DCMAKE_CXX_STANDARD=17 ..
+      - name: Build
+        run: |
+          cd Release
+          make -j2 VERBOSE=1
+      - name: Test
+        run: |
+          cd Release
+          ctest -VV
+
   build_linux_gcc_asan:
     name: Build on Linux with GCC+ASAN+UBSAN
     runs-on: ubuntu-latest
