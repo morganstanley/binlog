@@ -71,7 +71,7 @@ like any other container, but have a special text representation:
 `const char*` arguments, because of established convention, are assumed to
 point to null terminated strings, therefore logged and displayed accordingly.
 
-## Logging Pointers
+## Logging Pointers and Optionals
 
 Raw and standard smart pointers pointing to a loggable `element_type`
 are loggable by default:
@@ -83,6 +83,11 @@ If the pointer is _empty_ (i.e: it points to no valid object),
 no value is logged, and in the text log it will be shown as `{null}`.
 Logging of `weak_ptr` is not supported, those must be `.lock()`-ed first.
 
+If C++17 is available, the standard optional with a loggable `value_type`
+can be made loggable:
+
+    [catchfile test/integration/LoggingOptionals.cpp stdopt]
+
 Aside the standard pointers, any pointer or optional-like type is loggable
 that satisfies the following constraints:
 
@@ -90,7 +95,7 @@ that satisfies the following constraints:
  - Dereferencing it yields to a loggable type
  - It is declared as being an optional, e.g:
 
-        [catchfile test/integration/LoggingPointers.cpp optspec]
+        [catchfile test/integration/LoggingOptionals.cpp optspec]
 
 ## Logging Pairs and Tuples
 

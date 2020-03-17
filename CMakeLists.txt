@@ -330,6 +330,11 @@ if(Boost_FOUND)
     target_link_options(Shell PRIVATE "-fno-sanitize=all")
   endif()
 
+  if(${CMAKE_CXX_STANDARD} GREATER_EQUAL 17)
+    add_inttest(LoggingOptionals)
+      include_boost(LoggingOptionals)
+  endif()
+
 else()
   message(STATUS "Boost not found, will not build integration tests")
 endif()

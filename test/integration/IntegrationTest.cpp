@@ -125,6 +125,12 @@ BOOST_AUTO_TEST_CASE(NamedWriters)          { runReadDiff("NamedWriters", "%n %m
 BOOST_AUTO_TEST_CASE(SeverityControl)       { runReadDiff("SeverityControl", "%S %m"); }
 BOOST_AUTO_TEST_CASE(Categories)            { runReadDiff("Categories", "%C %n %m"); }
 
+#if __cplusplus >= 201703L
+
+BOOST_AUTO_TEST_CASE(LoggingOptionals)      { runReadDiff("LoggingOptionals", "%m"); }
+
+#endif
+
 BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(Bread)

@@ -1,6 +1,5 @@
 #include <binlog/binlog.hpp>
 
-#include <boost/optional/optional.hpp>
 #include <boost/smart_ptr/scoped_ptr.hpp>
 #include <boost/smart_ptr/shared_ptr.hpp>
 #include <boost/smart_ptr/weak_ptr.hpp>
@@ -8,12 +7,6 @@
 #include <iostream>
 
 #include <memory>
-
-//[optspec
-namespace mserialize { namespace detail {
-  template <typename T> struct is_optional<boost::optional<T>> : std::true_type {};
-}}
-//]
 
 int main()
 {
@@ -55,13 +48,6 @@ int main()
     !mserialize::detail::is_serializable<boost::weak_ptr<int>>::value,
     "boost::weak_ptr is not loggable"
   );
-
-  // Boost optional - loggable with the is_optional specialization above
-
-  boost::optional<int> opt(123);
-  boost::optional<int> emptyOpt;
-  BINLOG_INFO("Boost optionals: {} {}", opt, emptyOpt);
-  // Outputs: Boost optionals: 123 {null}
 
   binlog::consume(std::cout);
   return 0;
