@@ -36,6 +36,9 @@ int main()
   BINLOG_INFO("More sequence containers: {} {} {}", deq, list, vb);
   // Outputs: More sequence containers: [1, 2, 3] [4, 5, 6] [true, false, true]
 
+  BINLOG_INFO("Empty containers: {} {}", std::vector<int>{}, std::list<bool>{});
+  // Outputs: Empty containers: [] []
+
   //[associative
   std::set<int> set{4,8,15,16,23,42};
   std::map<char, std::string> map{{'a', "alpha"}, {'b', "beta"}};
