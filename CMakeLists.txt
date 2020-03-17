@@ -387,7 +387,7 @@ install(
 )
 
 install(
-  TARGETS bread headers binlog
+  TARGETS bread brecovery headers binlog
   EXPORT binlogTargets
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib
