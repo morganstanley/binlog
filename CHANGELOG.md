@@ -2,6 +2,10 @@
 
 ## Upcoming Release
 
+### Added
+
+ - Support logging of std::optional
+
 ### Fixed
 
  - Use -Wshadow on supporting compilers, fix warnings
