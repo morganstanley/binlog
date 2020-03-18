@@ -82,7 +82,7 @@ void BM_queueWrite(benchmark::State& state)
   g_done = true;
   reader.join();
 
-  state.SetBytesProcessed(std::int64_t(totalWriteSize));
+  state.SetBytesProcessed(totalWriteSize);
   state.counters["FailedWrite"] = double(failedWriteCount);
 }
 
