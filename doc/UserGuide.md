@@ -71,6 +71,20 @@ like any other container, but have a special text representation:
 `const char*` arguments, because of established convention, are assumed to
 point to null terminated strings, therefore logged and displayed accordingly.
 
+Unfortunately, sometimes even `char*` is used to refer to a null terminated string
+(e.g: [strerror][]). Binlog has no way to know whether the passed argument
+is a string (therefore calling `strlen` on it is safe) or just a pointer to a single character.
+To remain on the safe side, by default, Binlog assumes the latter.
+A few ways to workaround this:
+
+ - Use `const char*`, instead of `char*`. If `char*` is given, assign it to a `const char*` variable before logging
+ - Make the intent explicit, and wrap `char*` by `string_view`
+ - Trade safety for convenience, and make Binlog treat every `char*` as a string:
+
+        [catchfile test/integration/LoggingCStrings.cpp cstr]
+
+[strerror]: https://en.cppreference.com/w/cpp/string/byte/strerror
+
 ## Logging Pointers and Optionals
 
 Raw and standard smart pointers pointing to a loggable `element_type`
