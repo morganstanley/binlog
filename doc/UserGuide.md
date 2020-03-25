@@ -188,6 +188,15 @@ see the Mserialize documentation on [Adapting custom types][mserialize-act] and
 [mserialize-act]: Mserialize.html#adapting-custom-types
 [mserialize-rec]: Mserialize.html#adapting-user-defined-recursive-types-for-visitation
 
+## Logging std::filesystem Types
+
+If C++17 is available, standard filesystem types can be made loggable:
+
+    [catchfile test/integration/LoggingFilesystem.cpp fs]
+
+The supported filesystem types are: `path`, `directory_entry`, `file_type`,
+`perms`, `space_info`, `file_status`.
+
 # Tools
 
 ## bread

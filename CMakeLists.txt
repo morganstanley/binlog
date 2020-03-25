@@ -334,6 +334,7 @@ if(Boost_FOUND)
   if(${CMAKE_CXX_STANDARD} GREATER_EQUAL 17)
     add_inttest(LoggingOptionals)
       include_boost(LoggingOptionals)
+    add_inttest(LoggingFilesystem)
   endif()
 
 else()

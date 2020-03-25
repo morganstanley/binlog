@@ -129,6 +129,7 @@ BOOST_AUTO_TEST_CASE(Categories)            { runReadDiff("Categories", "%C %n %
 #if __cplusplus >= 201703L
 
 BOOST_AUTO_TEST_CASE(LoggingOptionals)      { runReadDiff("LoggingOptionals", "%m"); }
+BOOST_AUTO_TEST_CASE(LoggingFilesystem)     { runReadDiff("LoggingFilesystem", "%m"); }
 
 #endif
 

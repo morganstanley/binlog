@@ -5,6 +5,7 @@
 ### Added
 
  - Support logging of std::optional
+ - Support logging of std::filesystem components
  - `binlog/char_ptr_is_string.hpp`: treat `char*` as string if included
 
 ### Fixed
