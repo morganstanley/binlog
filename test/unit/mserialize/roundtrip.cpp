@@ -564,8 +564,8 @@ struct Vehicle
   std::string _name;
   std::unique_ptr<Person> _owner;
 
-  int age() const { return _age; }
-  int age(const int i) { return _age = i; }
+  int age() const noexcept { return _age; }
+  int age(const int i) noexcept { return _age = i; }
 
   std::string name() const { return _name; }
   void name(const std::string& n) { _name = n; }

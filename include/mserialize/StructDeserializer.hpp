@@ -44,6 +44,13 @@ auto deserializable_member(Field T::*field) -> decltype(field);
 template <typename T, typename Arg, typename Ret>
 auto deserializable_member(Ret (T::*setter)(Arg)) -> decltype(setter);
 
+#if __cplusplus >= 201703L
+
+template <typename T, typename Arg, typename Ret>
+auto deserializable_member(Ret (T::*setter)(Arg) noexcept) -> decltype(setter);
+
+#endif
+
 /**
  * Deserialize the given members of a custom type `T`.
  *
@@ -106,6 +113,18 @@ private:
     mserialize::deserialize(arg, istream);
     (t.*setter)(std::move(arg));
   }
+
+#if __cplusplus >= 201703L
+
+  template <typename Ret, typename Arg, typename InputStream>
+  static void deserialize_member(T& t, Ret (T::*setter)(Arg) noexcept, InputStream& istream)
+  {
+    detail::remove_cvref_t<Arg> arg;
+    mserialize::deserialize(arg, istream);
+    (t.*setter)(std::move(arg));
+  }
+
+#endif
 };
 
 } // namespace mserialize
