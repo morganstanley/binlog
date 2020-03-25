@@ -4,10 +4,13 @@
 # std::runtime_error is not nothrow copy constructible (cert-err60-cpp)
 # Rule aliases are not useful (hicpp)
 # llvm-header-guard derives the macro name from the absolute path sometimes
+# sizeof(T*) is prohibited by bugprone-sizeof-expression
+# modernize-use-trailing-return-type is nonsense
 
 Checks: "\
   *,
   -fuchsia-*,\
+  -bugprone-sizeof-expression,\
   -cppcoreguidelines-avoid-c-arrays,\
   -cppcoreguidelines-avoid-magic-numbers,\
   -cppcoreguidelines-macro-usage,\
@@ -19,13 +22,16 @@ Checks: "\
   -hicpp-*,\
   -cert-err58-cpp,\
   -cert-err60-cpp,\
+  -readability-convert-member-functions-to-static,\
   -readability-magic-numbers,\
   -readability-named-parameter,\
   -readability-uppercase-literal-suffix,\
   -misc-non-private-member-variables-in-classes,\
   -modernize-avoid-c-arrays,\
   -modernize-use-auto,\
+  -modernize-use-nodiscard,\
   -modernize-return-braced-init-list,\
+  -modernize-use-trailing-return-type,\
   -llvm-header-guard,\
   -google-runtime-references"
 
