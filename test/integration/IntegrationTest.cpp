@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE(DateFormat)
 
   bread.wait();
 
-  const std::vector<std::string> expected{"2019-12-02T13:37:38.262735011Z Hello"};
+  const std::vector<std::string> expected{"2019-12-02T13:38:33.602967233Z Hello"};
 
   compareVectors(expected, actual);
 }

@@ -4,7 +4,15 @@ namespace binlog {
 
 std::chrono::nanoseconds ticksToNanoseconds(std::uint64_t frequency, std::int64_t ticks)
 {
-  return std::chrono::nanoseconds{ticks * std::nano::den / std::int64_t(frequency)};
+  // Compute `ticks * std::nano::den / frequency`.
+  // To avoid `ticks * std::nano::den` overflowing, assume that:
+  //   ticks = q*f + r    and     r < f
+  // then multiply and divide the additives one by one.
+  // We assume that the result fits on 64 bits, as that many nanos cover a long timespan.
+  const std::int64_t sf = std::int64_t(frequency);
+  const std::int64_t q = ticks / sf;
+  const std::int64_t r = ticks % sf;
+  return std::chrono::nanoseconds{q * std::nano::den + r * std::nano::den / sf};
 }
 
 std::chrono::nanoseconds clockToNsSinceEpoch(const ClockSync& clockSync, std::uint64_t clockValue)
