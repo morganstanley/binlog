@@ -136,7 +136,7 @@ jobs:
       - name: Install Boost
         if: steps.cache-boost.outputs.cache-hit != 'true'
         run: |
-          wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.gz -Oboost.tar.gz
+          wget https://netix.dl.sourceforge.net/project/boost/boost/1.72.0/boost_1_72_0.tar.gz -Oboost.tar.gz
           tar -zxf boost.tar.gz
           cd boost_1_72_0
           mkdir -p installdir
