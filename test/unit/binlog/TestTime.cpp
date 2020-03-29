@@ -77,6 +77,14 @@ BOOST_AUTO_TEST_CASE(ticks_to_ns)
   BOOST_TEST(binlog::ticksToNanoseconds(3'000'000'000, 2) == std::chrono::nanoseconds{0});
   BOOST_TEST(binlog::ticksToNanoseconds(3'000'000'000, 3) == std::chrono::nanoseconds{1});
   BOOST_TEST(binlog::ticksToNanoseconds(3'000'000'000, 31) == std::chrono::nanoseconds{10});
+
+  // make sure it does not overflow
+  BOOST_TEST(binlog::ticksToNanoseconds(1'000'000'000, 31'534'085'395) == std::chrono::nanoseconds{31534085395});
+  BOOST_TEST(binlog::ticksToNanoseconds(3'000'000'000, 30'000'000'000) == std::chrono::seconds{10});
+
+  // int64_t(double(x)) != x
+  BOOST_TEST(binlog::ticksToNanoseconds(1'000'000'000, 9007199254740993) == std::chrono::nanoseconds{9007199254740993});
+  BOOST_TEST(binlog::ticksToNanoseconds(1'000'000'000, 1575293913602967233) == std::chrono::nanoseconds{1575293913602967233});
 }
 
 BOOST_AUTO_TEST_CASE(clock_to_ns)
