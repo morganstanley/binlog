@@ -171,6 +171,6 @@ jobs:
           cmake --build Release --config Release -j2
       - name: Test
         run: |
-          $Env:path += ";${env:BOOST_ROOT}\lib"
+          $Env:path += ";${env:BOOST_ROOT_1_72_0}\lib"
           cd Release
           ctest -VV -C Release
