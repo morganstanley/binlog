@@ -74,10 +74,12 @@ Benchmark code is located at `test/perf`.
 The benchmark measures the time it takes to create a timestamped log event with various
 log arguments (e.g: one integer, one string, three floats) in a single-producer,
 single-consumer queue (the logging is asynchronous), running in a tight loop.
-There's a benchmark that does not timestamp the log event, to indirectly measure the cost
-of `std::chrono::system_clock::now()` or `clock_gettime`.
-There's a bechmark trying to guess the cache effect, that invalidates
+Different clocks are used to timestamp log events. `no clock` means constant 0,
+`TSC clock` uses the time stamp counter, while `sys clock` means
+`std::chrono::system_clock::now()` or `clock_gettime`.
+There's a bechmark `poison cache`, trying to guess the cache effect, that invalidates
 the data cache on each iteration by writing a large byte buffer.
+The timing includes the writing of the buffer.
 
 The results reported below are a sample of several runs,
 only to show approximate performance, and not for direct comparison.
@@ -85,11 +87,12 @@ Machine configuration: Intel Xeon E5-2698 2.20 GHz, RHEL 2.6.32.
 
 | Benchmark                   | Std. Dev. | Median     |
 |:----------------------------|----------:|-----------:|
-| One integer                 |      0 ns |      44 ns |
-| One integer (no clock)      |      0 ns |      11 ns |
-| One integer (poison cache)  |      4 ns |    1015 ns |
-| One string                  |      1 ns |      50 ns |
-| Three floats                |      0 ns |      45 ns |
+| One integer (no clock)      |      0 ns |       8 ns |
+| One integer (TSC clock)     |      0 ns |       9 ns |
+| One integer (sys clock)     |      0 ns |      34 ns |
+| One integer (poison cache)  |      8 ns |     740 ns |
+| One string                  |      0 ns |      38 ns |
+| Three floats                |      0 ns |      30 ns |
 
 ## Install
 
