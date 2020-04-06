@@ -75,6 +75,8 @@ public:
     std::size_t channelsRemoved = 0;    /**< Number of channels removed because they are empty and closed */
   };
 
+  Session();
+
   /**
    * Create a channel with a queue of `queueCapacity` bytes.
    *
@@ -162,7 +164,7 @@ public:
   /**
    * Move already consumed metadata again to `out`.
    *
-   * Already consumed EventSources and a new ClockSync are consumed.
+   * Already consumed EventSources and the ClockSync are consumed.
    * Not-yet consumed EventSources will not be consumed.
    *
    * Useful if `out` changes runtime, e.g: because of log rotation.
@@ -183,6 +185,7 @@ private:
   std::mutex _mutex;
 
   std::vector<std::shared_ptr<Channel>> _channels;
+  detail::RecoverableVectorOutputStream _clockSync = {0xFE214F726E35BDBC, this};
   detail::RecoverableVectorOutputStream _sources = {0xFE214F726E35BDBC, this};
   std::streamsize _sourcesConsumePos = 0;
   std::uint64_t _nextSourceId = 1;
@@ -232,6 +235,12 @@ inline Session::Channel::~Channel()
 inline detail::Queue& Session::Channel::queue()
 {
   return *reinterpret_cast<detail::Queue*>(_queue.get() + sizeof(std::uint64_t) + sizeof(Session*));
+}
+
+inline Session::Session()
+{
+  const ClockSync clockSync = systemClockSync();
+  serializeSizePrefixedTagged(clockSync, _clockSync);
 }
 
 inline std::shared_ptr<Session::Channel> Session::createChannel(std::size_t queueCapacity, WriterProp writerProp)
@@ -301,8 +310,8 @@ Session::ConsumeResult Session::consume(OutputStream& out)
   // add a clock sync to the beginning of the stream
   if (_totalConsumedBytes == 0)
   {
-    const ClockSync clockSync = systemClockSync();
-    result.bytesConsumed += consumeSpecialEntry(clockSync, out);
+    out.write(_clockSync.data(), _clockSync.ssize());
+    result.bytesConsumed += std::size_t(_clockSync.ssize());
   }
 
   // consume event sources before events
@@ -373,8 +382,8 @@ Session::ConsumeResult Session::reconsumeMetadata(OutputStream& out)
   ConsumeResult result;
 
   // add clock sync
-  const ClockSync clockSync = systemClockSync();
-  result.bytesConsumed += serializeSizePrefixedTagged(clockSync, out);
+  out.write(_clockSync.data(), _clockSync.ssize());
+  result.bytesConsumed += std::size_t(_clockSync.ssize());
 
   // add consumed sources
   out.write(_sources.data(), _sourcesConsumePos);
