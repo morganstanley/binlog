@@ -46,6 +46,52 @@ BOOST_AUTO_TEST_CASE(add_event_with_time)
   BOOST_TEST(getEvents(session, "%d %m") == std::vector<std::string>{timePointToString(now) + " a=456 b=foo"}, boost::test_tools::per_element());
 }
 
+BOOST_AUTO_TEST_CASE(set_clock_sync_and_add_event_with_time)
+{
+  binlog::Session session;
+  binlog::SessionWriter writer(session, 128);
+
+  binlog::EventSource eventSource{
+    0, binlog::Severity::info, "cat", "fun", "file", 123, "a={} b={}", "i[c"
+  };
+  eventSource.id = session.addEventSource(eventSource);
+
+  const binlog::ClockSync clockSync{0, 1, 100 * std::nano::den, 0, "UTC"};
+  session.setClockSync(clockSync);
+
+  BOOST_TEST(writer.addEvent(eventSource.id, 123, 456, std::string("foo")));
+
+  BOOST_TEST(getEvents(session, "%d %m") == std::vector<std::string>{"1970.01.01 00:03:43 a=456 b=foo"}, boost::test_tools::per_element());
+}
+
+BOOST_AUTO_TEST_CASE(reset_clock_sync_and_add_events_with_time)
+{
+  binlog::Session session;
+  binlog::SessionWriter writer(session, 128);
+  TestStream stream;
+
+  binlog::EventSource eventSource{
+    0, binlog::Severity::info, "cat", "fun", "file", 123, "a={} b={}", "i[c"
+  };
+  eventSource.id = session.addEventSource(eventSource);
+
+  const binlog::ClockSync clockSync{0, 1, 100 * std::nano::den, 0, "UTC"};
+  session.setClockSync(clockSync);
+  BOOST_TEST(writer.addEvent(eventSource.id, 123, 456, std::string("foo")));
+  session.consume(stream);
+
+  const binlog::ClockSync clockSync2{0, 2, 200 * std::nano::den, 0, "UTC"};
+  session.setClockSync(clockSync2);
+  BOOST_TEST(writer.addEvent(eventSource.id, 122, 789, std::string("bar")));
+  session.consume(stream);
+
+  const std::vector<std::string> expectedEvents{
+    "1970.01.01 00:03:43 a=456 b=foo",
+    "1970.01.01 00:04:21 a=789 b=bar",
+  };
+  BOOST_TEST(streamToEvents(stream, "%d %m") == expectedEvents, boost::test_tools::per_element());
+}
+
 BOOST_AUTO_TEST_CASE(add_event_with_writer_id_name)
 {
   binlog::Session session;
