@@ -133,6 +133,14 @@ public:
   void setMinSeverity(Severity severity);
 
   /**
+   * Add `clockSync` to the set of managed metadata.
+   *
+   * Affects Events consumed after this call.
+   * Overwrites previously set, and the default ClockSync.
+   */
+  void setClockSync(const ClockSync& clockSync);
+
+  /**
    * Move metadata and data from the session to `out`.
    *
    * If needed (i.e: first time to consume), a
@@ -193,6 +201,8 @@ private:
   std::size_t _totalConsumedBytes = 0;
 
   std::atomic<Severity> _minSeverity = {Severity::trace};
+
+  bool _consumeClockSync = true;
 
   detail::VectorOutputStream _specialEntryBuffer;
 };
@@ -284,6 +294,14 @@ inline void Session::setMinSeverity(Severity severity)
   _minSeverity.store(severity, std::memory_order_release);
 }
 
+inline void Session::setClockSync(const ClockSync& clockSync)
+{
+  std::lock_guard<std::mutex> lock(_mutex);
+
+  serializeSizePrefixedTagged(clockSync, _clockSync);
+  _consumeClockSync = true;
+}
+
 template <typename OutputStream>
 Session::ConsumeResult Session::consume(OutputStream& out)
 {
@@ -307,11 +325,12 @@ Session::ConsumeResult Session::consume(OutputStream& out)
 
   ConsumeResult result;
 
-  // add a clock sync to the beginning of the stream
-  if (_totalConsumedBytes == 0)
+  // add a clock sync if not yet added
+  if (_consumeClockSync)
   {
     out.write(_clockSync.data(), _clockSync.ssize());
     result.bytesConsumed += std::size_t(_clockSync.ssize());
+    _consumeClockSync = false;
   }
 
   // consume event sources before events
