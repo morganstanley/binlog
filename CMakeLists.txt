@@ -217,6 +217,7 @@ add_example(TextOutput)
   target_link_libraries(TextOutput binlog)
 add_example(MultiOutput)
   target_link_libraries(MultiOutput binlog)
+add_example(TscClock)
 
 #---------------------------
 # Unit Test
