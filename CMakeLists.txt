@@ -38,6 +38,11 @@ find_package(benchmark COMPONENTS benchmark)
 # CMake workarounds
 #---------------------------
 
+set(BINLOG_IS_TOPLEVEL_PROJECT OFF)
+if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
+  set(BINLOG_IS_TOPLEVEL_PROJECT ON)
+endif()
+
 function(include_boost target)
   if(CMAKE_VERSION VERSION_GREATER 3.5)
     target_link_libraries(${target} Boost::boost) # headers
@@ -64,22 +69,32 @@ endif()
 # Build type
 #---------------------------
 
+if(BINLOG_IS_TOPLEVEL_PROJECT)
+
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Defaulting to build type: 'RelWithDebInfo'")
   set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Debug|Release|RelWithDebInfo|MinSizeRel" FORCE)
+endif()
+
 endif()
 
 #---------------------------
 # C++ standard
 #---------------------------
 
+if(BINLOG_IS_TOPLEVEL_PROJECT)
+
 set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ standard (11/14/17/20/...)") # -std=c++14
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)         # no gnu++14
 
+endif()
+
 #---------------------------
 # Compiler options
 #---------------------------
+
+if(BINLOG_IS_TOPLEVEL_PROJECT)
 
 if (MSVC)
   add_compile_options(/W4)
@@ -87,6 +102,8 @@ else ()
   add_compile_options(-Wall -Wextra -Werror -pedantic)
   add_optional_compile_options(-Wconversion -Wsign-conversion -Wold-style-cast -Wsuggest-override -Wshadow)
 endif ()
+
+endif()
 
 #---------------------------
 # Platform specific configuration
@@ -139,7 +156,7 @@ endif()
 #---------------------------
 
 add_library(headers INTERFACE)
-  if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
+  if(BINLOG_IS_TOPLEVEL_PROJECT)
     target_include_directories(headers INTERFACE
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<INSTALL_INTERFACE:include>
@@ -167,7 +184,7 @@ add_library(binlog STATIC
   set_property(TARGET binlog PROPERTY INTERPROCEDURAL_OPTIMIZATION ${BINLOG_HAS_IPO})
 
 # make add_subdirectory usage consistent with find_package
-if(NOT(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME}))
+if(NOT BINLOG_IS_TOPLEVEL_PROJECT)
   add_library(binlog::headers ALIAS headers)
   add_library(binlog::binlog  ALIAS binlog)
 endif()
