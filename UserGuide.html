@@ -39,7 +39,7 @@
 <li><a href="#logging">Logging</a><ul>
 <li><a href="#logging-containers">Logging Containers</a></li>
 <li><a href="#logging-strings">Logging Strings</a></li>
-<li><a href="#logging-pointers">Logging Pointers</a></li>
+<li><a href="#logging-pointers-and-optionals">Logging Pointers and Optionals</a></li>
 <li><a href="#logging-pairs-and-tuples">Logging Pairs and Tuples</a></li>
 <li><a href="#logging-enums">Logging Enums</a></li>
 <li><a href="#logging-user-defined-structures">Logging User Defined Structures</a></li>
@@ -135,7 +135,23 @@ BINLOG_INFO("Hello {}!", str);
 </code></pre>
 <p><code>const char*</code> arguments, because of established convention, are assumed to
 point to null terminated strings, therefore logged and displayed accordingly.</p>
-<h2 id="logging-pointers"><a class="toclink" href="#logging-pointers">Logging Pointers</a></h2>
+<p>Unfortunately, sometimes even <code>char*</code> is used to refer to a null terminated string
+(e.g: <a href="https://en.cppreference.com/w/cpp/string/byte/strerror">strerror</a>). Binlog has no way to know whether the passed argument
+is a string (therefore calling <code>strlen</code> on it is safe) or just a pointer to a single character.
+To remain on the safe side, by default, Binlog assumes the latter.
+A few ways to workaround this:</p>
+<ul>
+<li>Use <code>const char*</code>, instead of <code>char*</code>. If <code>char*</code> is given, assign it to a <code>const char*</code> variable before logging</li>
+<li>Make the intent explicit, and wrap <code>char*</code> by <code>string_view</code></li>
+<li>Trade safety for convenience, and make Binlog treat every <code>char*</code> as a string:<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/binlog/char_ptr_is_string.hpp">binlog/char_ptr_is_string.hpp</a>&gt;
+
+char* error = geterror(EBADF);
+BINLOG_INFO("Error: {}", error);
+// Outputs: Error: Bad file descriptor
+</code></pre>
+</li>
+</ul>
+<h2 id="logging-pointers-and-optionals"><a class="toclink" href="#logging-pointers-and-optionals">Logging Pointers and Optionals</a></h2>
 <p>Raw and standard smart pointers pointing to a loggable <code>element_type</code>
 are loggable by default:</p>
 <pre><code>int* ptr = nullptr;
@@ -148,6 +164,15 @@ BINLOG_INFO("Pointers: {} {} {}", ptr, uptr, sptr);
 If the pointer is <em>empty</em> (i.e: it points to no valid object),
 no value is logged, and in the text log it will be shown as <code>{null}</code>.
 Logging of <code>weak_ptr</code> is not supported, those must be <code>.lock()</code>-ed first.</p>
+<p>If C++17 is available, the standard optional with a loggable <code>value_type</code>
+can be made loggable:</p>
+<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/binlog/adapt_stdoptional.hpp">binlog/adapt_stdoptional.hpp</a>&gt; // must be included to log std::optional, requires C++17
+
+std::optional&lt;int&gt; opt(123);
+std::optional&lt;int&gt; emptyOpt;
+BINLOG_INFO("Optionals: {} {}", opt, emptyOpt);
+// Outputs: Optionals: 123 {null}
+</code></pre>
 <p>Aside the standard pointers, any pointer or optional-like type is loggable
 that satisfies the following constraints:</p>
 <ul>
@@ -492,7 +517,7 @@ binlog::consume(output);
       <hr/>
       <footer class="text-center text-muted">
         Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a> |
-        Generated: 2020. 02. 28.
+        Generated: 2020. 04. 26.
       </footer>
       <hr/>
     </div>
