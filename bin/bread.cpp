@@ -6,7 +6,7 @@
 #include <string>
 
 #define BINLOG_DEFAULT_FORMAT "%S %C [%d] %n %m (%G:%L)"
-#define BINLOG_DEFAULT_DATE_FORMAT "%m/%d %H:%M:%S.%N"
+#define BINLOG_DEFAULT_DATE_FORMAT "%Y-%m-%d %H:%M:%S.%N"
 
 namespace {
 

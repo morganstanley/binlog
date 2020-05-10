@@ -29,7 +29,7 @@ public:
   explicit TextOutputStream(
     std::ostream& out,
     std::string eventFormat = "%S %C [%d] %n %m (%G:%L)\n",
-    std::string dateFormat = "%m/%d %H:%M:%S.%N"
+    std::string dateFormat = "%Y-%m-%d %H:%M:%S.%N"
   );
 
   /**
