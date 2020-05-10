@@ -5,6 +5,9 @@
 #include <iostream>
 #include <string>
 
+#define BINLOG_DEFAULT_FORMAT "%S %C [%d] %n %m (%G:%L)"
+#define BINLOG_DEFAULT_DATE_FORMAT "%m/%d %H:%M:%S.%N"
+
 namespace {
 
 std::istream& openFile(const std::string& path, std::ifstream& file)
@@ -64,7 +67,7 @@ void showHelp()
     "  %m \t Message (format string with arguments substituted)\n"
     "  %% \t Literal %\n"
     "\n"
-    "  Default format string: \"%S %C [%d] %n %m (%G:%L)\"\n"
+    "  Default format string: \"" BINLOG_DEFAULT_FORMAT "\"\n"
     "\n"
     "Date Format\n"
     "  Timestamps are transformed to text by substituting placeholders"
@@ -81,7 +84,7 @@ void showHelp()
     "  %z \t Offset from UTC in ISO 8601 format (e.g: +0430)\n"
     "  %Z \t Time zone name abbreviation\n"
     "\n"
-    "  Default date format string: \"%m/%d %H:%M:%S.%N\"\n"
+    "  Default date format string: \"" BINLOG_DEFAULT_DATE_FORMAT "\"\n"
     "\n"
     "Report bugs to:\n"
     "  https://github.com/Morgan-Stanley/binlog/issues\n";
@@ -92,8 +95,8 @@ void showHelp()
 int main(int argc, /*const*/ char* argv[])
 {
   std::string inputPath = "-";
-  std::string format = "%S %C [%d] %n %m (%G:%L)\n";
-  std::string dateFormat = "%m/%d %H:%M:%S.%N";
+  std::string format = BINLOG_DEFAULT_FORMAT "\n";
+  std::string dateFormat = BINLOG_DEFAULT_DATE_FORMAT;
   bool sorted = false;
 
   int opt;
