@@ -165,7 +165,7 @@ jobs:
         run: |
           mkdir Release
           cd Release
-          cmake -DBINLOG_FORCE_TESTS=ON ..
+          cmake -DBOOST_ROOT="${env:BOOST_ROOT_1_72_0}" -DBINLOG_FORCE_TESTS=ON ..
       - name: Build
         run: |
           cmake --build Release --config Release -j2
