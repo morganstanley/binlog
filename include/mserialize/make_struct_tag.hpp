@@ -90,7 +90,7 @@ namespace mserialize {
  */
 
 template <typename T, typename Field>
-auto serializable_member_type(Field T::*field) -> Field;
+auto serializable_member_type(Field T::*field) -> Field&;
 
 template <typename T, typename Ret>
 auto serializable_member_type(Ret (T::*getter)() const) -> Ret;

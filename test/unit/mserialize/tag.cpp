@@ -135,6 +135,17 @@ MSERIALIZE_MAKE_STRUCT_TAG(Foo, alpha, bravo, charlie)
 
 static_assert(mserialize::tag<Foo>() == "{Foo`alpha'i`bravo'[c`charlie'<0f>}", "");
 
+struct Bar
+{
+  int a[1];
+  bool b[2][3];
+  char c[4][5][6];
+};
+
+MSERIALIZE_MAKE_STRUCT_TAG(Bar, a, b, c)
+
+static_assert(mserialize::tag<Bar>() == "{Bar`a'[i`b'[[y`c'[[[c}", "");
+
 // test MSERIALIZE_MAKE_TEMPLATE_TAG
 
 template <typename A, typename B>
