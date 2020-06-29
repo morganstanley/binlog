@@ -8,6 +8,8 @@
 
 int main()
 {
+  binlog::default_thread_local_writer().setName({});
+
   //[c
 
   BINLOG_INFO_C(my_category, "This is a categorized event");
