@@ -6,7 +6,9 @@
 
 #include <map>
 #include <memory> // unique_ptr
+#include <ostream>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace {
@@ -87,6 +89,34 @@ BOOST_AUTO_TEST_CASE(writer_name)
     "CRIT main W Hello",
   };
   BOOST_TEST(getEventsFromDefaultSession("%S %C %n %m") == expectedEvents, boost::test_tools::per_element());
+}
+
+BOOST_AUTO_TEST_CASE(default_writer_name)
+{
+  std::thread t([]() // start a new thread to test the defaults
+  {
+    std::ostringstream namestream;
+    namestream << std::this_thread::get_id();
+    const std::string name = namestream.str();
+
+    BINLOG_TRACE("Hello");
+    BINLOG_DEBUG("Hello");
+    BINLOG_INFO("Hello");
+    BINLOG_WARN("Hello");
+    BINLOG_ERROR("Hello");
+    BINLOG_CRITICAL("Hello");
+
+    const std::vector<std::string> expectedEvents{
+      "TRAC main " + name + " Hello",
+      "DEBG main " + name + " Hello",
+      "INFO main " + name + " Hello",
+      "WARN main " + name + " Hello",
+      "ERRO main " + name + " Hello",
+      "CRIT main " + name + " Hello",
+    };
+    BOOST_TEST(getEventsFromDefaultSession("%S %C %n %m") == expectedEvents, boost::test_tools::per_element());
+  });
+  t.join();
 }
 
 BOOST_AUTO_TEST_CASE(c_mixed)

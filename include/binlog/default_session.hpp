@@ -4,7 +4,22 @@
 #include <binlog/Session.hpp>
 #include <binlog/SessionWriter.hpp>
 
+#include <sstream>
+#include <thread>
+
 namespace binlog {
+
+namespace detail {
+
+/** Convert std::this_thread::get_id() to string */
+inline std::string this_thread_id_string()
+{
+  std::ostringstream str;
+  str << std::this_thread::get_id();
+  return str.str();
+}
+
+} // namespace detail
 
 /**
  * Get a global session.
@@ -27,14 +42,16 @@ inline Session& default_session()
 /**
  * Get a thread-local writer for default_session().
  *
- * The writer properties are defaulted,
- * see the SessionWriter constructor.
- *
  * This writer is used by basic log macros.
  */
 inline SessionWriter& default_thread_local_writer()
 {
-  static thread_local SessionWriter s_writer(default_session());
+  static thread_local SessionWriter s_writer(
+    default_session(),
+    1 << 20, // queue capacity
+    0,       // writer id
+    detail::this_thread_id_string() // writer name
+  );
   return s_writer;
 }
 
