@@ -181,7 +181,7 @@ void PrettyPrinter::printProducerLocalTime(detail::OstreamBuffer& out, const Clo
 {
   // TODO(benedek) perf: cache bdt, update instead of complete recompute
 
-  if (clockSync.clockFrequency != 0)
+  if (std::int64_t(clockSync.clockFrequency) > 0)
   {
     BrokenDownTime bdt{};
     const std::chrono::nanoseconds sinceEpoch = clockToNsSinceEpoch(clockSync, clockValue);
@@ -199,7 +199,7 @@ void PrettyPrinter::printUTCTime(detail::OstreamBuffer& out, const ClockSync& cl
 {
   // TODO(benedek) perf: cache bdt, update instead of complete recompute
 
-  if (clockSync.clockFrequency != 0)
+  if (std::int64_t(clockSync.clockFrequency) > 0)
   {
     BrokenDownTime bdt{};
     const std::chrono::nanoseconds sinceEpoch = clockToNsSinceEpoch(clockSync, clockValue);

@@ -47,7 +47,7 @@ public:
    * Print `event` using `writerProp` and `clockSync`
    * to `ostr`, according to the format specified in the consturctor.
    *
-   * If clockSync.clockFrequency is zero,
+   * If clockSync.clockFrequency is not positive after casting to int64_t,
    * broken down timestamps (%d and %u) are shown
    * as: "no_clock_sync?", as there's not enough context to
    * render them. The raw clock value remains accessible via %r.

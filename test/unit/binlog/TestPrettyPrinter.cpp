@@ -94,6 +94,16 @@ BOOST_FIXTURE_TEST_CASE(empty_clock_sync, TestcaseBase)
   BOOST_TEST(print(pp) == "no_clock_sync? no_clock_sync? 1569939329");
 }
 
+BOOST_FIXTURE_TEST_CASE(negative_clock_sync_freq, TestcaseBase)
+{
+  binlog::PrettyPrinter pp("%d %u %r", "");
+
+  clockSync = binlog::ClockSync{0, std::uint64_t(-1), 0, 0, {}};
+  event = binlog::Event{&eventSource, 0x8000000000000000, event.arguments};
+
+  BOOST_TEST(print(pp) == "no_clock_sync? no_clock_sync? 9223372036854775808");
+}
+
 BOOST_FIXTURE_TEST_CASE(filename, TestcaseBase)
 {
   binlog::PrettyPrinter pp("%G", "");

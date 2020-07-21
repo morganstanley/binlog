@@ -29,7 +29,7 @@ struct BrokenDownTime : std::tm
  *    theoretical result = 1 + 1/3 nanoseconds
  *    result = 1 nanoseconds
  *
- * @pre frequency != 0
+ * @pre int64_t(frequency) > 0
  */
 std::chrono::nanoseconds ticksToNanoseconds(std::uint64_t frequency, std::int64_t ticks);
 
