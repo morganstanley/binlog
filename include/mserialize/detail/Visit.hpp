@@ -45,7 +45,7 @@ public:
 
 // forward declaration
 template <typename Visitor, typename InputStream>
-void visit_impl(string_view full_tag, string_view tag, Visitor& visitor, InputStream& istream);
+void visit_impl(string_view full_tag, string_view tag, Visitor& visitor, InputStream& istream, int max_recursion);
 
 /** @pre tag in "ycbsilBSILfdD" */
 template <typename Visitor, typename InputStream>
@@ -73,13 +73,13 @@ void visit_arithmetic(char tag, Visitor& visitor, InputStream& istream)
 }
 
 template <typename Visitor, typename InputStream>
-void visit_sequence_impl(const string_view full_tag, const string_view elem_tag, std::uint32_t size, Visitor& visitor, InputStream& istream, char)
+void visit_sequence_impl(const string_view full_tag, const string_view elem_tag, std::uint32_t size, Visitor& visitor, InputStream& istream, int max_recursion, char)
 {
   visitor.visit(mserialize::Visitor::SequenceBegin{size, elem_tag});
 
   while (size--)
   {
-    visit_impl(full_tag, elem_tag, visitor, istream);
+    visit_impl(full_tag, elem_tag, visitor, istream, max_recursion);
   }
 
   visitor.visit(mserialize::Visitor::SequenceEnd{});
@@ -87,7 +87,7 @@ void visit_sequence_impl(const string_view full_tag, const string_view elem_tag,
 
 template <typename Visitor, typename InputStream>
 void_t<decltype(&InputStream::view)>
-visit_sequence_impl(const string_view full_tag, const string_view elem_tag, std::uint32_t size, Visitor& visitor, InputStream& istream, int)
+visit_sequence_impl(const string_view full_tag, const string_view elem_tag, std::uint32_t size, Visitor& visitor, InputStream& istream, int max_recursion, int)
 {
   if (elem_tag.size() == 1 && elem_tag[0] == 'c')
   {
@@ -96,13 +96,13 @@ visit_sequence_impl(const string_view full_tag, const string_view elem_tag, std:
   }
   else
   {
-    visit_sequence_impl(full_tag, elem_tag, size, visitor, istream, '\0');
+    visit_sequence_impl(full_tag, elem_tag, size, visitor, istream, max_recursion, '\0');
   }
 }
 
 /** @pre tag.front() == '[' , followed by a single tag */
 template <typename Visitor, typename InputStream>
-void visit_sequence(const string_view full_tag, string_view tag, Visitor& visitor, InputStream& istream)
+void visit_sequence(const string_view full_tag, string_view tag, Visitor& visitor, InputStream& istream, int max_recursion)
 {
   tag.remove_prefix(1); // drop [
 
@@ -110,12 +110,12 @@ void visit_sequence(const string_view full_tag, string_view tag, Visitor& visito
   mserialize::deserialize(size, istream);
   const string_view elem_tag = tag_pop(tag);
 
-  visit_sequence_impl(full_tag, elem_tag, size, visitor, istream, 0);
+  visit_sequence_impl(full_tag, elem_tag, size, visitor, istream, max_recursion, 0);
 }
 
 /** @pre tag.front() == '(' and tag.back() == ')' , enclosing any number of concatenated tags */
 template <typename Visitor, typename InputStream>
-void visit_tuple(const string_view full_tag, string_view tag, Visitor& visitor, InputStream& istream)
+void visit_tuple(const string_view full_tag, string_view tag, Visitor& visitor, InputStream& istream, int max_recursion)
 {
   tag.remove_prefix(1); // drop (
   tag.remove_suffix(1); // drop )
@@ -124,7 +124,7 @@ void visit_tuple(const string_view full_tag, string_view tag, Visitor& visitor, 
 
   for (string_view elem_tag = tag_pop(tag); ! elem_tag.empty(); elem_tag = tag_pop(tag))
   {
-    visit_impl(full_tag, elem_tag, visitor, istream);
+    visit_impl(full_tag, elem_tag, visitor, istream, max_recursion);
   }
 
   visitor.visit(mserialize::Visitor::TupleEnd{});
@@ -132,7 +132,7 @@ void visit_tuple(const string_view full_tag, string_view tag, Visitor& visitor, 
 
 /** @pre tag.front() == '<' and tag.back() == '>' , enclosing 1-255 concatenated tags */
 template <typename Visitor, typename InputStream>
-void visit_variant(const string_view full_tag, string_view tag, Visitor& visitor, InputStream& istream)
+void visit_variant(const string_view full_tag, string_view tag, Visitor& visitor, InputStream& istream, int max_recursion)
 {
   tag.remove_prefix(1); // drop <
   tag.remove_suffix(1); // drop >
@@ -147,7 +147,7 @@ void visit_variant(const string_view full_tag, string_view tag, Visitor& visitor
 
   visitor.visit(mserialize::Visitor::VariantBegin{discriminator, option_tag});
 
-  visit_impl(full_tag, option_tag, visitor, istream);
+  visit_impl(full_tag, option_tag, visitor, istream, max_recursion);
 
   visitor.visit(mserialize::Visitor::VariantEnd{});
 }
@@ -164,7 +164,7 @@ void visit_variant(const string_view full_tag, string_view tag, Visitor& visitor
  * @pre the described structure must not be infinitely recursive
  */
 template <typename Visitor, typename InputStream>
-void visit_struct(const string_view full_tag, string_view tag, Visitor& visitor, InputStream& istream)
+void visit_struct(const string_view full_tag, string_view tag, Visitor& visitor, InputStream& istream, int max_recursion)
 {
   tag.remove_suffix(1); // drop }
 
@@ -191,7 +191,7 @@ void visit_struct(const string_view full_tag, string_view tag, Visitor& visitor,
 
     visitor.visit(mserialize::Visitor::FieldBegin{field_name, field_tag});
 
-    visit_impl(full_tag, field_tag, visitor, istream);
+    visit_impl(full_tag, field_tag, visitor, istream, max_recursion);
 
     visitor.visit(mserialize::Visitor::FieldEnd{});
   }
@@ -244,25 +244,28 @@ void visit_enum(string_view tag, Visitor& visitor, InputStream& istream)
  * original definition of the structure has to be referenced.
  *
  * @pre tag is a substring of full_tag
+ * @throws std::runtime_error if max_recursion is 0
  */
 template <typename Visitor, typename InputStream>
-void visit_impl(const string_view full_tag, string_view tag, Visitor& visitor, InputStream& istream)
+void visit_impl(const string_view full_tag, string_view tag, Visitor& visitor, InputStream& istream, int max_recursion)
 {
+  if (max_recursion == 0) { throw std::runtime_error("Recursion limit exceeded while visiting tag: " + full_tag.to_string()); }
+
   if (tag.empty()) { return; }
 
   switch (tag.front())
   {
   case '[':
-    visit_sequence(full_tag, tag, visitor, istream);
+    visit_sequence(full_tag, tag, visitor, istream, max_recursion - 1);
     break;
   case '(':
-    visit_tuple(full_tag, tag, visitor, istream);
+    visit_tuple(full_tag, tag, visitor, istream, max_recursion - 1);
     break;
   case '<':
-    visit_variant(full_tag, tag, visitor, istream);
+    visit_variant(full_tag, tag, visitor, istream, max_recursion - 1);
     break;
   case '{':
-    visit_struct(full_tag, tag, visitor, istream);
+    visit_struct(full_tag, tag, visitor, istream, max_recursion - 1);
     break;
   case '/':
     visit_enum(tag, visitor, istream);
