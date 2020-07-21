@@ -22,7 +22,7 @@ public:
   std::enable_if_t<std::is_integral<Integer>::value>
   visit(Integer v)
   {
-    _p = write_integer_as_hex(v, _p) - 1;
+    _p = write_integer_as_hex(v, &_buffer[19]);
   }
 
   template <typename T>
@@ -31,14 +31,15 @@ public:
 
   string_view value() const
   {
-    return string_view(_p+1, std::size_t(_buffer + 18 - _p));
+    return string_view(_p, std::size_t(_buffer + 19 - _p));
   }
 
   string_view delimited_value(char prefix, char postfix)
   {
+    char* begin = _p - 1;
+    *begin = prefix;
     _buffer[19] = postfix;
-    *_p = prefix;
-    return string_view(_p, std::size_t(_buffer + 20 - _p));
+    return string_view(begin, std::size_t(_buffer + 20 - begin));
   }
 };
 
