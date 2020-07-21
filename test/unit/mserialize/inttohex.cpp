@@ -21,12 +21,12 @@ std::string hexvalue(int i)
 
 BOOST_AUTO_TEST_SUITE(MserializeInttohex)
 
-//BOOST_AUTO_TEST_CASE(empty)
-//{
-//  mserialize::detail::IntegerToHex hex;
-//  BOOST_TEST(hex.value() == "");
-//  BOOST_TEST(hex.delimited_value('x', 'y') == "xy");
-//}
+BOOST_AUTO_TEST_CASE(empty)
+{
+  mserialize::detail::IntegerToHex hex;
+  BOOST_TEST(hex.value() == "");
+  BOOST_TEST(hex.delimited_value('x', 'y') == "xy");
+}
 
 BOOST_AUTO_TEST_CASE(convert_positive_int)
 {
@@ -55,18 +55,18 @@ BOOST_AUTO_TEST_CASE(convert_max)
   BOOST_TEST(hex.delimited_value('!', '?') == "!FFFFFFFFFFFFFFFF?");
 }
 
-//BOOST_AUTO_TEST_CASE(multi_visit)
-//{
-//  mserialize::detail::IntegerToHex hex;
-//
-//  for (int i = 0; i <= 256; ++i)
-//  {
-//    hex.visit(i);
-//  }
-//
-//  // only the last visited integer value is kept:
-//  BOOST_TEST(hex.value() == "100");
-//  BOOST_TEST(hex.delimited_value('x', 'y') == "x100y");
-//}
+BOOST_AUTO_TEST_CASE(multi_visit)
+{
+  mserialize::detail::IntegerToHex hex;
+
+  for (int i = 0; i <= 256; ++i)
+  {
+    hex.visit(i);
+  }
+
+  // only the last visited integer value is kept:
+  BOOST_TEST(hex.value() == "100");
+  BOOST_TEST(hex.delimited_value('x', 'y') == "x100y");
+}
 
 BOOST_AUTO_TEST_SUITE_END()
