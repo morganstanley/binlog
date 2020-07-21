@@ -22,16 +22,13 @@ namespace mserialize {
  * @pre `istream` must contain a serialized object,
  *   whose type tag is `tag`.
  * @throws std::exception if reading of `istream` fails.
- *
- * Limitation: the implementation uses recursive function
- * calls. Do not visit a `tag` which comes from a possibly
- * malicious source, or one which is too long, to avoid
- * risking a stack overflow.
+ * @throws std::runtime_error if tag is too deeply nested,
+ *   to prevent stack overflow.
  */
 template <typename Visitor, typename InputStream>
 void visit(string_view tag, Visitor& visitor, InputStream& istream)
 {
-  detail::visit_impl(tag, tag, visitor, istream);
+  detail::visit_impl(tag, tag, visitor, istream, 2048);
 }
 
 } // namespace mserialize

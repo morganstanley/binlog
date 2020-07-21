@@ -85,6 +85,17 @@ public:
   std::string value() const { return _str.str(); }
 };
 
+class CountingVisitor
+{
+  int _count = 0;
+
+public:
+  template <typename T>
+  void visit(T) { ++_count; }
+
+  int value() const { return _count; }
+};
+
 template <typename Visitor, typename T, typename IS = InputStream>
 typename Visitor::value_type
 serialize_and_visit(const T& in)
@@ -415,6 +426,110 @@ BOOST_AUTO_TEST_CASE(tuple_of_recursive_struct)
    "VB(1,{Tree})< StB(Tree,`value'i`left'<0{Tree}>`right'<0{Tree}>) { value(i): 3 , left(<0{Tree}>): VB(0,0)< {null} > , right(<0{Tree}>): VB(0,0)< {null} > , } > , "
    "} ) "
   );
+}
+
+BOOST_AUTO_TEST_CASE(deeply_nested_seq_tag)
+{
+  const int max_recursion = 2047;
+
+  // works
+  {
+    std::string tag(max_recursion, '[');
+    tag.push_back('i');
+
+    CountingVisitor visitor;
+
+    std::stringstream stream;
+    for (int i = 0; i < max_recursion + 1; ++i)
+    {
+      mserialize::serialize(std::int32_t(1), stream);
+    }
+
+    mserialize::visit(tag, visitor, stream);
+    BOOST_TEST(visitor.value() == max_recursion * 2 + 1);
+  }
+
+  // throws
+  {
+    std::string tag(max_recursion + 1, '[');
+    tag.push_back('i');
+
+    CountingVisitor visitor;
+
+    std::stringstream stream;
+    for (int i = 0; i < max_recursion + 2; ++i)
+    {
+      mserialize::serialize(std::int32_t(1), stream);
+    }
+
+    BOOST_CHECK_THROW(mserialize::visit(tag, visitor, stream), std::runtime_error);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(deeply_nested_tuple_tag)
+{
+  const int max_recursion = 2047;
+
+  // works
+  {
+    const std::string tag = std::string(max_recursion, '(') + "i" + std::string(max_recursion, ')');
+
+    CountingVisitor visitor;
+
+    std::stringstream stream;
+    mserialize::serialize(std::int32_t(1), stream);
+
+    mserialize::visit(tag, visitor, stream);
+    BOOST_TEST(visitor.value() == max_recursion * 2 + 1);
+  }
+
+  // throws
+  {
+    const std::string tag = std::string(max_recursion + 1, '(') + "i" + std::string(max_recursion + 1, ')');
+
+    CountingVisitor visitor;
+
+    std::stringstream stream;
+    mserialize::serialize(std::int32_t(1), stream);
+
+    BOOST_CHECK_THROW(mserialize::visit(tag, visitor, stream), std::runtime_error);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(deeply_nested_variant_tag)
+{
+  const int max_recursion = 2047;
+
+  // works
+  {
+    const std::string tag = std::string(max_recursion, '<') + "B" + std::string(max_recursion, '>');
+
+    CountingVisitor visitor;
+
+    std::stringstream stream;
+    for (int i = 0; i < max_recursion + 1; ++i)
+    {
+      mserialize::serialize(uint8_t(0), stream);
+    }
+
+    mserialize::visit(tag, visitor, stream);
+    BOOST_TEST(visitor.value() == max_recursion * 2 + 1);
+  }
+
+  // throws
+  {
+    const std::string tag = std::string(max_recursion + 1, '<') + "B" + std::string(max_recursion + 1, '>');
+
+    CountingVisitor visitor;
+
+    std::stringstream stream;
+    for (int i = 0; i < max_recursion + 2; ++i)
+    {
+      mserialize::serialize(uint8_t(0), stream);
+    }
+
+    BOOST_CHECK_THROW(mserialize::visit(tag, visitor, stream), std::runtime_error);
+  }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
