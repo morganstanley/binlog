@@ -172,6 +172,15 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(arithmetic, T, arithmetic_types)
   }
 }
 
+BOOST_AUTO_TEST_CASE(invalid_arithmetic)
+{
+  CountingVisitor visitor;
+  std::stringstream stream;
+  mserialize::serialize(std::uint64_t(1), stream);
+
+  BOOST_CHECK_THROW(mserialize::visit("X", visitor, stream), std::runtime_error);
+}
+
 BOOST_AUTO_TEST_CASE(empty_vector_of_int)
 {
   const std::vector<int> in;

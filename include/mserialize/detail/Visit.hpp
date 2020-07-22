@@ -69,6 +69,7 @@ void visit_arithmetic(char tag, Visitor& visitor, InputStream& istream)
   case 'f': float f;       mserialize::deserialize(f, istream); visitor.visit(f); break;
   case 'd': double d;      mserialize::deserialize(d, istream); visitor.visit(d); break;
   case 'D': long double D; mserialize::deserialize(D, istream); visitor.visit(D); break;
+  default: throw std::runtime_error(std::string("Invalid arithmetic tag: ") + tag); break;
   }
 }
 

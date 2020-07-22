@@ -24,6 +24,7 @@ namespace mserialize {
  * @throws std::exception if reading of `istream` fails.
  * @throws std::runtime_error if tag is too deeply nested,
  *   to prevent stack overflow.
+ * @throws std::runtime_error if tag is syntactically invalid
  */
 template <typename Visitor, typename InputStream>
 void visit(string_view tag, Visitor& visitor, InputStream& istream)
