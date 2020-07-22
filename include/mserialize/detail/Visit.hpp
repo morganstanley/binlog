@@ -148,7 +148,14 @@ void visit_variant(const string_view full_tag, string_view tag, Visitor& visitor
 
   visitor.visit(mserialize::Visitor::VariantBegin{discriminator, option_tag});
 
-  visit_impl(full_tag, option_tag, visitor, istream, max_recursion);
+  if (option_tag == "0")
+  {
+    visitor.visit(mserialize::Visitor::Null{});
+  }
+  else
+  {
+    visit_impl(full_tag, option_tag, visitor, istream, max_recursion);
+  }
 
   visitor.visit(mserialize::Visitor::VariantEnd{});
 }
@@ -270,9 +277,6 @@ void visit_impl(const string_view full_tag, string_view tag, Visitor& visitor, I
     break;
   case '/':
     visit_enum(tag, visitor, istream);
-    break;
-  case '0':
-    visitor.visit(mserialize::Visitor::Null{});
     break;
   default:
     visit_arithmetic(tag.front(), visitor, istream);

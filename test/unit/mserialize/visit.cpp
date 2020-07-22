@@ -541,4 +541,11 @@ BOOST_AUTO_TEST_CASE(deeply_nested_variant_tag)
   }
 }
 
+BOOST_AUTO_TEST_CASE(no_freestanding_null)
+{
+  CountingVisitor visitor;
+  std::stringstream stream;
+  BOOST_CHECK_THROW(mserialize::visit("0", visitor, stream), std::runtime_error);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
