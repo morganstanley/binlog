@@ -541,6 +541,13 @@ BOOST_AUTO_TEST_CASE(deeply_nested_variant_tag)
   }
 }
 
+BOOST_AUTO_TEST_CASE(infinite_recursive_struct)
+{
+  CountingVisitor visitor;
+  std::stringstream stream;
+  BOOST_CHECK_THROW(mserialize::visit("{R`r'{R}}", visitor, stream), std::runtime_error);
+}
+
 BOOST_AUTO_TEST_CASE(no_freestanding_null)
 {
   CountingVisitor visitor;
