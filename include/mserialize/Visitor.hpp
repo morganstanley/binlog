@@ -88,14 +88,14 @@ struct Visitor
 
   struct RepeatBegin
   {
-    std::size_t size{}; /**< Number of time the next visted value repeats */
-    string_view tag;    /**< Type tag of the repeating value */
+    std::uint32_t size{}; /**< Number of time the next visted value repeats */
+    string_view tag;      /**< Type tag of the repeating value */
   };
 
   struct RepeatEnd
   {
-    std::size_t size{}; /**< Number of time the previous visted value repeats */
-    string_view tag;    /**< Type tag of the repeating value */
+    std::uint32_t size{}; /**< Number of time the previous visted value repeats */
+    string_view tag;      /**< Type tag of the repeating value */
   };
 
   // visitor methods - to be implemented by derived type
