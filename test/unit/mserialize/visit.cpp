@@ -418,6 +418,25 @@ BOOST_AUTO_TEST_CASE(recursive_struct)
   BOOST_TEST(out == sg);
 }
 
+BOOST_AUTO_TEST_CASE(seq_of_recursive_struct)
+{
+  const std::string tag = "[{R`r'[{R}}"; // R is not empty due to the seq size
+
+  CountingVisitor visitor;
+
+  std::stringstream stream;
+  stream.exceptions(std::ios_base::failbit);
+  mserialize::serialize(std::int32_t(1), stream);
+  mserialize::serialize(std::int32_t(64), stream);
+  for (int i = 0; i < 64; ++i)
+  {
+    mserialize::serialize(std::int32_t(0), stream);
+  }
+
+  mserialize::visit(tag, visitor, stream);
+  BOOST_TEST(visitor.value() == 392);
+}
+
 BOOST_AUTO_TEST_CASE(tuple_of_recursive_struct)
 {
   Tree child{3, nullptr, nullptr};
@@ -556,6 +575,26 @@ BOOST_AUTO_TEST_CASE(no_freestanding_null)
   CountingVisitor visitor;
   std::stringstream stream;
   BOOST_CHECK_THROW(mserialize::visit("0", visitor, stream), std::runtime_error);
+}
+
+BOOST_AUTO_TEST_CASE(seq_of_empty_tuple)
+{
+  const std::vector<std::tuple<>> in(1024);
+  const std::string out = serialize_and_visit<ToString>(in);
+  BOOST_TEST(out == "SB(1024,())[ RB(1024,())( TB()( ) ) ] ");
+}
+
+BOOST_AUTO_TEST_CASE(seq_of_empty_struct)
+{
+  const std::string tag = "[{S`a'()`b'(()())}";
+
+  CountingVisitor visitor;
+
+  std::stringstream stream;
+  mserialize::serialize(std::int32_t(1024), stream);
+
+  mserialize::visit(tag, visitor, stream);
+  BOOST_TEST(visitor.value() == 18);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

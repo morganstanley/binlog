@@ -3,6 +3,8 @@
 
 #include <mserialize/Visitor.hpp>
 #include <mserialize/deserialize.hpp>
+#include <mserialize/singular.hpp>
+
 #include <mserialize/detail/integer_to_hex.hpp>
 #include <mserialize/detail/tag_util.hpp>
 
@@ -78,9 +80,20 @@ void visit_sequence_impl(const string_view full_tag, const string_view elem_tag,
 {
   visitor.visit(mserialize::Visitor::SequenceBegin{size, elem_tag});
 
-  while (size--)
+  if (size > 32 && singular(full_tag, elem_tag, max_recursion))
   {
+    // every elem in the seq are the same and serialized using 0 bytes.
+    // visit the first one only, to prevent little input generating huge output
+    visitor.visit(mserialize::Visitor::RepeatBegin{size, elem_tag});
     visit_impl(full_tag, elem_tag, visitor, istream, max_recursion);
+    visitor.visit(mserialize::Visitor::RepeatEnd{size, elem_tag});
+  }
+  else
+  {
+    while (size--)
+    {
+      visit_impl(full_tag, elem_tag, visitor, istream, max_recursion);
+    }
   }
 
   visitor.visit(mserialize::Visitor::SequenceEnd{});
