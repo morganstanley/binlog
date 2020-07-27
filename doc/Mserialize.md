@@ -368,6 +368,9 @@ Library design tends to be arguable. Some decisions need to be explained.
       visitor.visit(mserialize::Visitor::FieldEnd      );
 
       visitor.visit(mserialize::Visitor::Enum          );
+
+      visitor.visit(mserialize::Visitor::RepeatBegin   );
+      visitor.visit(mserialize::Visitor::RepeatEnd     );
     };
 
 # References

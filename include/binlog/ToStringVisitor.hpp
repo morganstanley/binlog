@@ -58,6 +58,9 @@ public:
   void visit(mserialize::Visitor::FieldBegin);
   void visit(mserialize::Visitor::FieldEnd);
 
+  void visit(mserialize::Visitor::RepeatBegin);
+  void visit(mserialize::Visitor::RepeatEnd);
+
 private:
   void comma();
 

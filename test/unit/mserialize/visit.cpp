@@ -82,6 +82,9 @@ public:
   void visit(mserialize::Visitor::FieldBegin fb)    { _str << fb.name << '(' << fb.tag << "): "; }
   void visit(mserialize::Visitor::FieldEnd)         { _str << ", "; }
 
+  void visit(mserialize::Visitor::RepeatBegin rb) { _str << "RB(" << rb.size << ',' << rb.tag << ")( ";}
+  void visit(mserialize::Visitor::RepeatEnd)      { _str << ") "; }
+
   std::string value() const { return _str.str(); }
 };
 
