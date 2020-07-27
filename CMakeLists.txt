@@ -253,6 +253,7 @@ if(Boost_FOUND)
     test/unit/mserialize/visit.cpp
     test/unit/mserialize/documentation.cpp
     test/unit/mserialize/inttohex.cpp
+    test/unit/mserialize/singular.cpp
 
     test/unit/binlog/TestEventStream.cpp
     test/unit/binlog/TestTime.cpp
