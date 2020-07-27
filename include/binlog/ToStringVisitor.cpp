@@ -132,6 +132,16 @@ void ToStringVisitor::comma()
   }
 }
 
+void ToStringVisitor::visit(mserialize::Visitor::RepeatBegin) {}
+
+void ToStringVisitor::visit(mserialize::Visitor::RepeatEnd re)
+{
+  if (re.size > 1)
+  {
+    _out << " ... <repeats " << re.size << " times>";
+  }
+}
+
 void ToStringVisitor::enterSeq()
 {
   _state = State::SeqBegin;

@@ -261,4 +261,22 @@ BOOST_FIXTURE_TEST_CASE(empty_field_name, TestcaseBase)
   BOOST_TEST(result() == "BoundedInt{ 1024 }");
 }
 
+BOOST_FIXTURE_TEST_CASE(repeat_once, TestcaseBase)
+{
+  visitor.visit(V::RepeatBegin{1, "i"});
+  visitor.visit(int(1));
+  visitor.visit(V::RepeatEnd{1, "i"});
+
+  BOOST_TEST(result() == "1");
+}
+
+BOOST_FIXTURE_TEST_CASE(repeat_more, TestcaseBase)
+{
+  visitor.visit(V::RepeatBegin{9, "i"});
+  visitor.visit(int(1));
+  visitor.visit(V::RepeatEnd{9, "i"});
+
+  BOOST_TEST(result() == "1 ... <repeats 9 times>");
+}
+
 BOOST_AUTO_TEST_SUITE_END()
