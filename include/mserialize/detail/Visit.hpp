@@ -227,6 +227,7 @@ void visit_struct(const string_view full_tag, string_view tag, Visitor& visitor,
  *
  * @pre tag.front() == / and tag.back() == \
  * @pre the underlying type must be an integer tag
+ * @throws std::runtime_error if syntax is invalid
  */
 template <typename Visitor, typename InputStream>
 void visit_enum(string_view tag, Visitor& visitor, InputStream& istream)
@@ -234,7 +235,7 @@ void visit_enum(string_view tag, Visitor& visitor, InputStream& istream)
   tag.remove_prefix(1); // drop slash
   tag.remove_suffix(1); // drop backslash
 
-  if (tag.empty()) { return; }
+  if (tag.empty()) { throw std::runtime_error("Invalid enum tag: '" + tag.to_string() + "'"); }
 
   // convert the discriminator to hex
   const char underlying_type_tag = tag[0];
