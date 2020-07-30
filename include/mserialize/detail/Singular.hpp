@@ -33,6 +33,7 @@ inline bool singular_struct(string_view full_tag, string_view tag, int max_recur
     tag = tag_pop(tag);
     tag.remove_prefix(intro.size());
     tag.remove_suffix(1);
+    tag_pop_label(tag);
     // if tag is not empty at this point, this is a recursive struct: non-singular
     return tag.empty();
   }
@@ -44,8 +45,8 @@ inline bool singular_struct(string_view full_tag, string_view tag, int max_recur
 
     if (! singular_impl(full_tag, field_tag, max_recursion)) { return false; }
   }
-  return true;
 
+  return true;
 }
 
 inline bool singular_impl(string_view full_tag, string_view tag, int max_recursion)

@@ -67,4 +67,10 @@ BOOST_AUTO_TEST_CASE(recursive)
   BOOST_TEST(mserialize::singular("{R,`r'[{R}}", "{R}") == false);
 }
 
+BOOST_AUTO_TEST_CASE(corrupt_but_singular)
+{
+  BOOST_TEST(mserialize::singular("[{1t0", "{1t") == true);
+  BOOST_TEST(mserialize::singular("(", "(") == true);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
