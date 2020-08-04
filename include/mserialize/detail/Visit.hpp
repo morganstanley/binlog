@@ -194,11 +194,7 @@ void visit_struct(const string_view full_tag, string_view tag, Visitor& visitor,
   if (tag.empty())
   {
     // perhaps a recursive struct?
-    const std::size_t intro_pos = full_tag.find(intro);
-    tag = string_view(full_tag.data() + intro_pos, full_tag.size() - intro_pos);
-    tag = tag_pop(tag);
-    tag.remove_prefix(intro.size());
-    tag.remove_suffix(1);
+    tag = resolve_recursive_tag(full_tag, intro);
   }
 
   intro.remove_prefix(1); // drop {
