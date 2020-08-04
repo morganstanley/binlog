@@ -28,11 +28,8 @@ inline bool singular_struct(string_view full_tag, string_view tag, int max_recur
   if (tag.empty())
   {
     // perhaps a recursive struct?
-    const std::size_t intro_pos = full_tag.find(intro);
-    tag = string_view(full_tag.data() + intro_pos, full_tag.size() - intro_pos);
-    tag = tag_pop(tag);
-    tag.remove_prefix(intro.size());
-    tag.remove_suffix(1);
+    tag = resolve_recursive_tag(full_tag, intro);
+    // drop the name of the first field, if any
     tag_pop_label(tag);
     // if tag is not empty at this point, this is a recursive struct: non-singular
     return tag.empty();

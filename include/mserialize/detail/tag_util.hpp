@@ -123,6 +123,33 @@ inline string_view tag_pop_arithmetic(string_view& tags)
   return arithmetic_tag;
 }
 
+/**
+ * Find the definition (sequence of label-tag pairs) of the
+ * given struct `intro` in `full_tag`.
+ *
+ * This is useful as recursive structs can be referenced
+ * without giving the full definition, e.g:
+ *
+ *     full_tag = "{N`n'<0{N}>}"
+ *     intro = "{N"
+ *     resolve_recursive_tag(full_tag, intro) == "`n'<0{N}>"
+ *
+ * If `intro` references an empty struct, returns an empty string.
+ *
+ * @param full_tag the complete type tag
+ * @param intro the {Foo part of a struct tag
+ * @return sequence of field label-tag pairs
+ */
+inline string_view resolve_recursive_tag(string_view full_tag, string_view intro)
+{
+  const std::size_t intro_pos = full_tag.find(intro);
+  string_view tag(full_tag.data() + intro_pos, full_tag.size() - intro_pos);
+  tag = tag_pop(tag);
+  tag.remove_prefix(intro.size());
+  tag.remove_suffix(1); // drop closing curly
+  return tag;
+}
+
 } // namespace detail
 } // namespace mserialize
 
