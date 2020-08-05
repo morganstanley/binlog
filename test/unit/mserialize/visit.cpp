@@ -597,4 +597,15 @@ BOOST_AUTO_TEST_CASE(seq_of_empty_struct)
   BOOST_TEST(visitor.value() == 18);
 }
 
+BOOST_AUTO_TEST_CASE(empty_prefix_of_containing_struct)
+{
+  const std::string tag = "{FooBar`f'{Foo}}";
+  ToString visitor;
+  std::stringstream stream;
+  stream.exceptions(std::ios_base::failbit);
+
+  mserialize::visit(tag, visitor, stream);
+  BOOST_TEST(visitor.value() == "StB(FooBar,`f'{Foo}) { f({Foo}): StB(Foo,) { } , } ");
+}
+
 BOOST_AUTO_TEST_SUITE_END()

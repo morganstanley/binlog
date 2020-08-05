@@ -142,12 +142,22 @@ inline string_view tag_pop_arithmetic(string_view& tags)
  */
 inline string_view resolve_recursive_tag(string_view full_tag, string_view intro)
 {
-  const std::size_t intro_pos = full_tag.find(intro);
-  string_view tag(full_tag.data() + intro_pos, full_tag.size() - intro_pos);
-  tag = tag_pop(tag);
-  tag.remove_prefix(intro.size());
-  tag.remove_suffix(1); // drop closing curly
-  return tag;
+  while (! full_tag.empty())
+  {
+    const std::size_t intro_pos = full_tag.find(intro);
+    full_tag.remove_prefix(intro_pos);
+    full_tag.remove_prefix(intro.size());
+    if (full_tag.empty()) { break; }
+    if (full_tag.front() == '}') { break; } // empty struct
+    if (full_tag.front() == '`') // definition found
+    {
+      const std::size_t size = size_between_balanced(full_tag, '{', '}');
+      return string_view{full_tag.data(), size - 1};
+    }
+    // else: spurious find, e.g: found {FooBar for {Foo
+  }
+
+  return {};
 }
 
 } // namespace detail
