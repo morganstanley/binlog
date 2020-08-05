@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(not_singular)
 BOOST_AUTO_TEST_CASE(recursive)
 {
   BOOST_TEST(mserialize::singular("{Empty`x'{Empty}}", "{Empty}") == false); // infinite recursion
-  BOOST_TEST(mserialize::singular("{R,`r'[{R}}", "{R}") == false);
+  BOOST_TEST(mserialize::singular("{R`r'[{R}}", "{R}") == false);
 }
 
 BOOST_AUTO_TEST_CASE(corrupt_but_singular)
