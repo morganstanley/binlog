@@ -254,6 +254,7 @@ if(Boost_FOUND)
     test/unit/mserialize/documentation.cpp
     test/unit/mserialize/inttohex.cpp
     test/unit/mserialize/singular.cpp
+    test/unit/mserialize/tag_util.cpp
 
     test/unit/binlog/TestEventStream.cpp
     test/unit/binlog/TestTime.cpp
