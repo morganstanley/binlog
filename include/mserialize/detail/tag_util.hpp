@@ -142,6 +142,8 @@ inline string_view tag_pop_arithmetic(string_view& tags)
  */
 inline string_view resolve_recursive_tag(string_view full_tag, string_view intro)
 {
+  if (intro.empty()) { return {}; }
+
   while (! full_tag.empty())
   {
     const std::size_t intro_pos = full_tag.find(intro);

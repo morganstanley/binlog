@@ -8,6 +8,7 @@ BOOST_AUTO_TEST_CASE(resolve_recursive_tag)
 {
   using mserialize::detail::resolve_recursive_tag;
   BOOST_TEST(resolve_recursive_tag("", "") == "");
+  BOOST_TEST(resolve_recursive_tag("{", "") == "");
   BOOST_TEST(resolve_recursive_tag("{A}", "{A") == "");
   BOOST_TEST(resolve_recursive_tag("{A`f'i}", "{A") == "`f'i");
   BOOST_TEST(resolve_recursive_tag("(ii{A`f'i}II)", "{A") == "`f'i");
