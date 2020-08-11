@@ -32,7 +32,7 @@ Range IstreamEntryStream::nextEntryPayload()
   if (! _input) // payload is truncated
   {
     rewind(std::streamsize(sizeof(size)) + _input.gcount());
-    throw std::runtime_error("Failed to entry payload from istream, only got "
+    throw std::runtime_error("Failed to read entry payload from istream, only got "
       + std::to_string(_input.gcount()) + " bytes, expected " + std::to_string(size));
   }
 
