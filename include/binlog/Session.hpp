@@ -8,7 +8,6 @@
 #include <binlog/detail/QueueReader.hpp>
 #include <binlog/detail/VectorOutputStream.hpp>
 
-#include <algorithm> // move
 #include <atomic>
 #include <cstdint>
 #include <deque>
@@ -375,8 +374,7 @@ Session::ConsumeResult Session::consume(OutputStream& out)
     if (isClosed)
     {
       // queue is empty and closed, remove it
-      std::move(it+1, _channels.end(), it);
-      _channels.pop_back();
+      it = _channels.erase(it);
       result.channelsRemoved++;
     }
     else
