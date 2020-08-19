@@ -8,6 +8,7 @@
 #include <binlog/detail/QueueReader.hpp>
 #include <binlog/detail/VectorOutputStream.hpp>
 
+#include <algorithm> // remove_if
 #include <atomic>
 #include <cstdint>
 #include <deque>
@@ -339,7 +340,7 @@ Session::ConsumeResult Session::consume(OutputStream& out)
   result.bytesConsumed += std::size_t(sourceWriteSize);
 
   // consume some events
-  for (auto it = _channels.begin(); it != _channels.end();)
+  for (std::shared_ptr<Channel>& channelptr : _channels)
   {
     // Important to check if channel is closed before beginRead,
     // otherwise the following race becomes possible:
@@ -347,9 +348,9 @@ Session::ConsumeResult Session::consume(OutputStream& out)
     //  - Producer adds data
     //  - Producer closes the queue
     //  - Consumer finds queue is closed, removes it -> data loss
-    const bool isClosed = (it->use_count() == 1);
+    const bool isClosed = (channelptr.use_count() == 1);
 
-    Channel& ch = **it;
+    Channel& ch = *channelptr;
 
     detail::QueueReader reader(ch.queue());
     const detail::QueueReader::ReadResult data = reader.beginRead();
@@ -374,16 +375,21 @@ Session::ConsumeResult Session::consume(OutputStream& out)
     if (isClosed)
     {
       // queue is empty and closed, remove it
-      it = _channels.erase(it);
+      channelptr.reset();
       result.channelsRemoved++;
-    }
-    else
-    {
-      ++it;
     }
 
     result.channelsPolled++;
   }
+
+  // remove empty and closed channels
+  _channels.erase(
+    std::remove_if(
+      _channels.begin(), _channels.end(),
+      [](const std::shared_ptr<Channel>& channelptr) { return !channelptr; }
+    ),
+    _channels.end()
+  );
 
   _totalConsumedBytes += result.bytesConsumed;
   result.totalBytesConsumed = _totalConsumedBytes;
