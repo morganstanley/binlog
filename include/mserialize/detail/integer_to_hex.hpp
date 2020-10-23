@@ -19,7 +19,15 @@ constexpr std::size_t hex_string_size(Integer v)
   }
   else
   {
+    #if defined(__GNUC__) and not defined(__clang__)
+      // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96742
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wtype-limits"
+    #endif
     for (; std::int64_t(v) < 0; v /= 16) { ++size; }
+    #if defined(__GNUC__) and not defined(__clang__)
+      #pragma GCC diagnostic pop
+    #endif
   }
   return size;
 }
