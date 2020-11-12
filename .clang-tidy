@@ -36,7 +36,7 @@ Checks: "\
   -llvm-header-guard,\
   -google-runtime-references"
 
-HeaderFilterRegex: '.*'
+HeaderFilterRegex: '.*binlog/.*|.*mserialize/.*'
 
 CheckOptions:
   - key: cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
