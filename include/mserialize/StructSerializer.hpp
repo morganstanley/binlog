@@ -42,6 +42,11 @@ auto serializable_member(Field T::*field) -> decltype(field);
 template <typename T, typename Ret>
 auto serializable_member(Ret (T::*getter)() const) -> decltype(getter);
 
+#if __cplusplus >= 201703L
+template <typename T, typename Ret>
+auto serializable_member(Ret (T::*getter)() const noexcept) -> decltype(getter);
+#endif
+
 /**
  * Serialize the given members of a custom type `T`.
  *
@@ -112,6 +117,14 @@ private:
     mserialize::serialize((t.*getter)(), ostream);
   }
 
+#if __cplusplus >= 201703L
+  template <typename Field, typename OutputStream>
+  static void serialize_member(const T& t, Field (T::*getter)() const noexcept, OutputStream& ostream)
+  {
+    mserialize::serialize((t.*getter)(), ostream);
+  }
+#endif
+
   template <typename Field>
   static std::size_t serialized_size_member(const T& t, Field T::*field)
   {
@@ -123,6 +136,14 @@ private:
   {
     return mserialize::serialized_size((t.*getter)());
   }
+
+#if __cplusplus >= 201703L
+  template <typename Field>
+  static std::size_t serialized_size_member(const T& t, Field (T::*getter)() const noexcept)
+  {
+    return mserialize::serialized_size((t.*getter)());
+  }
+#endif
 };
 
 } // namespace mserialize
