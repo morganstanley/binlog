@@ -13,7 +13,7 @@ jobs:
           set -x
           mkdir Release
           cd Release
-          cmake -DBOOST_ROOT=$BOOST_ROOT_1_69_0 -DBoost_ARCHITECTURE=-x64 -DBINLOG_FORCE_TESTS=ON ..
+          cmake -DBOOST_ROOT=$BOOST_ROOT_1_72_0 -DBoost_ARCHITECTURE=-x64 -DBINLOG_FORCE_TESTS=ON ..
       - name: Build
         run: |
           cd Release
@@ -45,7 +45,7 @@ jobs:
           set -x
           mkdir Release
           cd Release
-          cmake -DBOOST_ROOT=$BOOST_ROOT_1_69_0 -DBoost_ARCHITECTURE=-x64 -DBINLOG_FORCE_TESTS=ON -DCMAKE_CXX_STANDARD=17 ..
+          cmake -DBOOST_ROOT=$BOOST_ROOT_1_72_0 -DBoost_ARCHITECTURE=-x64 -DBINLOG_FORCE_TESTS=ON -DCMAKE_CXX_STANDARD=17 ..
       - name: Build
         run: |
           cd Release
@@ -65,7 +65,7 @@ jobs:
           set -x
           mkdir AddressSanitized
           cd AddressSanitized
-          cmake -DBOOST_ROOT=$BOOST_ROOT_1_69_0 -DBoost_ARCHITECTURE=-x64 -DBINLOG_FORCE_TESTS=ON -DBINLOG_USE_ASAN=On -DBINLOG_USE_UBSAN=On ..
+          cmake -DBOOST_ROOT=$BOOST_ROOT_1_72_0 -DBoost_ARCHITECTURE=-x64 -DBINLOG_FORCE_TESTS=ON -DBINLOG_USE_ASAN=On -DBINLOG_USE_UBSAN=On ..
       - name: Build
         run: |
           cd AddressSanitized
@@ -85,7 +85,7 @@ jobs:
           set -x
           mkdir ThreadSanitized
           cd ThreadSanitized
-          cmake -DBOOST_ROOT=$BOOST_ROOT_1_69_0 -DBoost_ARCHITECTURE=-x64 -DBINLOG_FORCE_TESTS=ON -DBINLOG_USE_TSAN=On ..
+          cmake -DBOOST_ROOT=$BOOST_ROOT_1_72_0 -DBoost_ARCHITECTURE=-x64 -DBINLOG_FORCE_TESTS=ON -DBINLOG_USE_TSAN=On ..
       - name: Build
         run: |
           cd ThreadSanitized
@@ -112,7 +112,7 @@ jobs:
           cd Clang
           export CC=$(which clang)
           export CXX=$(which clang++)
-          cmake -DBOOST_ROOT=$BOOST_ROOT_1_69_0 -DBoost_ARCHITECTURE=-x64 -DBINLOG_FORCE_TESTS=ON -DBINLOG_USE_CLANG_TIDY=On ..
+          cmake -DBOOST_ROOT=$BOOST_ROOT_1_72_0 -DBoost_ARCHITECTURE=-x64 -DBINLOG_FORCE_TESTS=ON -DBINLOG_USE_CLANG_TIDY=On ..
       - name: Build
         run: |
           cd Clang
