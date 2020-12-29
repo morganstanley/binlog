@@ -4,6 +4,15 @@
 
 BOOST_AUTO_TEST_SUITE(MserializeTagUtil)
 
+BOOST_AUTO_TEST_CASE(tag_first_size_large_input)
+{
+  std::vector<char> buffer(1'000'001, '[');
+  buffer.back() = 'i';
+
+  const mserialize::string_view tag(buffer.data(), buffer.size());
+  BOOST_TEST(buffer.size() == mserialize::detail::tag_first_size(tag));
+}
+
 BOOST_AUTO_TEST_CASE(resolve_recursive_tag)
 {
   using mserialize::detail::resolve_recursive_tag;
