@@ -60,24 +60,37 @@ inline string_view remove_prefix_before(string_view& s, char c)
 /** @returns the size of the first tag in `tags` */
 inline std::size_t tag_first_size(string_view tags)
 {
-  if (tags.empty()) { return 0; }
-
-  switch (tags.front())
+  std::size_t result = 0;
+  for (char c : tags)
   {
-  case '[':
-    tags.remove_prefix(1);
-    return 1 + tag_first_size(tags);
-  case '(':
-    return size_between_balanced(tags, '(', ')');
-  case '<':
-    return size_between_balanced(tags, '<', '>');
-  case '{':
-    return size_between_balanced(tags, '{', '}');
-  case '/':
-    return size_between_balanced(tags, '/', '\\');
+    if (c != '[') { break; }
+    ++result;
+  }
+  tags.remove_prefix(result);
+
+  if (! tags.empty())
+  {
+    switch (tags.front())
+    {
+    case '(':
+      result += size_between_balanced(tags, '(', ')');
+      break;
+    case '<':
+      result += size_between_balanced(tags, '<', '>');
+      break;
+    case '{':
+      result += size_between_balanced(tags, '{', '}');
+      break;
+    case '/':
+      result += size_between_balanced(tags, '/', '\\');
+      break;
+    default:
+      result += 1; // assume arithmetic
+      break;
+    }
   }
 
-  return 1; // assume arithmetic
+  return result;
 }
 
 /** Remove and return the first tag in the concatenated `tags` */
