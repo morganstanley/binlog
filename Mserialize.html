@@ -77,7 +77,7 @@ The format is not intended to be universal, it does not serve the purpose of
 exchanging messages between different platforms (e.g: between platforms of different endianness).</p>
 <h1 id="serialization-and-deserialization"><a class="toclink" href="#serialization-and-deserialization">Serialization and Deserialization</a></h1>
 <p>Objects of supported types can be easily serialized:</p>
-<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/mserialize/serialize.hpp">mserialize/serialize.hpp</a>&gt;
+<pre><code>#include &lt;mserialize/serialize.hpp&gt;
 
 const T my_value;
 std::ofstream ostream(path);
@@ -97,7 +97,7 @@ mserialize::serialize(my_value, ostream);
 <p>Additional types can be adapted to the library, as <a href="#adapting-custom-types">shown below</a>.
 The target <code>ostream</code> can be anything that models the <a href="#outputstream">OutputStream</a> concept.</p>
 <p>Deserialization of serialized objects is equally easy:</p>
-<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/mserialize/deserialize.hpp">mserialize/deserialize.hpp</a>&gt;
+<pre><code>#include &lt;mserialize/deserialize.hpp&gt;
 
 T my_value;
 std::ifstream istream(path);
@@ -121,8 +121,8 @@ throws <code>std::runtime_error</code>.</p>
 (unless they meet the requirements of some supported concept, e.g: a container).
 Such types can be still adapted though, by specializing extension points for these types.
 The easiest way is to use macros:</p>
-<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/mserialize/make_struct_deserializable.hpp">mserialize/make_struct_deserializable.hpp</a>&gt;
-#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/mserialize/make_struct_serializable.hpp">mserialize/make_struct_serializable.hpp</a>&gt;
+<pre><code>#include &lt;mserialize/make_struct_deserializable.hpp&gt;
+#include &lt;mserialize/make_struct_serializable.hpp&gt;
 
 // Given a custom type:
 struct Alpha { int a = 0; std::string b; };
@@ -142,7 +142,7 @@ Alpha out;
 stream.exceptions(std::ios_base::failbit);
 mserialize::deserialize(out, stream);
 
-assert(in.a == out.a && in.b == out.b);
+assert(in.a == out.a &amp;&amp; in.b == out.b);
 </code></pre>
 <p>The macros have to be invoked at the global scope, outside of any namespace.
 The first argument is the name of the type, the rest are the members
@@ -165,7 +165,7 @@ class Beta
   float d;
 
 public:
-  const std::string& getC() const;
+  const std::string&amp; getC() const;
   void setC(std::string);
 
   float getD() const;
@@ -194,8 +194,8 @@ declarations can be added to the type:</p>
 </code></pre>
 <p>Class templates can be made serializable and deserializable on the same conditions,
 except that a different macro must be called:</p>
-<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/mserialize/make_template_deserializable.hpp">mserialize/make_template_deserializable.hpp</a>&gt;
-#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/mserialize/make_template_serializable.hpp">mserialize/make_template_serializable.hpp</a>&gt;
+<pre><code>#include &lt;mserialize/make_template_deserializable.hpp&gt;
+#include &lt;mserialize/make_template_serializable.hpp&gt;
 
 template &lt;typename A, typename B&gt;
 struct Pair { A a; B b; };
@@ -219,8 +219,8 @@ or not deserializable.</p>
 a <em>type tag</em> still must be available for visitation to work.
 A type tag is a string, that describes a serializable type to the extent that it can be visited.</p>
 <p>The following example shows how serialization and visitation can work together:</p>
-<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/mserialize/serialize.hpp">mserialize/serialize.hpp</a>&gt;
-#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/mserialize/tag.hpp">mserialize/tag.hpp</a>&gt;
+<pre><code>#include &lt;mserialize/serialize.hpp&gt;
+#include &lt;mserialize/tag.hpp&gt;
 
 // serialize a T object
 const T t;
@@ -230,8 +230,8 @@ mserialize::serialize(tag, ostream);
 mserialize::serialize(t, ostream);
 </code></pre>
 <p>&nbsp;</p>
-<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/mserialize/deserialize.hpp">mserialize/deserialize.hpp</a>&gt;
-#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/mserialize/visit.hpp">mserialize/visit.hpp</a>&gt;
+<pre><code>#include &lt;mserialize/deserialize.hpp&gt;
+#include &lt;mserialize/visit.hpp&gt;
 
 // visit the object
 std::ifstream istream(path);
@@ -252,7 +252,7 @@ do not use tags coming from a potentially malicious source.</p>
 <h2 id="adapting-enums-for-visitation"><a class="toclink" href="#adapting-enums-for-visitation">Adapting enums for visitation</a></h2>
 <p>By default, enums have no tag associated.
 A tag, suitable for visitation can be defined in the following way:</p>
-<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/mserialize/make_enum_tag.hpp">mserialize/make_enum_tag.hpp</a>&gt;
+<pre><code>#include &lt;mserialize/make_enum_tag.hpp&gt;
 
 enum Delta { a, b, c };
 MSERIALIZE_MAKE_ENUM_TAG(Delta, a, b, c)
@@ -267,7 +267,7 @@ underlying value will be available, the enumerator name will be empty.</p>
 (In general, since any type modeling a specific supported concept, e.g:
 user defined containers, does have a tag associated by default).
 A tag, suitable for visitation can be defined in the following way:</p>
-<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/mserialize/make_struct_tag.hpp">mserialize/make_struct_tag.hpp</a>&gt;
+<pre><code>#include &lt;mserialize/make_struct_tag.hpp&gt;
 
 struct Epsilon { int a; std::string b; };
 MSERIALIZE_MAKE_STRUCT_TAG(Epsilon, a, b)
@@ -284,7 +284,7 @@ if visitation of objects serialized that way is desired.
 See <a href="#adapting-user-defined-recursive-types-for-visitation">Adapting user defined recursive types for visitation</a> for a solution.</p>
 <p>A tag can be assigned to class templates on the same conditions,
 except that a different macro must be called:</p>
-<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/mserialize/make_template_tag.hpp">mserialize/make_template_tag.hpp</a>&gt;
+<pre><code>#include &lt;mserialize/make_template_tag.hpp&gt;
 
 template &lt;typename A, typename B, typename C&gt;
 struct Triplet { A a; B b; C c; };
@@ -303,7 +303,7 @@ The rest of the arguments are members, same as above.</p>
 if one of its fields has a type tag that includes the type tag of the parent type.
 Currently, <code>MSERIALIZE_MAKE_STRUCT_TAG</code> is unable to deal with such recursive structures.
 As a workaround, such type tags can be manually assigned:</p>
-<pre><code>#include &lt;<a href="https://github.com/Morgan-Stanley/binlog/blob/dev/include/mserialize/tag.hpp">mserialize/tag.hpp</a>&gt;
+<pre><code>#include &lt;mserialize/tag.hpp&gt;
 
 struct Node { int value; Node* next; };
 
@@ -453,7 +453,7 @@ struct CustomTag&lt;Node&gt;
 concept OutputStream = requires(OutStr ostream, const char* buf, std::streamsize size)
 {
   // Append `size` bytes from `buffer` to the stream
-  { ostream.write(buf, size) } -&gt; OutStr&;
+  { ostream.write(buf, size) } -&gt; OutStr&amp;;
 };
 </code></pre>
 <h2 id="inputstream"><a class="toclink" href="#inputstream">InputStream</a></h2>
@@ -462,7 +462,7 @@ concept InputStream = requires(InpStr istream, char* buf, std::streamsize size)
 {
   // Consume `size` bytes from the stream and copy them to the `buffer`.
   // Throw std::exception on failure (i.e: not enough bytes available)
-  { istream.read(buf, size) } -&gt; InpStr&;
+  { istream.read(buf, size) } -&gt; InpStr&amp;;
 };
 </code></pre>
 <h2 id="viewstream"><a class="toclink" href="#viewstream">ViewStream</a></h2>
@@ -514,6 +514,9 @@ concept Visitor = requires(V visitor)
   visitor.visit(mserialize::Visitor::FieldEnd      );
 
   visitor.visit(mserialize::Visitor::Enum          );
+
+  visitor.visit(mserialize::Visitor::RepeatBegin   );
+  visitor.visit(mserialize::Visitor::RepeatEnd     );
 };
 </code></pre>
 <h1 id="references"><a class="toclink" href="#references">References</a></h1>
@@ -597,7 +600,7 @@ not described here.</p>
       <hr/>
       <footer class="text-center text-muted">
         Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a> |
-        Generated: 2020. 04. 26.
+        Generated: 2021. 03. 04.
       </footer>
       <hr/>
     </div>
