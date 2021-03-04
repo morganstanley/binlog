@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Binlog high performance C++ log library producing structured binary logs">
+
+    <title>Binlog &mdash; a high performance log library for C++</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.0/css/bootstrap.min.css" integrity="sha384-SI27wrMjH3ZZ89r4o+fGIJtnzkAnFs3E4qz9DIYioCQ5l9Rd/7UAa8DHcaL8jkWt" crossorigin="anonymous">
+    <style>
+    pre { background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 0.6em 1em; }
+    h1,h2 { margin-top: 1em; }
+    div.navbar { padding: 8px 0; }
+    div.toc { float: right; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+
+      <div class="navbar-wrapper">
+        <div class="navbar" role="navigation">
+          <div class="navbar-header">
+            <a class="navbar-brand" href="index.html">Binlog</a>
+          </div>
+          <nav class="nav">
+            <a class="nav-link" href="UserGuide.html">UserGuide</a>
+            <a class="nav-link" href="Internals.html">Internals</a>
+            <a class="nav-link" href="Mserialize.html">Mserialize</a>
+            <a class="nav-link" href="https://github.com/Morgan-Stanley/binlog">GitHub</a>
+          </nav>
+        </div>
+      </div>
+
+    <div class="jumbotron">
+        <h1>Log anything, create structured binary logs quickly</h1>
+        <p>using Binlog, a high performance C++ log library</p>
+        <p><a class="btn btn-lg btn-success" href="UserGuide.html" role="button">Documentation</a></p>
+    </div>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4">
+          <h2>Log Anything</h2>
+          <p>
+            Do not waste time figuring out the correct printf placeholder or writing ostream shift operators.
+            Binlog supports logging common types out of the box, such as containers, smart pointers, pairs and tuples,
+            while allowing simple adaption of custom enumerations and types.
+            Learn more from the <a href="UserGuide.html">Documentation</a>.
+          </p>
+        </div>
+        <div class="col-md-4">
+          <h2>Structured Binary Logs</h2>
+          <p>
+            Binlog achieves exceptional log performance by creating binary logs instead of expensive text logs,
+            saving CPU cycles and memory by not doing string conversion on the hot path.
+            The created structured binary log is flexible, convertible to human readable and
+            machine digestible formats.
+            See the <a href="https://github.com/Morgan-Stanley/binlog#performance">Performance Test Results</a>.
+          </p>
+        </div>
+        <div class="col-md-4">
+          <h2>Portable Free Software</h2>
+          <p>
+            Binlog can work on any C++14 conforming platform.
+            Binlog is built and tested on Linux, macOS and Windows, using GCC, Clang and MSVC.
+            Binlog is a Apache v2 licensed free, open source software.
+            Get the <a href="https://github.com/Morgan-Stanley/binlog">source on GitHub</a>.
+          </p>
+        </div>
+      </div>
+
+    <hr/>
+    <footer class="text-center text-muted">
+      Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a>
+    </footer>
+    <hr/>
+
+    </div>
+  </body>
+</html>
