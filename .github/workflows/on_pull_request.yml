@@ -95,8 +95,8 @@ jobs:
           cd ThreadSanitized
           ctest -VV
 
-  build_on_linux_clang_tidy:
-    name: Build in Linux with Clang+Tidy
+  build_linux_clang_tidy:
+    name: Build on Linux with Clang+Tidy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -121,6 +121,29 @@ jobs:
         run: |
           cd Clang
           ctest -VV
+
+  build_linux_documentation:
+    name: Build Documentation on Linux
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.1
+        with:
+          persist-credentials: false
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get install -y python-markdown
+
+      - name: Build
+        run: |
+          set -x
+          mkdir Release
+          cd Release
+          cmake ..
+          make Documentation
+          mkdir doc
+          cp ../doc/index.html *.html doc
 
   build_mac_clang:
     name: Build on macOS with Clang
