@@ -339,6 +339,8 @@ metadata in the old file), old metadata has to be added via `Session::reconsumeM
 
     [catchfile example/LogRotation.cpp rotate]
 
+[Log rotation]: https://en.wikipedia.org/wiki/Log_rotation
+
 # Text Output
 
 The key feature of Binlog is producing structured, binary logfiles.
@@ -363,5 +365,19 @@ Usage is like before:
 
     [catchfile example/MultiOutput.cpp usage]
 
+# Limitations
 
-[Log rotation]: https://en.wikipedia.org/wiki/Log_rotation
+The `BINLOG_<SEVERITY>` and `BINLOG_<SEVERITY>_C` macros that do not take a writer argument
+access global state: a function local static writer and a session. Depending on the initialization order,
+in a [global destructor context][cppref-Initialization], that state might be no longer valid,
+yielding to undefined behavior. Possible resolutions include:
+
+ - Do not log in the destructor of a global object
+ - If logging in the destructor of a global object cannot be avoided,
+   make sure that initialization of the global log state is sequenced before
+   the initialization of the affected global objects
+ - Use log macros that do not access global state, e.g: `BINLOG_<SEVERITY>_W`,
+   and make sure the initialization of its writer argument is sequenced before
+   the initialization of the affected global objects
+
+[cppref-Initialization]: https://en.cppreference.com/w/cpp/language/initialization

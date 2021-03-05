@@ -32,6 +32,10 @@ inline std::string this_thread_id_string()
  * This session is also used by basic
  * log macros, which hide the Session
  * concept from users.
+ *
+ * The implementation uses a function local static,
+ * avoid using the returned reference in the context
+ * of global destructors.
  */
 inline Session& default_session()
 {
@@ -43,6 +47,10 @@ inline Session& default_session()
  * Get a thread-local writer for default_session().
  *
  * This writer is used by basic log macros.
+ *
+ * The implementation uses a function local static,
+ * avoid using the returned reference in the context
+ * of global destructors.
  */
 inline SessionWriter& default_thread_local_writer()
 {

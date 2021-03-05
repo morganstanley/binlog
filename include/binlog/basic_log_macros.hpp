@@ -24,6 +24,10 @@
  * Disabled severity levels do not produce any events,
  * and do not evaluate their log arguments.
  *
+ * Global state is accessed internally (the default session and default thread local writer),
+ * avoid using these macros in a global destructor context.
+ * For greater control, see advanced_log_macros.hpp.
+ *
  * @param format string literal with {} placeholders
  * @param args... any number of serializable, tagged, log arguments. Can be empty
  */
@@ -49,6 +53,10 @@
  * Severity levels can be enabled/disabled the same way
  * as for BINLOG_<SEVERITY>. Disabled severity levels
  * do not produce any events, and do not evaluate their log arguments.
+ *
+ * Global state is accessed internally (the default session and default thread local writer),
+ * avoid using these macros in a global destructor context.
+ * For greater control, see advanced_log_macros.hpp.
  *
  * @param category arbitrary valid symbol name
  * @param format string literal with {} placeholders
