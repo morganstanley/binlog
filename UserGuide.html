@@ -58,6 +58,7 @@
 <li><a href="#log-rotation">Log Rotation</a></li>
 <li><a href="#text-output">Text Output</a></li>
 <li><a href="#multiple-output">Multiple Output</a></li>
+<li><a href="#limitations">Limitations</a></li>
 </ul>
 </div>
 <h1 id="hello-world"><a class="toclink" href="#hello-world">Hello World</a></h1>
@@ -513,11 +514,25 @@ private:
 MultiOutputStream output(logfile, std::cerr);
 binlog::consume(output);
 </code></pre>
+<h1 id="limitations"><a class="toclink" href="#limitations">Limitations</a></h1>
+<p>The <code>BINLOG_&lt;SEVERITY&gt;</code> and <code>BINLOG_&lt;SEVERITY&gt;_C</code> macros that do not take a writer argument
+access global state: a function local static writer and a session. Depending on the initialization order,
+in a <a href="https://en.cppreference.com/w/cpp/language/initialization">global destructor context</a>, that state might be no longer valid,
+yielding to undefined behavior. Possible resolutions include:</p>
+<ul>
+<li>Do not log in the destructor of a global object</li>
+<li>If logging in the destructor of a global object cannot be avoided,
+   make sure that initialization of the global log state is sequenced before
+   the initialization of the affected global objects</li>
+<li>Use log macros that do not access global state, e.g: <code>BINLOG_&lt;SEVERITY&gt;_W</code>,
+   and make sure the initialization of its writer argument is sequenced before
+   the initialization of the affected global objects</li>
+</ul>
 
       <hr/>
       <footer class="text-center text-muted">
         Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a> |
-        Generated: 2021. 03. 04.
+        Generated: 2021. 03. 05.
       </footer>
       <hr/>
     </div>
