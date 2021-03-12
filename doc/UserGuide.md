@@ -97,6 +97,11 @@ If the pointer is _empty_ (i.e: it points to no valid object),
 no value is logged, and in the text log it will be shown as `{null}`.
 Logging of `weak_ptr` is not supported, those must be `.lock()`-ed first.
 
+To log the address pointed by the pointer (instead of the object it points to),
+apply `binlog::address` or cast the pointer to a `void*`:
+
+    [catchfile test/integration/LoggingPointers.cpp address]
+
 If C++17 is available, the standard optional with a loggable `value_type`
 can be made loggable:
 
