@@ -13,8 +13,6 @@ namespace mserialize {
  *
  * @requires `visitor` to model the Visitor concept, see Vistor.hpp
  * @requires `istream` must model the mserialize::InputStream concept.
- *   If `istream` also models the mserialize::ViewStream concept,
- *   visitation of strings is more efficient.
  * @pre `tag` must be a valid type tag, e.g:
  *   a tag returned by mserialize::tag<T>().
  * @pre `istream` must contain a serialized object,

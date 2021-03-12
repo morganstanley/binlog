@@ -42,8 +42,6 @@ public:
   bool visit(mserialize::Visitor::SequenceBegin, Range&);
   void visit(mserialize::Visitor::SequenceEnd);
 
-  void visit(mserialize::Visitor::String);
-
   bool visit(mserialize::Visitor::TupleBegin, const Range&);
   void visit(mserialize::Visitor::TupleEnd);
 
