@@ -7,21 +7,65 @@
 
 namespace mserialize {
 
-/**
- * Interface/concept of the `visitor` argument of mserialize::visit.
+/*
+ * Concept of the `visitor` argument of mserialize::visit.
  *
  * The Visitor object given to mserialize::visit
- * must derive from this class OR must have methods
- * matching the virtual methods of this class.
+ * must model this concept.
  *
  * During visitation, the `visit` methods
- * will be called, according to the given
+ * are called, according to the given
  * type tag and input stream.
+//[concept
+template <typename V, typename InputStream>
+concept Visitor = requires(V visitor)
+{
+  visitor.visit(bool          );
+  visitor.visit(char          );
+  visitor.visit(std::int8_t   );
+  visitor.visit(std::int16_t  );
+  visitor.visit(std::int32_t  );
+  visitor.visit(std::int64_t  );
+  visitor.visit(std::uint8_t  );
+  visitor.visit(std::uint16_t );
+  visitor.visit(std::uint32_t );
+  visitor.visit(std::uint64_t );
+
+  visitor.visit(float         );
+  visitor.visit(double        );
+  visitor.visit(long double   );
+
+  visitor.visit(mserialize::Visitor::SequenceBegin );
+  visitor.visit(mserialize::Visitor::SequenceEnd   );
+
+  visitor.visit(mserialize::Visitor::String        );
+
+  visitor.visit(mserialize::Visitor::TupleBegin    )
+  visitor.visit(mserialize::Visitor::TupleEnd      );
+
+  visitor.visit(mserialize::Visitor::VariantBegin  );
+  visitor.visit(mserialize::Visitor::VariantEnd    );
+  visitor.visit(mserialize::Visitor::Null          );
+
+  visitor.visit(mserialize::Visitor::StructBegin   );
+  visitor.visit(mserialize::Visitor::StructEnd     );
+
+  visitor.visit(mserialize::Visitor::FieldBegin    );
+  visitor.visit(mserialize::Visitor::FieldEnd      );
+
+  visitor.visit(mserialize::Visitor::Enum          );
+
+  visitor.visit(mserialize::Visitor::RepeatBegin   );
+  visitor.visit(mserialize::Visitor::RepeatEnd     );
+};
+//]
+*/
+
+/**
+ * Collection of the visit tags `mserialize::visit` use.
  */
 struct Visitor
 {
-  virtual ~Visitor() = default;
-
   // Sequence
 
   struct SequenceBegin
@@ -97,44 +141,6 @@ struct Visitor
     std::uint32_t size{}; /**< Number of time the previous visted value repeats */
     string_view tag;      /**< Type tag of the repeating value */
   };
-
-  // visitor methods - to be implemented by derived type
-
-  virtual void visit(bool          ) = 0;
-  virtual void visit(char          ) = 0;
-  virtual void visit(std::int8_t   ) = 0;
-  virtual void visit(std::int16_t  ) = 0;
-  virtual void visit(std::int32_t  ) = 0;
-  virtual void visit(std::int64_t  ) = 0;
-  virtual void visit(std::uint8_t  ) = 0;
-  virtual void visit(std::uint16_t ) = 0;
-  virtual void visit(std::uint32_t ) = 0;
-  virtual void visit(std::uint64_t ) = 0;
-
-  virtual void visit(float         ) = 0;
-  virtual void visit(double        ) = 0;
-  virtual void visit(long double   ) = 0;
-
-  virtual void visit(SequenceBegin ) = 0;
-  virtual void visit(SequenceEnd   ) = 0;
-
-  virtual void visit(TupleBegin    ) = 0;
-  virtual void visit(TupleEnd      ) = 0;
-
-  virtual void visit(VariantBegin  ) = 0;
-  virtual void visit(VariantEnd    ) = 0;
-  virtual void visit(Null          ) = 0;
-
-  virtual void visit(StructBegin   ) = 0;
-  virtual void visit(StructEnd     ) = 0;
-
-  virtual void visit(FieldBegin    ) = 0;
-  virtual void visit(FieldEnd      ) = 0;
-
-  virtual void visit(Enum          ) = 0;
-
-  virtual void visit(RepeatBegin   ) = 0;
-  virtual void visit(RepeatEnd     ) = 0;
 };
 
 } // namespace mserialize
