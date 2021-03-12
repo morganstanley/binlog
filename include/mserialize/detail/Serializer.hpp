@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <ios> // streamsize (macOS)
 #include <type_traits>
 
 namespace mserialize {
