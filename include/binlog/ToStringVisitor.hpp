@@ -39,7 +39,7 @@ public:
   void visit(std::int8_t);
   void visit(std::uint8_t);
 
-  bool visit(mserialize::Visitor::SequenceBegin, const Range&);
+  bool visit(mserialize::Visitor::SequenceBegin, Range&);
   void visit(mserialize::Visitor::SequenceEnd);
 
   void visit(mserialize::Visitor::String);

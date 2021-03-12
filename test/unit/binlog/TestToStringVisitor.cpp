@@ -82,13 +82,9 @@ BOOST_FIXTURE_TEST_CASE(sequence_of_int, TestcaseBase)
 
 BOOST_FIXTURE_TEST_CASE(sequence_of_char, TestcaseBase)
 {
-  visitor.visit(V::SequenceBegin{3, "c"}, input);
-  visitor.visit('a');
-  visitor.visit('b');
-  visitor.visit('c');
-  visitor.visit(V::SequenceEnd{});
-
-  BOOST_TEST(result() == "[a, b, c]");
+  input = binlog::Range("abc", 3);
+  BOOST_TEST(visitor.visit(V::SequenceBegin{3, "c"}, input));
+  BOOST_TEST(result() == "abc");
 }
 
 
@@ -120,22 +116,14 @@ BOOST_FIXTURE_TEST_CASE(seq_of_seq_of_int, TestcaseBase)
 
 BOOST_FIXTURE_TEST_CASE(seq_of_seq_of_char, TestcaseBase)
 {
+  input = binlog::Range("abcdef", 6);
   visitor.visit(V::SequenceBegin{3, "[c"}, input);
-  visitor.visit(V::SequenceBegin{2, "c"}, input);
-  visitor.visit('a');
-  visitor.visit('b');
-  visitor.visit(V::SequenceEnd{});
-  visitor.visit(V::SequenceBegin{2, "c"}, input);
-  visitor.visit('c');
-  visitor.visit('d');
-  visitor.visit(V::SequenceEnd{});
-  visitor.visit(V::SequenceBegin{2, "c"}, input);
-  visitor.visit('e');
-  visitor.visit('f');
-  visitor.visit(V::SequenceEnd{});
+  BOOST_TEST(visitor.visit(V::SequenceBegin{2, "c"}, input));
+  BOOST_TEST(visitor.visit(V::SequenceBegin{2, "c"}, input));
+  BOOST_TEST(visitor.visit(V::SequenceBegin{2, "c"}, input));
   visitor.visit(V::SequenceEnd{});
 
-  BOOST_TEST(result() == "[[a, b], [c, d], [e, f]]");
+  BOOST_TEST(result() == "[ab, cd, ef]");
 }
 
 BOOST_FIXTURE_TEST_CASE(empty_tuple, TestcaseBase)
