@@ -22,6 +22,7 @@ struct TestcaseBase
 {
   using V = mserialize::Visitor;
 
+  binlog::Range input;
   std::ostringstream str;
   binlog::detail::OstreamBuffer buf{str};
   binlog::ToStringVisitor visitor{buf};
@@ -63,14 +64,14 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE(arithmetic, T, not_bool_arithmetic_types, Testc
 
 BOOST_FIXTURE_TEST_CASE(empty_sequence_of_int, TestcaseBase)
 {
-  visitor.visit(V::SequenceBegin{0, "i"});
+  visitor.visit(V::SequenceBegin{0, "i"}, input);
   visitor.visit(V::SequenceEnd{});
   BOOST_TEST(result() == "[]");
 }
 
 BOOST_FIXTURE_TEST_CASE(sequence_of_int, TestcaseBase)
 {
-  visitor.visit(V::SequenceBegin{3, "i"});
+  visitor.visit(V::SequenceBegin{3, "i"}, input);
   visitor.visit(int(1));
   visitor.visit(int(2));
   visitor.visit(int(3));
@@ -81,7 +82,7 @@ BOOST_FIXTURE_TEST_CASE(sequence_of_int, TestcaseBase)
 
 BOOST_FIXTURE_TEST_CASE(sequence_of_char, TestcaseBase)
 {
-  visitor.visit(V::SequenceBegin{3, "c"});
+  visitor.visit(V::SequenceBegin{3, "c"}, input);
   visitor.visit('a');
   visitor.visit('b');
   visitor.visit('c');
@@ -99,16 +100,16 @@ BOOST_FIXTURE_TEST_CASE(string, TestcaseBase)
 
 BOOST_FIXTURE_TEST_CASE(seq_of_seq_of_int, TestcaseBase)
 {
-  visitor.visit(V::SequenceBegin{3, "[i"});
-  visitor.visit(V::SequenceBegin{2, "i"});
+  visitor.visit(V::SequenceBegin{3, "[i"}, input);
+  visitor.visit(V::SequenceBegin{2, "i"}, input);
   visitor.visit(int(1));
   visitor.visit(int(2));
   visitor.visit(V::SequenceEnd{});
-  visitor.visit(V::SequenceBegin{2, "i"});
+  visitor.visit(V::SequenceBegin{2, "i"}, input);
   visitor.visit(int(3));
   visitor.visit(int(4));
   visitor.visit(V::SequenceEnd{});
-  visitor.visit(V::SequenceBegin{2, "i"});
+  visitor.visit(V::SequenceBegin{2, "i"}, input);
   visitor.visit(int(5));
   visitor.visit(int(6));
   visitor.visit(V::SequenceEnd{});
@@ -119,16 +120,16 @@ BOOST_FIXTURE_TEST_CASE(seq_of_seq_of_int, TestcaseBase)
 
 BOOST_FIXTURE_TEST_CASE(seq_of_seq_of_char, TestcaseBase)
 {
-  visitor.visit(V::SequenceBegin{3, "[c"});
-  visitor.visit(V::SequenceBegin{2, "c"});
+  visitor.visit(V::SequenceBegin{3, "[c"}, input);
+  visitor.visit(V::SequenceBegin{2, "c"}, input);
   visitor.visit('a');
   visitor.visit('b');
   visitor.visit(V::SequenceEnd{});
-  visitor.visit(V::SequenceBegin{2, "c"});
+  visitor.visit(V::SequenceBegin{2, "c"}, input);
   visitor.visit('c');
   visitor.visit('d');
   visitor.visit(V::SequenceEnd{});
-  visitor.visit(V::SequenceBegin{2, "c"});
+  visitor.visit(V::SequenceBegin{2, "c"}, input);
   visitor.visit('e');
   visitor.visit('f');
   visitor.visit(V::SequenceEnd{});
@@ -139,14 +140,14 @@ BOOST_FIXTURE_TEST_CASE(seq_of_seq_of_char, TestcaseBase)
 
 BOOST_FIXTURE_TEST_CASE(empty_tuple, TestcaseBase)
 {
-  visitor.visit(V::TupleBegin{""});
+  visitor.visit(V::TupleBegin{""}, input);
   visitor.visit(V::TupleEnd{});
   BOOST_TEST(result() == "()");
 }
 
 BOOST_FIXTURE_TEST_CASE(tuple_of_int_bool_char, TestcaseBase)
 {
-  visitor.visit(V::TupleBegin{"iyc"});
+  visitor.visit(V::TupleBegin{"iyc"}, input);
   visitor.visit(int(1));
   visitor.visit(true);
   visitor.visit('a');
@@ -157,14 +158,14 @@ BOOST_FIXTURE_TEST_CASE(tuple_of_int_bool_char, TestcaseBase)
 
 BOOST_FIXTURE_TEST_CASE(seq_of_variant, TestcaseBase)
 {
-  visitor.visit(V::SequenceBegin{3, "<0i>"});
-  visitor.visit(V::VariantBegin{1, "i"});
+  visitor.visit(V::SequenceBegin{3, "<0i>"}, input);
+  visitor.visit(V::VariantBegin{1, "i"}, input);
   visitor.visit(V::Null{});
   visitor.visit(V::VariantEnd{});
-  visitor.visit(V::VariantBegin{0, "0"});
+  visitor.visit(V::VariantBegin{0, "0"}, input);
   visitor.visit(int(1));
   visitor.visit(V::VariantEnd{});
-  visitor.visit(V::VariantBegin{1, "i"});
+  visitor.visit(V::VariantBegin{1, "i"}, input);
   visitor.visit(int(2));
   visitor.visit(V::VariantEnd{});
   visitor.visit(V::SequenceEnd{});
@@ -174,7 +175,7 @@ BOOST_FIXTURE_TEST_CASE(seq_of_variant, TestcaseBase)
 
 BOOST_FIXTURE_TEST_CASE(seq_of_enum, TestcaseBase)
 {
-  visitor.visit(V::SequenceBegin{3, "/i`E'0`a'1`b'\\"});
+  visitor.visit(V::SequenceBegin{3, "/i`E'0`a'1`b'\\"}, input);
   visitor.visit(V::Enum{"E", "b", 'i', "1"});
   visitor.visit(V::Enum{"E", "a", 'i', "2"});
   visitor.visit(V::Enum{"E", "", 'i', "3"});
@@ -185,21 +186,21 @@ BOOST_FIXTURE_TEST_CASE(seq_of_enum, TestcaseBase)
 
 BOOST_FIXTURE_TEST_CASE(empty_struct, TestcaseBase)
 {
-  visitor.visit(V::StructBegin{"Empty", ""});
+  visitor.visit(V::StructBegin{"Empty", ""}, input);
   visitor.visit(V::StructEnd{});
   BOOST_TEST(result() == "Empty");
 }
 
 BOOST_FIXTURE_TEST_CASE(empty_struct_template, TestcaseBase)
 {
-  visitor.visit(V::StructBegin{"Empty<A,B,C>", ""});
+  visitor.visit(V::StructBegin{"Empty<A,B,C>", ""}, input);
   visitor.visit(V::StructEnd{});
   BOOST_TEST(result() == "Empty");
 }
 
 BOOST_FIXTURE_TEST_CASE(simple_struct, TestcaseBase)
 {
-  visitor.visit(V::StructBegin{"Alpha", "`a'i`b'y"});
+  visitor.visit(V::StructBegin{"Alpha", "`a'i`b'y"}, input);
   visitor.visit(V::FieldBegin{"a", "i"});
   visitor.visit(int(1));
   visitor.visit(V::FieldEnd{});
@@ -213,15 +214,15 @@ BOOST_FIXTURE_TEST_CASE(simple_struct, TestcaseBase)
 
 BOOST_FIXTURE_TEST_CASE(pair_of_structs, TestcaseBase)
 {
-  visitor.visit(V::TupleBegin{"{Alpha`a'i}{Empty}{Beta`b'y}"});
-  visitor.visit(V::StructBegin{"Alpha", "`a'i"});
+  visitor.visit(V::TupleBegin{"{Alpha`a'i}{Empty}{Beta`b'y}"}, input);
+  visitor.visit(V::StructBegin{"Alpha", "`a'i"}, input);
   visitor.visit(V::FieldBegin{"a", "i"});
   visitor.visit(int(1));
   visitor.visit(V::FieldEnd{});
   visitor.visit(V::StructEnd{});
-  visitor.visit(V::StructBegin{"Empty", ""});
+  visitor.visit(V::StructBegin{"Empty", ""}, input);
   visitor.visit(V::StructEnd{});
-  visitor.visit(V::StructBegin{"Beta", "`b'y"});
+  visitor.visit(V::StructBegin{"Beta", "`b'y"}, input);
   visitor.visit(V::FieldBegin{"b", "y"});
   visitor.visit(true);
   visitor.visit(V::FieldEnd{});
@@ -233,16 +234,16 @@ BOOST_FIXTURE_TEST_CASE(pair_of_structs, TestcaseBase)
 
 BOOST_FIXTURE_TEST_CASE(struct_of_structs, TestcaseBase)
 {
-  visitor.visit(V::StructBegin{"Alpha", "`ccc'{Beta`d'i}`e'{Empty}"});
+  visitor.visit(V::StructBegin{"Alpha", "`ccc'{Beta`d'i}`e'{Empty}"}, input);
   visitor.visit(V::FieldBegin{"ccc", "{Beta`d'i}"});
-  visitor.visit(V::StructBegin{"Beta", "`d'i"});
+  visitor.visit(V::StructBegin{"Beta", "`d'i"}, input);
   visitor.visit(V::FieldBegin{"d", "i"});
   visitor.visit(int(1));
   visitor.visit(V::FieldEnd{});
   visitor.visit(V::StructEnd{});
   visitor.visit(V::FieldEnd{});
   visitor.visit(V::FieldBegin{"e", "{Empty}"});
-  visitor.visit(V::StructBegin{"Empty", ""});
+  visitor.visit(V::StructBegin{"Empty", ""}, input);
   visitor.visit(V::StructEnd{});
   visitor.visit(V::FieldEnd{});
   visitor.visit(V::StructEnd{});
@@ -252,7 +253,7 @@ BOOST_FIXTURE_TEST_CASE(struct_of_structs, TestcaseBase)
 
 BOOST_FIXTURE_TEST_CASE(empty_field_name, TestcaseBase)
 {
-  visitor.visit(V::StructBegin{"BoundedInt", "`'i"});
+  visitor.visit(V::StructBegin{"BoundedInt", "`'i"}, input);
   visitor.visit(V::FieldBegin{"", "i"});
   visitor.visit(int(1024));
   visitor.visit(V::FieldEnd{});

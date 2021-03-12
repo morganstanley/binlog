@@ -16,6 +16,12 @@ namespace mserialize {
  * During visitation, the `visit` methods
  * are called, according to the given
  * type tag and input stream.
+ *
+ * Some `visit` methods take an InputStream argument:
+ * The visitor can decide to consume the complete
+ * object indicated by the type tag from the given InputStream,
+ * and `return true` to signal that visitation of
+ * this object must be skipped.
 //[concept
 template <typename V, typename InputStream>
 concept Visitor = requires(V visitor)
@@ -35,19 +41,19 @@ concept Visitor = requires(V visitor)
   visitor.visit(double        );
   visitor.visit(long double   );
 
-  visitor.visit(mserialize::Visitor::SequenceBegin );
+  visitor.visit(mserialize::Visitor::SequenceBegin, InputStream&) -> bool;
   visitor.visit(mserialize::Visitor::SequenceEnd   );
 
   visitor.visit(mserialize::Visitor::String        );
 
-  visitor.visit(mserialize::Visitor::TupleBegin    )
+  visitor.visit(mserialize::Visitor::TupleBegin, InputStream&) -> bool;
   visitor.visit(mserialize::Visitor::TupleEnd      );
 
-  visitor.visit(mserialize::Visitor::VariantBegin  );
+  visitor.visit(mserialize::Visitor::VariantBegin, InputStream&) -> bool;
   visitor.visit(mserialize::Visitor::VariantEnd    );
   visitor.visit(mserialize::Visitor::Null          );
 
-  visitor.visit(mserialize::Visitor::StructBegin   );
+  visitor.visit(mserialize::Visitor::StructBegin, InputStream&) -> bool;
   visitor.visit(mserialize::Visitor::StructEnd     );
 
   visitor.visit(mserialize::Visitor::FieldBegin    );

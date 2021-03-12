@@ -141,6 +141,7 @@ struct CustomTag<Node>
 struct Visitor
 {
   template <typename T> void visit(T) {}
+  template <typename T> bool visit(T, std::ifstream&) { return false; }
 };
 
 BOOST_AUTO_TEST_SUITE(Documentation)

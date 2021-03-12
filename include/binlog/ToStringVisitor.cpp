@@ -25,12 +25,14 @@ void ToStringVisitor::visit(std::uint8_t v)
   _out << unsigned(v);
 }
 
-void ToStringVisitor::visit(mserialize::Visitor::SequenceBegin)
+bool ToStringVisitor::visit(mserialize::Visitor::SequenceBegin, const Range&)
 {
   comma();
 
   _out.put('[');
   enterSeq();
+
+  return false;
 }
 
 void ToStringVisitor::visit(mserialize::Visitor::SequenceEnd)
@@ -45,11 +47,12 @@ void ToStringVisitor::visit(mserialize::Visitor::String str)
   _out << str.data;
 }
 
-void ToStringVisitor::visit(mserialize::Visitor::TupleBegin)
+bool ToStringVisitor::visit(mserialize::Visitor::TupleBegin, const Range&)
 {
   comma();
   _out.put('(');
   enterSeq();
+  return false;
 }
 
 void ToStringVisitor::visit(mserialize::Visitor::TupleEnd)
@@ -77,7 +80,7 @@ void ToStringVisitor::visit(mserialize::Visitor::Enum e)
   }
 }
 
-void ToStringVisitor::visit(mserialize::Visitor::StructBegin sb)
+bool ToStringVisitor::visit(mserialize::Visitor::StructBegin sb, const Range&)
 {
   comma();
   _out << mserialize::detail::remove_prefix_before(sb.name, '<');
@@ -90,6 +93,8 @@ void ToStringVisitor::visit(mserialize::Visitor::StructBegin sb)
     _out << "{ ";
     enterSeq();
   }
+
+  return false;
 }
 
 void ToStringVisitor::visit(mserialize::Visitor::StructEnd)

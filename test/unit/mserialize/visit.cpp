@@ -35,6 +35,9 @@ public:
   template <typename U>
   void visit(const U&) { BOOST_FAIL("Unexpected visit of U"); }
 
+  template <typename U>
+  bool visit(const U&, InputStream&) { BOOST_FAIL("Unexpected visit of U"); return false; }
+
   T value()
   {
     BOOST_TEST(_has_visit);
@@ -59,15 +62,18 @@ public:
   void visit(std::int8_t v)    { _str << int(v) << ' '; }
   void visit(std::uint8_t v)   { _str << unsigned(v) << ' '; }
 
-  void visit(mserialize::Visitor::SequenceBegin sb) { _str << "SB(" << sb.size << ',' << sb.tag << ")[ "; }
+  template <typename IS>
+  bool visit(mserialize::Visitor::SequenceBegin sb, IS&) { _str << "SB(" << sb.size << ',' << sb.tag << ")[ "; return false; }
   void visit(mserialize::Visitor::SequenceEnd)      { _str << "] "; }
 
   void visit(mserialize::Visitor::String str)       { _str << "Str(" << str.data << ") "; }
 
-  void visit(mserialize::Visitor::TupleBegin tb)    { _str << "TB(" << tb.tag << ")( "; }
+  template <typename IS>
+  bool visit(mserialize::Visitor::TupleBegin tb, IS&)    { _str << "TB(" << tb.tag << ")( "; return false; }
   void visit(mserialize::Visitor::TupleEnd)         { _str << ") "; }
 
-  void visit(mserialize::Visitor::VariantBegin vb)  { _str << "VB(" << vb.discriminator << ',' << vb.tag << ")< "; }
+  template <typename IS>
+  bool visit(mserialize::Visitor::VariantBegin vb, IS&)  { _str << "VB(" << vb.discriminator << ',' << vb.tag << ")< "; return false; }
   void visit(mserialize::Visitor::VariantEnd)       { _str << "> "; }
   void visit(mserialize::Visitor::Null)             { _str << "{null} "; }
 
@@ -76,7 +82,8 @@ public:
     _str << "E(" << e.name << "::" << e.enumerator << ',' << e.tag << ",0x" << e.value << ") ";
   }
 
-  void visit(mserialize::Visitor::StructBegin sb)   { _str << "StB(" << sb.name << ',' << sb.tag << ") { "; }
+  template <typename IS>
+  bool visit(mserialize::Visitor::StructBegin sb, IS&)   { _str << "StB(" << sb.name << ',' << sb.tag << ") { "; return false; }
   void visit(mserialize::Visitor::StructEnd)        { _str << "} "; }
 
   void visit(mserialize::Visitor::FieldBegin fb)    { _str << fb.name << '(' << fb.tag << "): "; }
@@ -95,6 +102,9 @@ class CountingVisitor
 public:
   template <typename T>
   void visit(T) { ++_count; }
+
+  template <typename T>
+  bool visit(T, std::stringstream&) { ++_count; return false; }
 
   int value() const { return _count; }
 };
