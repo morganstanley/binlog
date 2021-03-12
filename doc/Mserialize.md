@@ -331,47 +331,7 @@ Library design tends to be arguable. Some decisions need to be explained.
 
 ## Visitor
 
-    template <typename V>
-    concept Visitor = requires(V visitor)
-    {
-      visitor.visit(bool          );
-      visitor.visit(char          );
-      visitor.visit(std::int8_t   );
-      visitor.visit(std::int16_t  );
-      visitor.visit(std::int32_t  );
-      visitor.visit(std::int64_t  );
-      visitor.visit(std::uint8_t  );
-      visitor.visit(std::uint16_t );
-      visitor.visit(std::uint32_t );
-      visitor.visit(std::uint64_t );
-
-      visitor.visit(float         );
-      visitor.visit(double        );
-      visitor.visit(long double   );
-
-      visitor.visit(mserialize::Visitor::SequenceBegin );
-      visitor.visit(mserialize::Visitor::SequenceEnd   );
-
-      visitor.visit(mserialize::Visitor::String        );
-
-      visitor.visit(mserialize::Visitor::TupleBegin    );
-      visitor.visit(mserialize::Visitor::TupleEnd      );
-
-      visitor.visit(mserialize::Visitor::VariantBegin  );
-      visitor.visit(mserialize::Visitor::VariantEnd    );
-      visitor.visit(mserialize::Visitor::Null          );
-
-      visitor.visit(mserialize::Visitor::StructBegin   );
-      visitor.visit(mserialize::Visitor::StructEnd     );
-
-      visitor.visit(mserialize::Visitor::FieldBegin    );
-      visitor.visit(mserialize::Visitor::FieldEnd      );
-
-      visitor.visit(mserialize::Visitor::Enum          );
-
-      visitor.visit(mserialize::Visitor::RepeatBegin   );
-      visitor.visit(mserialize::Visitor::RepeatEnd     );
-    };
+    [catchfile include/mserialize/Visitor.hpp concept]
 
 # References
 

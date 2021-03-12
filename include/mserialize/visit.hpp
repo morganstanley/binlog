@@ -11,9 +11,7 @@ namespace mserialize {
 /**
  * Visit the serialized objects in `istream`.
  *
- * @requires `visitor` to model the Visitor concept,
- *   which is implicitly given by the virtual
- *   members of the `mserialize::Vistor` type.
+ * @requires `visitor` to model the Visitor concept, see Vistor.hpp
  * @requires `istream` must model the mserialize::InputStream concept.
  *   If `istream` also models the mserialize::ViewStream concept,
  *   visitation of strings is more efficient.
