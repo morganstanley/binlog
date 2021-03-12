@@ -35,7 +35,7 @@ struct TestcaseBase
   binlog::WriterProp writerProp{789, "writer", 0};
   binlog::ClockSync clockSync{0, 1, 0, 5400, "XYZ"};
 
-  std::string print(binlog::PrettyPrinter& pp)
+  std::string print(binlog::PrettyPrinter& pp) const
   {
     std::ostringstream str;
     pp.printEvent(str, event, writerProp, clockSync);
