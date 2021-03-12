@@ -1,7 +1,7 @@
 #include <binlog/ToStringVisitor.hpp>
 
+#include <mserialize/detail/Visit.hpp> // IntegerToHex
 #include <mserialize/detail/tag_util.hpp> // remove_prefix_before
-
 
 namespace binlog {
 
@@ -80,9 +80,19 @@ void ToStringVisitor::visit(mserialize::Visitor::Enum e)
   }
 }
 
-bool ToStringVisitor::visit(mserialize::Visitor::StructBegin sb, const Range&)
+bool ToStringVisitor::visit(mserialize::Visitor::StructBegin sb, Range& input)
 {
   comma();
+
+  if (sb.name == "binlog::address" && sb.tag == "`value'L")
+  {
+    const std::uint64_t value = input.read<std::uint64_t>();
+    mserialize::detail::IntegerToHex tohex;
+    tohex.visit(value);
+    _out << "0x" << tohex.value();
+    return true;
+  }
+
   _out << mserialize::detail::remove_prefix_before(sb.name, '<');
   if (sb.tag.empty())
   {

@@ -51,7 +51,7 @@ public:
 
   void visit(mserialize::Visitor::Enum);
 
-  bool visit(mserialize::Visitor::StructBegin, const Range&);
+  bool visit(mserialize::Visitor::StructBegin, Range&);
   void visit(mserialize::Visitor::StructEnd);
 
   void visit(mserialize::Visitor::FieldBegin);

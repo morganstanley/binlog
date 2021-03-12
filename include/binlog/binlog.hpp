@@ -6,6 +6,7 @@
  * which includes commonly used headers.
  */
 
+#include <binlog/Address.hpp>
 #include <binlog/ArrayView.hpp>
 #include <binlog/adapt_enum.hpp>
 #include <binlog/adapt_struct.hpp>
