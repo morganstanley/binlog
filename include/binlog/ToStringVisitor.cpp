@@ -25,9 +25,15 @@ void ToStringVisitor::visit(std::uint8_t v)
   _out << unsigned(v);
 }
 
-bool ToStringVisitor::visit(mserialize::Visitor::SequenceBegin, const Range&)
+bool ToStringVisitor::visit(mserialize::Visitor::SequenceBegin sb, Range& input)
 {
   comma();
+
+  if (sb.tag.size() == 1 && sb.tag[0] == 'c') // skip char-by-char visitation of strings
+  {
+    _out.write(input.view(sb.size), sb.size);
+    return true;
+  }
 
   _out.put('[');
   enterSeq();
