@@ -18,7 +18,6 @@ namespace binlog {
  * Provides convenience read() members to copy
  * data from the viewed buffer.
  * Models the mserialize::InputStream concept.
- * Models the mserialize::ViewStream concept.
  */
 class Range
 {

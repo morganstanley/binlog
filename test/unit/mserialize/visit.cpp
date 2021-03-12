@@ -66,8 +66,6 @@ public:
   bool visit(mserialize::Visitor::SequenceBegin sb, IS&) { _str << "SB(" << sb.size << ',' << sb.tag << ")[ "; return false; }
   void visit(mserialize::Visitor::SequenceEnd)      { _str << "] "; }
 
-  void visit(mserialize::Visitor::String str)       { _str << "Str(" << str.data << ") "; }
-
   template <typename IS>
   bool visit(mserialize::Visitor::TupleBegin tb, IS&)    { _str << "TB(" << tb.tag << ")( "; return false; }
   void visit(mserialize::Visitor::TupleEnd)         { _str << ") "; }
@@ -109,7 +107,7 @@ public:
   int value() const { return _count; }
 };
 
-template <typename Visitor, typename T, typename IS = InputStream>
+template <typename Visitor, typename T>
 typename Visitor::value_type
 serialize_and_visit(const T& in)
 {
@@ -122,7 +120,7 @@ serialize_and_visit(const T& in)
 
   // visit
   Visitor visitor;
-  IS istream{stream};
+  InputStream istream{stream};
   const auto tag = mserialize::tag<T>();
   mserialize::visit(tag, visitor, istream);
 
@@ -222,20 +220,6 @@ BOOST_AUTO_TEST_CASE(vector_of_char)
   const std::vector<char> in{'f','o','o','b','a','r'};
   const std::string out = serialize_and_visit<ToString>(in);
   BOOST_TEST(out == "SB(6,c)[ f o o b a r ] ");
-}
-
-BOOST_AUTO_TEST_CASE(vector_of_char_view_stream)
-{
-  const std::vector<char> in{'f','o','o','b','a','r'};
-  const std::string out = serialize_and_visit<ToString, std::vector<char>, ViewStream>(in);
-  BOOST_TEST(out == "Str(foobar) ");
-}
-
-BOOST_AUTO_TEST_CASE(string)
-{
-  const std::string in = "barbaz";
-  const std::string out = serialize_and_visit<ToString, std::string, ViewStream>(in);
-  BOOST_TEST(out == "Str(barbaz) ");
 }
 
 BOOST_AUTO_TEST_CASE(empty_tuple)

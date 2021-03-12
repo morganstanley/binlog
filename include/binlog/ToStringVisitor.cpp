@@ -47,12 +47,6 @@ void ToStringVisitor::visit(mserialize::Visitor::SequenceEnd)
   leaveSeq();
 }
 
-void ToStringVisitor::visit(mserialize::Visitor::String str)
-{
-  comma();
-  _out << str.data;
-}
-
 bool ToStringVisitor::visit(mserialize::Visitor::TupleBegin, const Range&)
 {
   comma();
