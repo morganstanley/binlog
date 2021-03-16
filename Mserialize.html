@@ -51,7 +51,6 @@
 <li><a href="#concepts">Concepts</a><ul>
 <li><a href="#outputstream">OutputStream</a></li>
 <li><a href="#inputstream">InputStream</a></li>
-<li><a href="#viewstream">ViewStream</a></li>
 <li><a href="#visitor">Visitor</a></li>
 </ul>
 </li>
@@ -465,19 +464,8 @@ concept InputStream = requires(InpStr istream, char* buf, std::streamsize size)
   { istream.read(buf, size) } -&gt; InpStr&amp;;
 };
 </code></pre>
-<h2 id="viewstream"><a class="toclink" href="#viewstream">ViewStream</a></h2>
-<pre><code>template &lt;typename VStr&gt;
-concept ViewStream = requires(VStr vstream, std::size_t size)
-{
-  // Consume `size` bytes from the stream and return a pointer
-  // to the start of the consumed bytes. The returned pointer
-  // is valid until the next operation.
-  // Throw std::exception on failure (i.e: not enough bytes available)
-  { vstream.view(size) } -&gt; const char*;
-};
-</code></pre>
 <h2 id="visitor"><a class="toclink" href="#visitor">Visitor</a></h2>
-<pre><code>template &lt;typename V&gt;
+<pre><code>template &lt;typename V, typename InputStream&gt;
 concept Visitor = requires(V visitor)
 {
   visitor.visit(bool          );
@@ -495,19 +483,19 @@ concept Visitor = requires(V visitor)
   visitor.visit(double        );
   visitor.visit(long double   );
 
-  visitor.visit(mserialize::Visitor::SequenceBegin );
+  visitor.visit(mserialize::Visitor::SequenceBegin, InputStream&amp;) -&gt; bool;
   visitor.visit(mserialize::Visitor::SequenceEnd   );
 
   visitor.visit(mserialize::Visitor::String        );
 
-  visitor.visit(mserialize::Visitor::TupleBegin    );
+  visitor.visit(mserialize::Visitor::TupleBegin, InputStream&amp;) -&gt; bool;
   visitor.visit(mserialize::Visitor::TupleEnd      );
 
-  visitor.visit(mserialize::Visitor::VariantBegin  );
+  visitor.visit(mserialize::Visitor::VariantBegin, InputStream&amp;) -&gt; bool;
   visitor.visit(mserialize::Visitor::VariantEnd    );
   visitor.visit(mserialize::Visitor::Null          );
 
-  visitor.visit(mserialize::Visitor::StructBegin   );
+  visitor.visit(mserialize::Visitor::StructBegin, InputStream&amp;) -&gt; bool;
   visitor.visit(mserialize::Visitor::StructEnd     );
 
   visitor.visit(mserialize::Visitor::FieldBegin    );
@@ -600,7 +588,7 @@ not described here.</p>
       <hr/>
       <footer class="text-center text-muted">
         Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a> |
-        Generated: 2021. 03. 05.
+        Generated: 2021. 03. 16.
       </footer>
       <hr/>
     </div>

@@ -165,6 +165,11 @@ BINLOG_INFO("Pointers: {} {} {}", ptr, uptr, sptr);
 If the pointer is <em>empty</em> (i.e: it points to no valid object),
 no value is logged, and in the text log it will be shown as <code>{null}</code>.
 Logging of <code>weak_ptr</code> is not supported, those must be <code>.lock()</code>-ed first.</p>
+<p>To log the address pointed by the pointer (instead of the object it points to),
+apply <code>binlog::address</code> or cast the pointer to a <code>void*</code>:</p>
+<pre><code>BINLOG_INFO("Raw pointer value: {} {}", binlog::address(any_pointer), void_pointer);
+// Outputs: Raw pointer value: 0xF777123 0xF777123
+</code></pre>
 <p>If C++17 is available, the standard optional with a loggable <code>value_type</code>
 can be made loggable:</p>
 <pre><code>#include &lt;binlog/adapt_stdoptional.hpp&gt; // must be included to log std::optional, requires C++17
@@ -532,7 +537,7 @@ yielding to undefined behavior. Possible resolutions include:</p>
       <hr/>
       <footer class="text-center text-muted">
         Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a> |
-        Generated: 2021. 03. 05.
+        Generated: 2021. 03. 16.
       </footer>
       <hr/>
     </div>
