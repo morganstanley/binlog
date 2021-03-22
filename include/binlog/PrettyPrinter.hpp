@@ -62,13 +62,15 @@ public:
     const Event& event,
     const WriterProp& writerProp = {},
     const ClockSync& clockSync = {}
-  ) const;
+  );
 
   /**
    * If the type indicated by `sb` is known, deserialize it from `input`,
    * and print it to `out`, then return true.
    *
    * If the type is not known, `input` remains unchanged and the method returns false.
+   *
+   * The output might be affected by the last call to printEvent.
    */
   bool printStruct(detail::OstreamBuffer& out, mserialize::Visitor::StructBegin sb, Range& input) const;
 
@@ -77,20 +79,21 @@ private:
     detail::OstreamBuffer& out,
     char spec,
     const Event& event,
-    const WriterProp& writerProp,
-    const ClockSync& clockSync
+    const WriterProp& writerProp
   ) const;
 
   void printEventMessage(detail::OstreamBuffer& out, const Event& event) const;
 
-  void printProducerLocalTime(detail::OstreamBuffer& out, const ClockSync& clockSync, std::uint64_t clockValue) const;
-  void printUTCTime(detail::OstreamBuffer& out, const ClockSync& clockSync, std::uint64_t clockValue) const;
+  void printProducerLocalTime(detail::OstreamBuffer& out, std::uint64_t clockValue) const;
+  void printUTCTime(detail::OstreamBuffer& out, std::uint64_t clockValue) const;
 
   void printTime(detail::OstreamBuffer& out, BrokenDownTime& bdt, int tzoffset, const char* tzname) const;
   void printTimeField(detail::OstreamBuffer& out, char spec, BrokenDownTime& bdt, int tzoffset, const char* tzname) const;
 
   std::string _eventFormat;
   std::string _timeFormat;
+  bool _useLocaltime; // true if timestamps in messages should be rendered in producer-localtime
+  const ClockSync* _clockSync;
 };
 
 } // namespace binlog
