@@ -28,7 +28,7 @@ jobs:
       - name: Test Building as Subdir
         run: |
           mkdir SubdirTest && cd SubdirTest
-          cmake ../test/cmake/subdir
+          cmake -DCMAKE_CXX_STANDARD=14 ../test/cmake/subdir
           make -j2 VERBOSE=1
       - name: Test Depending on Install
         run: |
