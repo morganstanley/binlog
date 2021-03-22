@@ -193,6 +193,17 @@ see the Mserialize documentation on [Adapting custom types][mserialize-act] and
 [mserialize-act]: Mserialize.html#adapting-custom-types
 [mserialize-rec]: Mserialize.html#adapting-user-defined-recursive-types-for-visitation
 
+## Logging Standard Types
+
+`std::chrono::system_clock::time_point` objects can be logged after adoption by including a header file:
+
+    [catchfile test/integration/LoggingTimePoint.cpp timepoint]
+
+The object is serialized as a single number (nanoseconds since epoch), and pretty printed as a human readable timestamp.
+The pretty printed text format is affected by the `-d` flag when using [bread](#bread).
+If `%d` (localtime) appears first in the `-f` (format) parameter, the time point is converted to producer-local timezone
+(this is the default). If `%u` (UTC) appears first, the time point is shown in UTC.
+
 # Tools
 
 ## bread
@@ -372,6 +383,7 @@ Usage is like before:
 
 # Limitations
 
+**Logging in global destructor context**:
 The `BINLOG_<SEVERITY>` and `BINLOG_<SEVERITY>_C` macros that do not take a writer argument
 access global state: a function local static writer and a session. Depending on the initialization order,
 in a [global destructor context][cppref-Initialization], that state might be no longer valid,
@@ -386,3 +398,8 @@ yielding to undefined behavior. Possible resolutions include:
    the initialization of the affected global objects
 
 [cppref-Initialization]: https://en.cppreference.com/w/cpp/language/initialization
+
+**Timestamps**: By default, Binlog uses `std::chrono::system_clock` to create timestamps,
+and assumes that this clock measures UTC time (without leap seconds). This is required as of C++20.
+The Binlog test suite tests if this requirement holds on a given platform.
+

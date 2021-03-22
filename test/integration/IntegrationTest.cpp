@@ -122,6 +122,7 @@ BOOST_AUTO_TEST_CASE(LoggingPointers)       { runReadDiff("LoggingPointers", "%m
 BOOST_AUTO_TEST_CASE(LoggingTuples)         { runReadDiff("LoggingTuples", "%m"); }
 BOOST_AUTO_TEST_CASE(LoggingEnums)          { runReadDiff("LoggingEnums", "%m"); }
 BOOST_AUTO_TEST_CASE(LoggingAdaptedStructs) { runReadDiff("LoggingAdaptedStructs", "%m"); }
+BOOST_AUTO_TEST_CASE(LoggingTimePoint)      { runReadDiff("LoggingTimePoint", "%m"); }
 BOOST_AUTO_TEST_CASE(NamedWriters)          { runReadDiff("NamedWriters", "%n %m"); }
 BOOST_AUTO_TEST_CASE(SeverityControl)       { runReadDiff("SeverityControl", "%S %m"); }
 BOOST_AUTO_TEST_CASE(Categories)            { runReadDiff("Categories", "%C %n %m"); }

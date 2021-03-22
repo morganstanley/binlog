@@ -30,7 +30,6 @@ struct TestcaseBase
   };
 
   std::string argsBuffer;
-  binlog::Range args;
   binlog::Event event{&eventSource, 1569939329, {}};
   binlog::WriterProp writerProp{789, "writer", 0};
   binlog::ClockSync clockSync{0, 1, 0, 5400, "XYZ"};
@@ -180,6 +179,56 @@ BOOST_FIXTURE_TEST_CASE(closing_percentage, TestcaseBase)
   binlog::PrettyPrinter pp("%d %", "%Z %");
 
   BOOST_TEST(print(pp) == "XYZ % %");
+}
+
+BOOST_FIXTURE_TEST_CASE(inline_time_localtime_by_default, TestcaseBase)
+{
+  binlog::PrettyPrinter pp("%m", "%Y-%m-%d %H:%M:%S.%N %z %Z");
+  eventSource.argumentTags = "{std::chrono::system_clock::time_point`ns'l}";
+
+  std::ostringstream argsBufferStream;
+  mserialize::serialize(std::uint64_t{123}, argsBufferStream);
+  argsBuffer = argsBufferStream.str();
+  event.arguments = binlog::Range(argsBuffer.data(), argsBuffer.data() + argsBuffer.size());
+  eventSource.formatString = "{}";
+
+  BOOST_TEST(print(pp) == "1970-01-01 01:30:00.000000123 +0130 XYZ");
+}
+
+BOOST_FIXTURE_TEST_CASE(inline_time_localtime_if_d, TestcaseBase)
+{
+  binlog::PrettyPrinter pp("%d %u %m", "%Y-%m-%d %H:%M:%S.%N %z %Z");
+  eventSource.argumentTags = "{std::chrono::system_clock::time_point`ns'l}";
+
+  std::ostringstream argsBufferStream;
+  mserialize::serialize(std::uint64_t{456}, argsBufferStream);
+  argsBuffer = argsBufferStream.str();
+  event.arguments = binlog::Range(argsBuffer.data(), argsBuffer.data() + argsBuffer.size());
+  eventSource.formatString = "{}";
+
+  BOOST_TEST(print(pp) ==
+    "2019-10-01 15:45:29.000000000 +0130 XYZ " // %d
+    "2019-10-01 14:15:29.000000000 +0000 UTC " // %u
+    "1970-01-01 01:30:00.000000456 +0130 XYZ"  // %m
+  );
+}
+
+BOOST_FIXTURE_TEST_CASE(inline_time_utc_if_u, TestcaseBase)
+{
+  binlog::PrettyPrinter pp("%u %d %m", "%Y-%m-%d %H:%M:%S.%N %z %Z");
+  eventSource.argumentTags = "{std::chrono::system_clock::time_point`ns'l}";
+
+  std::ostringstream argsBufferStream;
+  mserialize::serialize(std::uint64_t{789}, argsBufferStream);
+  argsBuffer = argsBufferStream.str();
+  event.arguments = binlog::Range(argsBuffer.data(), argsBuffer.data() + argsBuffer.size());
+  eventSource.formatString = "{}";
+
+  BOOST_TEST(print(pp) ==
+    "2019-10-01 14:15:29.000000000 +0000 UTC " // %u
+    "2019-10-01 15:45:29.000000000 +0130 XYZ " // %d
+    "1970-01-01 00:00:00.000000789 +0000 UTC"  // %m
+  );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
