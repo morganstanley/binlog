@@ -2,6 +2,7 @@
 
 #include <binlog/ToStringVisitor.hpp>
 
+#include <mserialize/detail/Visit.hpp> // IntegerToHex
 #include <mserialize/detail/tag_util.hpp>
 #include <mserialize/string_view.hpp>
 #include <mserialize/visit.hpp>
@@ -90,6 +91,20 @@ void PrettyPrinter::printEvent(
   }
 }
 
+bool PrettyPrinter::printStruct(detail::OstreamBuffer& out, mserialize::Visitor::StructBegin sb, Range& input) const
+{
+  if (sb.name == "binlog::address" && sb.tag == "`value'L")
+  {
+    const std::uint64_t value = input.read<std::uint64_t>();
+    mserialize::detail::IntegerToHex tohex;
+    tohex.visit(value);
+    out << "0x" << tohex.value();
+    return true;
+  }
+
+  return false;
+}
+
 void PrettyPrinter::printEventField(
   detail::OstreamBuffer& out,
   char spec,
@@ -158,7 +173,7 @@ void PrettyPrinter::printEventMessage(detail::OstreamBuffer& out, const Event& e
 {
   mserialize::string_view tags = event.source->argumentTags;
   Range args = event.arguments;
-  ToStringVisitor visitor(out);
+  ToStringVisitor visitor(out, this);
 
   const std::string& fmt = event.source->formatString;
   for (std::size_t i = 0; i < fmt.size(); ++i)

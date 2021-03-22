@@ -10,6 +10,8 @@
 
 namespace binlog {
 
+class PrettyPrinter;
+
 /**
  * Convert serialized values to string.
  *
@@ -26,7 +28,7 @@ namespace binlog {
 class ToStringVisitor
 {
 public:
-  explicit ToStringVisitor(detail::OstreamBuffer& out);
+  explicit ToStringVisitor(detail::OstreamBuffer& out, const PrettyPrinter* pp = nullptr);
 
   // catch all for arithmetic types
   template <typename T>
@@ -75,6 +77,7 @@ private:
   int _seqDepth;
   bool _emptyStruct;
   detail::OstreamBuffer& _out;
+  const PrettyPrinter* _pp;
 };
 
 } // namespace binlog
