@@ -1,15 +1,17 @@
 #include <binlog/ToStringVisitor.hpp>
 
-#include <mserialize/detail/Visit.hpp> // IntegerToHex
+#include <binlog/PrettyPrinter.hpp>
+
 #include <mserialize/detail/tag_util.hpp> // remove_prefix_before
 
 namespace binlog {
 
-ToStringVisitor::ToStringVisitor(detail::OstreamBuffer& out)
+ToStringVisitor::ToStringVisitor(detail::OstreamBuffer& out, const PrettyPrinter* pp)
   :_state(State::Normal),
    _seqDepth(0),
    _emptyStruct(false),
-   _out(out)
+   _out(out),
+   _pp(pp)
 {}
 
 // avoid displaying int8_t and uint8_t as a character
@@ -84,12 +86,8 @@ bool ToStringVisitor::visit(mserialize::Visitor::StructBegin sb, Range& input)
 {
   comma();
 
-  if (sb.name == "binlog::address" && sb.tag == "`value'L")
+  if (_pp != nullptr && _pp->printStruct(_out, sb, input))
   {
-    const std::uint64_t value = input.read<std::uint64_t>();
-    mserialize::detail::IntegerToHex tohex;
-    tohex.visit(value);
-    _out << "0x" << tohex.value();
     return true;
   }
 

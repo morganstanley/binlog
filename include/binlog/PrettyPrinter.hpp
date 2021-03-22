@@ -2,8 +2,11 @@
 #define BINLOG_PRETTY_PRINTER_HPP
 
 #include <binlog/Entries.hpp>
+#include <binlog/Range.hpp>
 #include <binlog/Time.hpp>
 #include <binlog/detail/OstreamBuffer.hpp>
+
+#include <mserialize/Visitor.hpp>
 
 #include <cstdint>
 #include <iosfwd>
@@ -60,6 +63,14 @@ public:
     const WriterProp& writerProp = {},
     const ClockSync& clockSync = {}
   ) const;
+
+  /**
+   * If the type indicated by `sb` is known, deserialize it from `input`,
+   * and print it to `out`, then return true.
+   *
+   * If the type is not known, `input` remains unchanged and the method returns false.
+   */
+  bool printStruct(detail::OstreamBuffer& out, mserialize::Visitor::StructBegin sb, Range& input) const;
 
 private:
   void printEventField(
