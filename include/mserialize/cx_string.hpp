@@ -33,7 +33,7 @@ public:
   explicit constexpr cx_string(const char* str)
     :_data{0}
   {
-    #if defined(__GNUC__) and not defined(__clang__)
+    #if defined(__GNUC__) && !defined(__clang__)
       // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96742
       #pragma GCC diagnostic push
       #pragma GCC diagnostic ignored "-Wtype-limits"
@@ -42,7 +42,7 @@ public:
     {
       _data[i] = str[i];
     }
-    #if defined(__GNUC__) and not defined(__clang__)
+    #if defined(__GNUC__) && !defined(__clang__)
       #pragma GCC diagnostic pop
     #endif
   }
