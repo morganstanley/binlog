@@ -43,6 +43,7 @@
 <li><a href="#logging-pairs-and-tuples">Logging Pairs and Tuples</a></li>
 <li><a href="#logging-enums">Logging Enums</a></li>
 <li><a href="#logging-user-defined-structures">Logging User Defined Structures</a></li>
+<li><a href="#logging-standard-types">Logging Standard Types</a></li>
 </ul>
 </li>
 <li><a href="#tools">Tools</a><ul>
@@ -277,6 +278,18 @@ The type must not be recursive, e.g: <code>Foo</code> can't have a to be logged 
 For more information and to make templates or recursive types loggable,
 see the Mserialize documentation on <a href="Mserialize.html#adapting-custom-types">Adapting custom types</a> and
 <a href="Mserialize.html#adapting-user-defined-recursive-types-for-visitation">Adapting user defined recursive types for visitation</a>.</p>
+<h2 id="logging-standard-types"><a class="toclink" href="#logging-standard-types">Logging Standard Types</a></h2>
+<p><code>std::chrono::system_clock::time_point</code> objects can be logged after adoption by including a header file:</p>
+<pre><code>#include &lt;binlog/adapt_stdtimepoint.hpp&gt; // must be included to log std::chrono::system_clock::time_point
+
+std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+BINLOG_INFO("Now: {}", now);
+// Outputs: Now: 2021-03-16 18:05:02.123456000
+</code></pre>
+<p>The object is serialized as a single number (nanoseconds since epoch), and pretty printed as a human readable timestamp.
+The pretty printed text format is affected by the <code>-d</code> flag when using <a href="#bread">bread</a>.
+If <code>%d</code> (localtime) appears first in the <code>-f</code> (format) parameter, the time point is converted to producer-local timezone
+(this is the default). If <code>%u</code> (UTC) appears first, the time point is shown in UTC.</p>
 <h1 id="tools"><a class="toclink" href="#tools">Tools</a></h1>
 <h2 id="bread"><a class="toclink" href="#bread">bread</a></h2>
 <p>The binary logfile produced by Binlog is not human-readable,
@@ -520,7 +533,8 @@ MultiOutputStream output(logfile, std::cerr);
 binlog::consume(output);
 </code></pre>
 <h1 id="limitations"><a class="toclink" href="#limitations">Limitations</a></h1>
-<p>The <code>BINLOG_&lt;SEVERITY&gt;</code> and <code>BINLOG_&lt;SEVERITY&gt;_C</code> macros that do not take a writer argument
+<p><strong>Logging in global destructor context</strong>:
+The <code>BINLOG_&lt;SEVERITY&gt;</code> and <code>BINLOG_&lt;SEVERITY&gt;_C</code> macros that do not take a writer argument
 access global state: a function local static writer and a session. Depending on the initialization order,
 in a <a href="https://en.cppreference.com/w/cpp/language/initialization">global destructor context</a>, that state might be no longer valid,
 yielding to undefined behavior. Possible resolutions include:</p>
@@ -533,11 +547,14 @@ yielding to undefined behavior. Possible resolutions include:</p>
    and make sure the initialization of its writer argument is sequenced before
    the initialization of the affected global objects</li>
 </ul>
+<p><strong>Timestamps</strong>: By default, Binlog uses <code>std::chrono::system_clock</code> to create timestamps,
+and assumes that this clock measures UTC time (without leap seconds). This is required as of C++20.
+The Binlog test suite tests if this requirement holds on a given platform.</p>
 
       <hr/>
       <footer class="text-center text-muted">
         Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a> |
-        Generated: 2021. 03. 16.
+        Generated: 2021. 03. 29.
       </footer>
       <hr/>
     </div>
