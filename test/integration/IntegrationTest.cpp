@@ -1,23 +1,13 @@
 #include <boost/test/unit_test.hpp>
 
-#include <boost/process/detail/traits/wchar_t.hpp>
-#include <boost/process/env.hpp>
-#include <boost/process/environment.hpp>
-#include <boost/process/io.hpp>
-#include <boost/process/search_path.hpp>
-#include <boost/process/system.hpp>
-
 #include <mserialize/string_view.hpp>
 
-#include <algorithm> // sort
+#include <algorithm> // replace
 #include <cctype> // isspace
-#include <cstdio> // remove
+#include <cstdio> // remove, popen, pclose, fread
 #include <fstream>
-#include <iostream>
+#include <sstream>
 #include <string>
-#include <vector>
-
-BOOST_TEST_SPECIALIZED_COLLECTION_COMPARE(std::vector<std::string>)
 
 std::string g_bread_path;
 std::string g_inttest_dir;
@@ -32,9 +22,41 @@ std::string extension()
   #endif
 }
 
-std::vector<std::string> expectedDataFromSource(const std::string& name)
+std::string executePipeline(std::string cmd)
 {
-  std::vector<std::string> result;
+  #ifdef _WIN32
+    #define popen(command, mode) _popen(command, mode)
+    #define pclose(stream) _pclose(stream)
+
+    std::replace(cmd.begin(), cmd.end(), '/', '\\');
+  #endif
+
+  BOOST_TEST_MESSAGE("Cmd: " + cmd);
+
+  FILE* f = popen(cmd.data(), "r");
+  BOOST_TEST_REQUIRE(f != nullptr);
+
+  std::string result;
+
+  char buf[4096];
+  while (std::size_t rs = std::fread(buf, 1, sizeof(buf), f))
+  {
+    result.append(buf, rs);
+  }
+
+  BOOST_TEST(pclose(f) != -1);
+  return result;
+}
+
+bool fileReadable(const std::string& path)
+{
+  std::ifstream i(path);
+  return bool(i);
+}
+
+std::string expectedDataFromSource(const std::string& name)
+{
+  std::ostringstream result;
 
   const std::string path = g_src_dir + name + ".cpp";
   std::ifstream input(path, std::ios_base::in|std::ios_base::binary);
@@ -57,7 +79,7 @@ std::vector<std::string> expectedDataFromSource(const std::string& name)
     if (view.starts_with(marker))
     {
       view.remove_prefix(marker.size());
-      result.push_back(view.to_string());
+      result << view << "\n";
     }
   }
 
@@ -66,49 +88,17 @@ std::vector<std::string> expectedDataFromSource(const std::string& name)
     throw std::runtime_error("Failed to read " + path);
   }
 
-  return result;
-}
-
-std::vector<std::string> toVector(std::istream& input)
-{
-  std::vector<std::string> v;
-  for (std::string line; std::getline(input, line);)
-  {
-    v.push_back(std::move(line));
-  }
-
-  return v;
-}
-
-void compareVectors(const std::vector<std::string>& expected, const std::vector<std::string>& actual)
-{
-  BOOST_TEST(actual == expected);
-  if (actual.size() != expected.size())
-  {
-    // In this case, the test framework diagnostic is really lacking
-    std::cerr << "***Expected***\n";
-    for (auto&& s : expected) { std::cerr << s << "\n"; }
-    std::cerr << "***Actual***\n";
-    for (auto&& s : actual) { std::cerr << s << "\n"; }
-  }
+  return result.str();
 }
 
 void runReadDiff(const std::string& name, const std::string& format)
 {
-  namespace bp = boost::process;
-
-  bp::pipe p;
-  bp::ipstream text;
-  bp::child inttest(g_inttest_dir + name + extension(), bp::std_out > p);
-  bp::child bread(g_bread_path, "-f", format, "-", bp::std_in < p, bp::std_out > text);
-
-  const std::vector<std::string> actual = toVector(text);
-
-  bread.wait();
-  inttest.wait();
-
-  const std::vector<std::string> expected = expectedDataFromSource(name);
-  compareVectors(expected, actual);
+  std::ostringstream cmd;
+  cmd << g_inttest_dir << name << extension()
+      << " | " << g_bread_path << " -f \"" << format << "\" - ";
+  const std::string actual = executePipeline(cmd.str());
+  const std::string expected = expectedDataFromSource(name);
+  BOOST_TEST(expected == actual);
 }
 
 BOOST_AUTO_TEST_SUITE(RunReadDiff)
@@ -140,50 +130,11 @@ BOOST_AUTO_TEST_SUITE(Bread)
 BOOST_AUTO_TEST_CASE(DateFormat)
 {
   // read dateformat.blog, convert to text, check result
-  namespace bp = boost::process;
-
-  const std::string blogPath = g_src_dir + "data/dateformat.blog";
-  bp::ipstream text;
-  bp::child bread(g_bread_path, "-f", "%u %m", "-d", "%Y-%m-%dT%H:%M:%S.%NZ", blogPath, bp::std_out > text);
-
-  const std::vector<std::string> actual = toVector(text);
-
-  bread.wait();
-
-  const std::vector<std::string> expected{"2019-12-02T13:38:33.602967233Z Hello"};
-
-  compareVectors(expected, actual);
-}
-
-BOOST_AUTO_TEST_CASE(Pipe)
-{
-  // to make sure that piping works, used in scenarios like
-  // `zcat log.blog.gz|bread` and `tail -c0 -f log.blog|bread`
-  // pipe dateformat.blog byte by byte to bread, convert to text, check result
-  namespace bp = boost::process;
-
-  std::ifstream blog(g_src_dir + "data/dateformat.blog", std::ios_base::in|std::ios_base::binary);
-
-  bp::opstream binary;
-  bp::ipstream text;
-  bp::child bread(g_bread_path, "-f", "%m", bp::std_in < binary, bp::std_out > text);
-
-  // pipe input byte by byte to bread
-  char byte = 0;
-  while (blog.get(byte))
-  {
-    binary.put(byte);
-    binary.flush(); // inefficient by design: allow bread to be scheduled
-  }
-
-  binary.pipe().close(); // so getline will not hang when the pipe is fully consumed
-
-  // read bread output
-  const std::vector<std::string> actual = toVector(text);
-
-  bread.wait();
-
-  compareVectors({"Hello"}, actual);
+  std::ostringstream cmd;
+  cmd << g_bread_path << " -f \"%u %m\" -d \"%Y-%m-%dT%H:%M:%S.%NZ\" " << g_src_dir << "data/dateformat.blog";
+  const std::string actual = executePipeline(cmd.str());
+  const std::string expected = "2019-12-02T13:38:33.602967233Z Hello\n";
+  BOOST_TEST(expected == actual);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -192,70 +143,54 @@ BOOST_AUTO_TEST_SUITE(Brecovery)
 
 BOOST_AUTO_TEST_CASE(RecoverMetadataAndData)
 {
-  namespace bp = boost::process;
-
-  // find gdb
-  const auto gdbpath = bp::search_path("gdb");
-  if (gdbpath.empty())
+  // check gdb
+  const std::string gdbpath = "/usr/bin/gdb";
+  if (! fileReadable(gdbpath))
   {
     BOOST_TEST_MESSAGE("gdb not found, skip this test");
     return;
   }
 
   // run shell in gdb, create a corefile
-  const std::string shell = g_inttest_dir + "Shell" + extension();
-  const std::string corepath = "shell." + std::to_string(boost::this_process::get_id()) + ".core";
+  const std::string corepath = "shell.core";
 
-  bp::child gdb(
-    gdbpath,
-    "-q", "-iex", "set auto-load python-scripts off",
-    "-nx", "-batch", "-ex",
-    "print \"THIS IS A TEST. CRASH THE TEST PROGRAM\"", // make the test output less scary
-    "-ex", "run", "-ex", "gcore " + corepath, "--args", shell,
-    "log w1 hello w1",
-    "log w2 hello w2",
-    "log w1 bye w1",
-    "log w2 bye w2",
-    "terminate",
-    bp::std_in < bp::null
-  );
-  gdb.wait();
+  std::ostringstream gdbcmd;
+  gdbcmd << gdbpath << " -q -iex 'set auto-load python-scripts off' -nx -batch"
+    " -ex 'print \"THIS IS A TEST. CRASH THE TEST PROGRAM\"'" // make the test output less scary
+    " -ex run -ex 'gcore " << corepath << "' --args '" << g_inttest_dir << "Shell" << extension() << "'"
+    " 'log w1 hello w1'"
+    " 'log w2 hello w2'"
+    " 'log w1 bye w1'"
+    " 'log w2 bye w2'"
+    " terminate";
+  BOOST_TEST_MESSAGE("Run GDB: " + gdbcmd.str());
+  const int gdbretval = std::system(gdbcmd.str().data());
+  (void) gdbretval; // return value is implementation specified
 
   // check the core
-  std::ifstream core(corepath);
-  if (! core)
+  if (! fileReadable(corepath))
   {
     BOOST_TEST_MESSAGE("Could not generate corefile, skip this test");
     return;
   }
 
   // recover data from the core
-  bp::pipe binary;
+  std::ostringstream reccmd;
+  reccmd << g_inttest_dir + "brecovery" + extension() << " " << corepath
+         << " | " << g_bread_path << " -f %m";
+  const std::string recovered = executePipeline(reccmd.str());
 
-  // dance around boost::process bug
-  auto env = boost::this_process::environment();
-  env.set("ASAN_OPTIONS", "allocator_may_return_null=1"); // we expect bad_alloc
-
-  bp::child brecovery(
-    g_inttest_dir + "brecovery" + extension(),
-    corepath,
-    bp::std_out > binary,
-    env
-  );
-
-  bp::ipstream text;
-  bp::child bread(g_bread_path, "-f", "%m", bp::std_in < binary, bp::std_out > text);
-
-  std::vector<std::string> actual = toVector(text);
-  std::sort(actual.begin(), actual.end()); // order of recovered events is unspecified
-
-  brecovery.wait();
-  binary.close();
-  bread.wait();
-
-  const std::vector<std::string> expected{"bye w1", "bye w2", "hello w1", "hello w2"};
-
-  compareVectors(expected, actual);
+  // order of recovered buffers is unspecified
+  const std::string expected1 = "hello w1\nbye w1\nhello w2\nbye w2\n";
+  const std::string expected2 = "hello w2\nbye w2\nhello w1\nbye w1\n";
+  if (recovered == expected1)
+  {
+    BOOST_TEST(recovered == expected1);
+  }
+  else
+  {
+    BOOST_TEST(recovered == expected2);
+  }
 
   std::remove(corepath.data());
 }
