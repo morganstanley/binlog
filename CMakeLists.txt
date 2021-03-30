@@ -316,12 +316,11 @@ if(Boost_FOUND)
     link_boost(IntegrationTest filesystem)
     link_boost(IntegrationTest system)
     target_link_libraries(IntegrationTest headers)
-    target_link_libraries(IntegrationTest Threads::Threads) # Boost.Process -> ASIO -> pthread_join as of 1.70 f2cf918b
     set_target_properties(IntegrationTest PROPERTIES CXX_CLANG_TIDY "")
 
   add_test(NAME IntegrationTest
     COMMAND IntegrationTest --log_level=test_suite --color_output=true -- "$<TARGET_FILE:bread>" "$<TARGET_FILE_DIR:IntegrationTest>" "${PROJECT_SOURCE_DIR}")
-  set_property(TEST IntegrationTest PROPERTY ENVIRONMENT ASAN_OPTIONS=detect_leaks=1)
+  set_property(TEST IntegrationTest PROPERTY ENVIRONMENT ASAN_OPTIONS=detect_leaks=1:allocator_may_return_null=1)
 
   function(add_inttest name)
     add_executable(${name} test/integration/${name}.cpp $<$<CXX_COMPILER_ID:MSVC>:bin/binaryio.cpp>)
