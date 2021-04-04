@@ -6,9 +6,10 @@
 #include <binlog/SessionWriter.hpp>
 #include <binlog/Severity.hpp>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <chrono>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -24,19 +25,17 @@ void writeEvent(binlog::Session& session)
 
 } // namespace
 
-BOOST_AUTO_TEST_SUITE(CreateSourceAndEvent)
-
-BOOST_AUTO_TEST_CASE(no_arg)
+TEST_CASE("no_arg")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
 
   BINLOG_CREATE_SOURCE_AND_EVENT(writer, binlog::Severity::info, category, 0, "Hello");
 
-  BOOST_TEST(getEvents(session, "%m") == std::vector<std::string>{"Hello"}, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%m") == std::vector<std::string>{"Hello"});
 }
 
-BOOST_AUTO_TEST_CASE(one_arg)
+TEST_CASE("one_arg")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
@@ -46,10 +45,10 @@ BOOST_AUTO_TEST_CASE(one_arg)
     std::string("World")
   );
 
-  BOOST_TEST(getEvents(session, "%m") == std::vector<std::string>{"Hello World"}, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%m") == std::vector<std::string>{"Hello World"});
 }
 
-BOOST_AUTO_TEST_CASE(several_args)
+TEST_CASE("several_args")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
@@ -59,20 +58,20 @@ BOOST_AUTO_TEST_CASE(several_args)
     std::string("World"), 1, true, std::vector<int>{2,3,4}
   );
 
-  BOOST_TEST(getEvents(session, "%m") == std::vector<std::string>{"Hello World a=1 b=true c=[2, 3, 4]"}, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%m") == std::vector<std::string>{"Hello World a=1 b=true c=[2, 3, 4]"});
 }
 
-BOOST_AUTO_TEST_CASE(severity_and_category)
+TEST_CASE("severity_and_category")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
 
   BINLOG_CREATE_SOURCE_AND_EVENT(writer, binlog::Severity::info, my_category, 0, "Hello");
 
-  BOOST_TEST(getEvents(session, "%S %C %m") == std::vector<std::string>{"INFO my_category Hello"}, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%S %C %m") == std::vector<std::string>{"INFO my_category Hello"});
 }
 
-BOOST_AUTO_TEST_CASE(location)
+TEST_CASE("location")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
@@ -83,10 +82,10 @@ BOOST_AUTO_TEST_CASE(location)
   std::ostringstream msg;
   msg << __func__ << " " << __FILE__ << " " << line << " Hello";
 
-  BOOST_TEST(getEvents(session, "%M %F %L %m") == std::vector<std::string>{msg.str()}, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%M %F %L %m") == std::vector<std::string>{msg.str()});
 }
 
-BOOST_AUTO_TEST_CASE(writer_name)
+TEST_CASE("writer_name")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
@@ -94,10 +93,10 @@ BOOST_AUTO_TEST_CASE(writer_name)
 
   BINLOG_CREATE_SOURCE_AND_EVENT(writer, binlog::Severity::info, category, 0, "Hello");
 
-  BOOST_TEST(getEvents(session, "%n %m") == std::vector<std::string>{"w1 Hello"}, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%n %m") == std::vector<std::string>{"w1 Hello"});
 }
 
-BOOST_AUTO_TEST_CASE(time)
+TEST_CASE("time")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
@@ -109,10 +108,10 @@ BOOST_AUTO_TEST_CASE(time)
     "Hello"
   );
 
-  BOOST_TEST(getEvents(session, "%d %m") == std::vector<std::string>{timePointToString(now) + " Hello"}, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%d %m") == std::vector<std::string>{timePointToString(now) + " Hello"});
 }
 
-BOOST_AUTO_TEST_CASE(loop)
+TEST_CASE("loop")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 4096);
@@ -126,7 +125,7 @@ BOOST_AUTO_TEST_CASE(loop)
   session.consume(stream);
 
   // Make sure only one event source was added
-  BOOST_TEST(countTags(stream, binlog::EventSource::Tag) == 1);
+  CHECK(countTags(stream, binlog::EventSource::Tag) == 1);
 
   // Make sure events are correct
   std::vector<std::string> expectedEvents;
@@ -135,10 +134,10 @@ BOOST_AUTO_TEST_CASE(loop)
   {
     expectedEvents.push_back(std::to_string(i));
   }
-  BOOST_TEST(streamToEvents(stream, "%m") == expectedEvents, boost::test_tools::per_element());
+  CHECK(streamToEvents(stream, "%m") == expectedEvents);
 }
 
-BOOST_AUTO_TEST_CASE(two_threads)
+TEST_CASE("two_threads")
 {
   binlog::Session session;
 
@@ -158,13 +157,13 @@ BOOST_AUTO_TEST_CASE(two_threads)
   // However, data race is not allowed, TSAN must not be triggered.
   const std::size_t eventSourceCount = countTags(stream, binlog::EventSource::Tag);
   const bool oneOrTwoEventSources = eventSourceCount == 1 || eventSourceCount == 2;
-  BOOST_TEST(oneOrTwoEventSources);
+  CHECK(oneOrTwoEventSources);
 
   const std::vector<std::string> expectedEvents{
     "Hello Concurrent World",
     "Hello Concurrent World",
   };
-  BOOST_TEST(streamToEvents(stream, "%m") == expectedEvents, boost::test_tools::per_element());
+  CHECK(streamToEvents(stream, "%m") == expectedEvents);
 }
 
 static_assert(binlog::detail::count_placeholders("") == 0, "");
@@ -183,5 +182,3 @@ static_assert(binlog::detail::count_placeholders("{} foo {} bar {}") == 3, "");
 static_assert(binlog::detail::count_placeholders("{}{}{}") == 3, "");
 static_assert(binlog::detail::count_placeholders("{{}{}{}}") == 3, "");
 static_assert(binlog::detail::count_placeholders("{}{}{}{}{}{}{}{}{}{}") == 10, "");
-
-BOOST_AUTO_TEST_SUITE_END()

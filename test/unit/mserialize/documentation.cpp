@@ -1,7 +1,9 @@
 // The purpose of this suite is to test snippets which are included in the documentation automatically.
 // This suite is not to test the features themselves, which are tested in other suites.
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
+
+#include <sstream>
 
 //[serialize
 #include <mserialize/serialize.hpp>
@@ -144,9 +146,7 @@ struct Visitor
   template <typename T> bool visit(T, std::ifstream&) { return false; }
 };
 
-BOOST_AUTO_TEST_SUITE(Documentation)
-
-BOOST_AUTO_TEST_CASE(roundtrip)
+TEST_CASE("roundtrip")
 {
   using T = std::string;
 
@@ -172,10 +172,10 @@ BOOST_AUTO_TEST_CASE(roundtrip)
   }
 
   std::remove(path.data());
-  BOOST_TEST(true);
+  CHECK(true);
 }
 
-BOOST_AUTO_TEST_CASE(adapt_custom_type)
+TEST_CASE("adapt_custom_type")
 {
   //[adapt_custom_type
 
@@ -192,10 +192,10 @@ BOOST_AUTO_TEST_CASE(adapt_custom_type)
 
   assert(in.a == out.a && in.b == out.b);
   //]
-  BOOST_TEST(true);
+  CHECK(true);
 }
 
-BOOST_AUTO_TEST_CASE(visit)
+TEST_CASE("visit")
 {
   using T = std::string;
 
@@ -227,7 +227,5 @@ BOOST_AUTO_TEST_CASE(visit)
   }
 
   std::remove(path.data());
-  BOOST_TEST(true);
+  CHECK(true);
 }
-
-BOOST_AUTO_TEST_SUITE_END()

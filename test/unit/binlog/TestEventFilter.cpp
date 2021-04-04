@@ -6,7 +6,7 @@
 
 #include "test_utils.hpp"
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <sstream>
 
@@ -21,7 +21,7 @@ struct FilterAdapter
   {
     const std::size_t oldSize = stream.buffer.size();
     const std::size_t writeSize = filter.writeAllowed(buffer, std::size_t(size), stream);
-    BOOST_TEST(oldSize + writeSize == stream.buffer.size());
+    CHECK(oldSize + writeSize == stream.buffer.size());
     return *this;
   }
 };
@@ -35,9 +35,7 @@ std::vector<std::string> filterEvents(binlog::Session& session, binlog::EventFil
 
 } // namespace
 
-BOOST_AUTO_TEST_SUITE(EventFilter)
-
-BOOST_AUTO_TEST_CASE(allow_none)
+TEST_CASE("allow_none")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 512);
@@ -45,13 +43,13 @@ BOOST_AUTO_TEST_CASE(allow_none)
   binlog::EventFilter filter([](auto){ return false; });
 
   BINLOG_INFO_W(writer, "Hello");
-  BOOST_TEST(filterEvents(session, filter) == std::vector<std::string>{}, boost::test_tools::per_element());
+  CHECK(filterEvents(session, filter) == std::vector<std::string>{});
 
   BINLOG_WARN_W(writer, "Hello");
-  BOOST_TEST(filterEvents(session, filter) == std::vector<std::string>{}, boost::test_tools::per_element());
+  CHECK(filterEvents(session, filter) == std::vector<std::string>{});
 }
 
-BOOST_AUTO_TEST_CASE(allow_all)
+TEST_CASE("allow_all")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 512);
@@ -59,13 +57,13 @@ BOOST_AUTO_TEST_CASE(allow_all)
   binlog::EventFilter filter([](auto){ return true; });
 
   BINLOG_INFO_W(writer, "Hello");
-  BOOST_TEST(filterEvents(session, filter) == std::vector<std::string>{"INFO Hello"}, boost::test_tools::per_element());
+  CHECK(filterEvents(session, filter) == std::vector<std::string>{"INFO Hello"});
 
   BINLOG_WARN_W(writer, "Hello");
-  BOOST_TEST(filterEvents(session, filter) == std::vector<std::string>{"WARN Hello"}, boost::test_tools::per_element());
+  CHECK(filterEvents(session, filter) == std::vector<std::string>{"WARN Hello"});
 }
 
-BOOST_AUTO_TEST_CASE(allow_some)
+TEST_CASE("allow_some")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 512);
@@ -78,7 +76,7 @@ BOOST_AUTO_TEST_CASE(allow_some)
   const std::vector<std::string> expectedEvents1{
     "INFO Hello", "WARN Hello",
   };
-  BOOST_TEST(filterEvents(session, filter) == expectedEvents1, boost::test_tools::per_element());
+  CHECK(filterEvents(session, filter) == expectedEvents1);
 
   for (int i = 0; i < 8; ++i)
   {
@@ -89,7 +87,5 @@ BOOST_AUTO_TEST_CASE(allow_some)
     "INFO i=0", "INFO i=1", "INFO i=2", "INFO i=3",
     "INFO i=4", "INFO i=5", "INFO i=6", "INFO i=7",
   };
-  BOOST_TEST(filterEvents(session, filter) == expectedEvents2, boost::test_tools::per_element());
+  CHECK(filterEvents(session, filter) == expectedEvents2);
 }
-
-BOOST_AUTO_TEST_SUITE_END()

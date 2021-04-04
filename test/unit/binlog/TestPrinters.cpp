@@ -4,7 +4,7 @@
 #include <binlog/SessionWriter.hpp>
 #include <binlog/advanced_log_macros.hpp>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <sstream>
 #include <string>
@@ -30,9 +30,7 @@ void logClock(binlog::SessionWriter& writer, std::uint64_t clock)
 
 } // namespace
 
-BOOST_AUTO_TEST_SUITE(Printers)
-
-BOOST_AUTO_TEST_CASE(print_events)
+TEST_CASE("print_events")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 512);
@@ -50,10 +48,10 @@ BOOST_AUTO_TEST_CASE(print_events)
     "INFO Hello World",
     "WARN foobar 123",
   };
-  BOOST_TEST(streamToLines(txtstream) == expected, boost::test_tools::per_element());
+  CHECK(streamToLines(txtstream) == expected);
 }
 
-BOOST_AUTO_TEST_CASE(print_sorted_events)
+TEST_CASE("print_sorted_events")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 512);
@@ -77,7 +75,5 @@ BOOST_AUTO_TEST_CASE(print_sorted_events)
   const std::vector<std::string> expected{
     "1", "2", "3", "4", "5", "6", "7", "8", "9",
   };
-  BOOST_TEST(streamToLines(txtstream) == expected, boost::test_tools::per_element());
+  CHECK(streamToLines(txtstream) == expected);
 }
-
-BOOST_AUTO_TEST_SUITE_END()

@@ -5,7 +5,7 @@
 
 #include <mserialize/serialize.hpp>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <sstream>
 #include <stdexcept>
@@ -44,22 +44,20 @@ struct TestcaseBase
 
 } // namespace
 
-BOOST_AUTO_TEST_SUITE(PrettyPrinter)
-
-BOOST_FIXTURE_TEST_CASE(empty_fmt, TestcaseBase)
+TEST_CASE_FIXTURE(TestcaseBase, "empty_fmt")
 {
   binlog::PrettyPrinter pp("", "");
-  BOOST_TEST(print(pp) == "");
+  CHECK(print(pp) == "");
 }
 
-BOOST_FIXTURE_TEST_CASE(full_fmt, TestcaseBase)
+TEST_CASE_FIXTURE(TestcaseBase, "full_fmt")
 {
   binlog::PrettyPrinter pp(
     "%I %S %C %M %F %G %L %P %T %n %t %d %u %r %m %% %x foo",
     "%Y %y-%m-%d %H:%M:%S.%N %z %Z"
   );
 
-  BOOST_TEST(print(pp) ==
+  CHECK(print(pp) ==
     "123 INFO cat func dir1/dir2/file file 456 a: {}, b: {}"
     " i[c writer 789"
     " 2019 19-10-01 15:45:29.000000000 +0130 XYZ"
@@ -68,7 +66,7 @@ BOOST_FIXTURE_TEST_CASE(full_fmt, TestcaseBase)
   );
 }
 
-BOOST_FIXTURE_TEST_CASE(reverse_full_fmt, TestcaseBase)
+TEST_CASE_FIXTURE(TestcaseBase, "reverse_full_fmt")
 {
   // make sure PP assumes no particular order
   binlog::PrettyPrinter pp(
@@ -76,7 +74,7 @@ BOOST_FIXTURE_TEST_CASE(reverse_full_fmt, TestcaseBase)
     "%Z %z %N.%S:%M:%H %d-%m-%y %Y"
   );
 
-  BOOST_TEST(print(pp) ==
+  CHECK(print(pp) ==
     "foo %x % a: 111, b: foo 1569939329"
     " UTC +0000 000000000.29:15:14 01-10-19 2019"
     " XYZ +0130 000000000.29:45:15 01-10-19 2019"
@@ -84,104 +82,104 @@ BOOST_FIXTURE_TEST_CASE(reverse_full_fmt, TestcaseBase)
   );
 }
 
-BOOST_FIXTURE_TEST_CASE(empty_clock_sync, TestcaseBase)
+TEST_CASE_FIXTURE(TestcaseBase, "empty_clock_sync")
 {
   binlog::PrettyPrinter pp("%d %u %r", "");
 
   clockSync = binlog::ClockSync{};
 
-  BOOST_TEST(print(pp) == "no_clock_sync? no_clock_sync? 1569939329");
+  CHECK(print(pp) == "no_clock_sync? no_clock_sync? 1569939329");
 }
 
-BOOST_FIXTURE_TEST_CASE(negative_clock_sync_freq, TestcaseBase)
+TEST_CASE_FIXTURE(TestcaseBase, "negative_clock_sync_freq")
 {
   binlog::PrettyPrinter pp("%d %u %r", "");
 
   clockSync = binlog::ClockSync{0, std::uint64_t(-1), 0, 0, {}};
   event = binlog::Event{&eventSource, 0x8000000000000000, event.arguments};
 
-  BOOST_TEST(print(pp) == "no_clock_sync? no_clock_sync? 9223372036854775808");
+  CHECK(print(pp) == "no_clock_sync? no_clock_sync? 9223372036854775808");
 }
 
-BOOST_FIXTURE_TEST_CASE(filename, TestcaseBase)
+TEST_CASE_FIXTURE(TestcaseBase, "filename")
 {
   binlog::PrettyPrinter pp("%G", "");
 
   eventSource.file = "";
-  BOOST_TEST(print(pp) == "");
+  CHECK(print(pp) == "");
 
   eventSource.file = "/";
-  BOOST_TEST(print(pp) == "");
+  CHECK(print(pp) == "");
 
   eventSource.file = "/foo";
-  BOOST_TEST(print(pp) == "foo");
+  CHECK(print(pp) == "foo");
 
   eventSource.file = "/a/b/c.cpp";
-  BOOST_TEST(print(pp) == "c.cpp");
+  CHECK(print(pp) == "c.cpp");
 
   eventSource.file = "bar";
-  BOOST_TEST(print(pp) == "bar");
+  CHECK(print(pp) == "bar");
 
   eventSource.file = R"(\a\b\c.cpp)";
-  BOOST_TEST(print(pp) == "c.cpp");
+  CHECK(print(pp) == "c.cpp");
 }
 
-BOOST_FIXTURE_TEST_CASE(tzoffset, TestcaseBase)
+TEST_CASE_FIXTURE(TestcaseBase, "tzoffset")
 {
   binlog::PrettyPrinter pp("%d", "%z");
 
   clockSync.tzOffset = 0;
-  BOOST_TEST(print(pp) == "+0000");
+  CHECK(print(pp) == "+0000");
 
   clockSync.tzOffset = -60 * 60 * 3;
-  BOOST_TEST(print(pp) == "-0300");
+  CHECK(print(pp) == "-0300");
 
   clockSync.tzOffset = 60 * 30 * 5;
-  BOOST_TEST(print(pp) == "+0230");
+  CHECK(print(pp) == "+0230");
 }
 
-BOOST_FIXTURE_TEST_CASE(corrupt_argument_tags, TestcaseBase)
+TEST_CASE_FIXTURE(TestcaseBase, "corrupt_argument_tags")
 {
   binlog::PrettyPrinter pp("%m", "");
 
   eventSource.argumentTags = "[c[c";
-  BOOST_CHECK_THROW(print(pp), std::runtime_error);
+  CHECK_THROWS_AS(print(pp), std::runtime_error);
 }
 
-BOOST_FIXTURE_TEST_CASE(corrupt_argument_buffer, TestcaseBase)
+TEST_CASE_FIXTURE(TestcaseBase, "corrupt_argument_buffer")
 {
   binlog::PrettyPrinter pp("%m", "");
 
   event.arguments.read<char>(); // drop one byte
-  BOOST_CHECK_THROW(print(pp), std::runtime_error);
+  CHECK_THROWS_AS(print(pp), std::runtime_error);
 }
 
-BOOST_FIXTURE_TEST_CASE(corrupt_event_source_format, TestcaseBase)
+TEST_CASE_FIXTURE(TestcaseBase, "corrupt_event_source_format")
 {
   binlog::PrettyPrinter pp("%m", "");
 
   eventSource.formatString = "{}_{}_{}";
 
-  BOOST_TEST(print(pp) == "111_foo_");
+  CHECK(print(pp) == "111_foo_");
 }
 
-BOOST_FIXTURE_TEST_CASE(curlies_in_event_source_format, TestcaseBase)
+TEST_CASE_FIXTURE(TestcaseBase, "curlies_in_event_source_format")
 {
   binlog::PrettyPrinter pp("%m", "");
 
   eventSource.formatString = "{ {}_{{}_ {";
 
-  BOOST_TEST(print(pp) == "{ 111_{foo_ {");
+  CHECK(print(pp) == "{ 111_{foo_ {");
 }
 
-BOOST_FIXTURE_TEST_CASE(closing_percentage, TestcaseBase)
+TEST_CASE_FIXTURE(TestcaseBase, "closing_percentage")
 {
   binlog::PrettyPrinter pp("%d %", "%Z %");
 
-  BOOST_TEST(print(pp) == "XYZ % %");
+  CHECK(print(pp) == "XYZ % %");
 }
 
-BOOST_FIXTURE_TEST_CASE(inline_time_localtime_by_default, TestcaseBase)
+TEST_CASE_FIXTURE(TestcaseBase, "inline_time_localtime_by_default")
 {
   binlog::PrettyPrinter pp("%m", "%Y-%m-%d %H:%M:%S.%N %z %Z");
   eventSource.argumentTags = "{std::chrono::system_clock::time_point`ns'l}";
@@ -192,10 +190,10 @@ BOOST_FIXTURE_TEST_CASE(inline_time_localtime_by_default, TestcaseBase)
   event.arguments = binlog::Range(argsBuffer.data(), argsBuffer.data() + argsBuffer.size());
   eventSource.formatString = "{}";
 
-  BOOST_TEST(print(pp) == "1970-01-01 01:30:00.000000123 +0130 XYZ");
+  CHECK(print(pp) == "1970-01-01 01:30:00.000000123 +0130 XYZ");
 }
 
-BOOST_FIXTURE_TEST_CASE(inline_time_localtime_if_d, TestcaseBase)
+TEST_CASE_FIXTURE(TestcaseBase, "inline_time_localtime_if_d")
 {
   binlog::PrettyPrinter pp("%d %u %m", "%Y-%m-%d %H:%M:%S.%N %z %Z");
   eventSource.argumentTags = "{std::chrono::system_clock::time_point`ns'l}";
@@ -206,14 +204,14 @@ BOOST_FIXTURE_TEST_CASE(inline_time_localtime_if_d, TestcaseBase)
   event.arguments = binlog::Range(argsBuffer.data(), argsBuffer.data() + argsBuffer.size());
   eventSource.formatString = "{}";
 
-  BOOST_TEST(print(pp) ==
+  CHECK(print(pp) ==
     "2019-10-01 15:45:29.000000000 +0130 XYZ " // %d
     "2019-10-01 14:15:29.000000000 +0000 UTC " // %u
     "1970-01-01 01:30:00.000000456 +0130 XYZ"  // %m
   );
 }
 
-BOOST_FIXTURE_TEST_CASE(inline_time_utc_if_u, TestcaseBase)
+TEST_CASE_FIXTURE(TestcaseBase, "inline_time_utc_if_u")
 {
   binlog::PrettyPrinter pp("%u %d %m", "%Y-%m-%d %H:%M:%S.%N %z %Z");
   eventSource.argumentTags = "{std::chrono::system_clock::time_point`ns'l}";
@@ -224,11 +222,9 @@ BOOST_FIXTURE_TEST_CASE(inline_time_utc_if_u, TestcaseBase)
   event.arguments = binlog::Range(argsBuffer.data(), argsBuffer.data() + argsBuffer.size());
   eventSource.formatString = "{}";
 
-  BOOST_TEST(print(pp) ==
+  CHECK(print(pp) ==
     "2019-10-01 14:15:29.000000000 +0000 UTC " // %u
     "2019-10-01 15:45:29.000000000 +0130 XYZ " // %d
     "1970-01-01 00:00:00.000000789 +0000 UTC"  // %m
   );
 }
-
-BOOST_AUTO_TEST_SUITE_END()

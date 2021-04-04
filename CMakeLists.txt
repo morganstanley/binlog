@@ -280,17 +280,17 @@ if(Boost_FOUND)
     test/unit/binlog/test_utils.cpp
   )
     target_compile_definitions(UnitTest PRIVATE
-      BOOST_TEST_NO_MAIN
-      BOOST_ALL_DYN_LINK
-      BOOST_ALL_NO_LIB
+      DOCTEST_CONFIG_SUPER_FAST_ASSERTS
+      DOCTEST_CONFIG_NO_MULTI_LANE_ATOMICS
     )
     include_boost(UnitTest)
     link_boost(UnitTest unit_test_framework)
     target_link_libraries(UnitTest binlog)
     target_link_libraries(UnitTest Threads::Threads) # used by: TestQueue, TestSessionWriter, TestCreateSourceAndEvent
     target_include_directories(UnitTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/bin)
+    target_include_directories(UnitTest SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/test) # for doctest/doctest.h
 
-  add_test(NAME UnitTest COMMAND UnitTest --log_level=test_suite --color_output=true)
+  add_test(NAME UnitTest COMMAND UnitTest -s --force-colors)
   set_property(TEST UnitTest PROPERTY ENVIRONMENT ASAN_OPTIONS=detect_leaks=1)
 
 else()
@@ -307,19 +307,19 @@ if(Boost_FOUND)
 
   add_executable(IntegrationTest test/integration/IntegrationTest.cpp)
     target_compile_definitions(IntegrationTest PRIVATE
-      BOOST_TEST_NO_MAIN
-      BOOST_ALL_DYN_LINK
-      BOOST_ALL_NO_LIB
+      DOCTEST_CONFIG_SUPER_FAST_ASSERTS
+      DOCTEST_CONFIG_NO_MULTI_LANE_ATOMICS
     )
     include_boost(IntegrationTest)
     link_boost(IntegrationTest unit_test_framework)
     link_boost(IntegrationTest filesystem)
     link_boost(IntegrationTest system)
     target_link_libraries(IntegrationTest headers)
+    target_include_directories(IntegrationTest SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/test) # for doctest/doctest.h
     set_target_properties(IntegrationTest PROPERTIES CXX_CLANG_TIDY "")
 
   add_test(NAME IntegrationTest
-    COMMAND IntegrationTest --log_level=test_suite --color_output=true -- "$<TARGET_FILE:bread>" "$<TARGET_FILE_DIR:IntegrationTest>" "${PROJECT_SOURCE_DIR}")
+    COMMAND IntegrationTest -s --force-colors -- "$<TARGET_FILE:bread>" "$<TARGET_FILE_DIR:IntegrationTest>" "${PROJECT_SOURCE_DIR}")
   set_property(TEST IntegrationTest PROPERTY ENVIRONMENT ASAN_OPTIONS=detect_leaks=1:allocator_may_return_null=1)
 
   function(add_inttest name)

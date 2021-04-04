@@ -3,8 +3,6 @@
 
 #include "custom_array.hpp"
 
-#include <boost/mpl/list.hpp>
-
 #include <cstdint>
 
 #include <array>
@@ -18,49 +16,58 @@
 #include <unordered_set>
 #include <vector>
 
-using arithmetic_types = boost::mpl::list<
-  bool,
-  std::int8_t, std::int16_t, std::int32_t, std::int64_t,
-  std::uint8_t, std::uint16_t, std::uint32_t, std::uint64_t,
-  float, double, long double
->;
+#define ARITHMETIC_TYPES                                     \
+  bool,                                                      \
+  std::int8_t, std::int16_t, std::int32_t, std::int64_t,     \
+  std::uint8_t, std::uint16_t, std::uint32_t, std::uint64_t, \
+  float, double, long double                                 \
+  /**/
 
-using float_types = boost::mpl::list<
-  float, double, long double
->;
+#define FLOAT_TYPES float, double, long double
 
-template <typename T>
-using sequence_types = boost::mpl::list<
-  T[10], std::array<T, 10>,
-  std::deque<T>, std::forward_list<T>,
-  std::list<T>, std::vector<T>,
-  test::CustomArray<T, 10>
->;
+#define SEQUENCE_TYPES(T)              \
+  T[10], std::array<T, 10>,            \
+  std::deque<T>, std::forward_list<T>, \
+  std::list<T>, std::vector<T>,        \
+  test::CustomArray<T, 10>             \
+  /**/
 
-template <typename T>
-using var_size_sequence_types = boost::mpl::list<
-  std::deque<T>, std::forward_list<T>,
-  std::list<T>, std::vector<T>
->;
+#define SEQUENCE_TYPES_TO_STRING(T)        \
+ TYPE_TO_STRING(T[10]); /* NOLINT(bugprone-macro-parentheses) */ \
+ TYPE_TO_STRING(std::array<T,10>);         \
+ TYPE_TO_STRING(std::deque<T>);            \
+ TYPE_TO_STRING(std::forward_list<T>);     \
+ TYPE_TO_STRING(std::list<T>);             \
+ TYPE_TO_STRING(std::vector<T>);           \
+ TYPE_TO_STRING(test::CustomArray<T, 10>)  \
+ /**/
 
-template <typename T>
-using smart_pointers = boost::mpl::list<
-  std::unique_ptr<T>,
-  std::shared_ptr<T>
->;
+#define VAR_SIZE_SEQUENCE_TYPES(T)     \
+  std::deque<T>, std::forward_list<T>, \
+  std::list<T>, std::vector<T>         \
+  /**/
 
-template <typename T>
-using sets = boost::mpl::list<
-  std::set<T>,
-  std::multiset<T>,
-  std::unordered_set<T>
->;
+#define SMART_POINTERS(T) std::unique_ptr<T>, std::shared_ptr<T>
 
-template <typename K, typename V>
-using maps = boost::mpl::list<
-  std::map<K, V>,
-  std::multimap<K, V>,
-  std::unordered_map<K, V>
->;
+#define SMART_POINTERS_TO_STRING(T)   \
+  TYPE_TO_STRING(std::unique_ptr<T>); \
+  TYPE_TO_STRING(std::shared_ptr<T>)  \
+  /**/
+
+#define SETS(T) std::set<T>, std::multiset<T>, std::unordered_set<T>
+
+#define SETS_TO_STRING(T)               \
+  TYPE_TO_STRING(std::set<T>);          \
+  TYPE_TO_STRING(std::multiset<T>);     \
+  TYPE_TO_STRING(std::unordered_set<T>) \
+  /**/
+
+#define MAPS(K, V) std::map<K, V>, std::multimap<K, V>, std::unordered_map<K, V>
+
+#define MAPS_TO_STRING(K, V)               \
+  TYPE_TO_STRING(std::map<K, V>);          \
+  TYPE_TO_STRING(std::multimap<K, V>);     \
+  TYPE_TO_STRING(std::unordered_map<K, V>) \
+  /**/
 
 #endif // TEST_UNIT_MSERIALIZE_TEST_TYPE_LISTS_HPP

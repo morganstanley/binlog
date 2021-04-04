@@ -2,7 +2,7 @@
 
 #include "test_utils.hpp"
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <map>
 #include <memory> // unique_ptr
@@ -17,15 +17,13 @@ std::vector<std::string> getEventsFromDefaultSession(const char* eventFormat)
 {
   TestStream stream;
   const binlog::Session::ConsumeResult cr = binlog::consume(stream);
-  BOOST_TEST(stream.buffer.size() == cr.bytesConsumed);
+  CHECK(stream.buffer.size() == cr.bytesConsumed);
   return streamToEvents(stream, eventFormat);
 }
 
 } // namespace
 
-BOOST_AUTO_TEST_SUITE(BasicLogMacros)
-
-BOOST_AUTO_TEST_CASE(no_arg)
+TEST_CASE("no_arg")
 {
   BINLOG_TRACE("Hello");
   BINLOG_DEBUG("Hello");
@@ -42,10 +40,10 @@ BOOST_AUTO_TEST_CASE(no_arg)
     "ERRO main Hello",
     "CRIT main Hello",
   };
-  BOOST_TEST(getEventsFromDefaultSession("%S %C %m") == expectedEvents, boost::test_tools::per_element());
+  CHECK(getEventsFromDefaultSession("%S %C %m") == expectedEvents);
 }
 
-BOOST_AUTO_TEST_CASE(more_args)
+TEST_CASE("more_args")
 {
   const std::unique_ptr<int> pi(new int(123));
   const std::unique_ptr<int> pn;
@@ -66,10 +64,10 @@ BOOST_AUTO_TEST_CASE(more_args)
     "ERRO main Hello [(1, 2), (3, 4)]",
     "CRIT main Hello 123 {null} [(1, 2), (3, 4)] 456",
   };
-  BOOST_TEST(getEventsFromDefaultSession("%S %C %m") == expectedEvents, boost::test_tools::per_element());
+  CHECK(getEventsFromDefaultSession("%S %C %m") == expectedEvents);
 }
 
-BOOST_AUTO_TEST_CASE(writer_name)
+TEST_CASE("writer_name")
 {
   binlog::default_thread_local_writer().setName("W");
 
@@ -88,10 +86,10 @@ BOOST_AUTO_TEST_CASE(writer_name)
     "ERRO main W Hello",
     "CRIT main W Hello",
   };
-  BOOST_TEST(getEventsFromDefaultSession("%S %C %n %m") == expectedEvents, boost::test_tools::per_element());
+  CHECK(getEventsFromDefaultSession("%S %C %n %m") == expectedEvents);
 }
 
-BOOST_AUTO_TEST_CASE(default_writer_name)
+TEST_CASE("default_writer_name")
 {
   std::thread t([]() // start a new thread to test the defaults
   {
@@ -114,12 +112,12 @@ BOOST_AUTO_TEST_CASE(default_writer_name)
       "ERRO main " + name + " Hello",
       "CRIT main " + name + " Hello",
     };
-    BOOST_TEST(getEventsFromDefaultSession("%S %C %n %m") == expectedEvents, boost::test_tools::per_element());
+    CHECK(getEventsFromDefaultSession("%S %C %n %m") == expectedEvents);
   });
   t.join();
 }
 
-BOOST_AUTO_TEST_CASE(c_mixed)
+TEST_CASE("c_mixed")
 {
   binlog::default_thread_local_writer().setName("W2");
 
@@ -138,7 +136,5 @@ BOOST_AUTO_TEST_CASE(c_mixed)
     "ERRO some_other_cat W2 Hello",
     "CRIT some_cat W2 Hello 123",
   };
-  BOOST_TEST(getEventsFromDefaultSession("%S %C %n %m") == expectedEvents, boost::test_tools::per_element());
+  CHECK(getEventsFromDefaultSession("%S %C %n %m") == expectedEvents);
 }
-
-BOOST_AUTO_TEST_SUITE_END()

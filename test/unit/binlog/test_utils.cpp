@@ -4,7 +4,7 @@
 #include <binlog/EventStream.hpp>
 #include <binlog/PrettyPrinter.hpp>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <ctime>
 #include <sstream>
@@ -47,7 +47,7 @@ std::vector<std::string> getEvents(binlog::Session& session, const char* eventFo
 {
   TestStream stream;
   const binlog::Session::ConsumeResult cr = session.consume(stream);
-  BOOST_TEST(stream.buffer.size() == cr.bytesConsumed);
+  CHECK(stream.buffer.size() == cr.bytesConsumed);
   return streamToEvents(stream, eventFormat);
 }
 

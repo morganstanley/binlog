@@ -4,7 +4,7 @@
 
 #include "test_utils.hpp"
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <chrono>
 #include <sstream>
@@ -12,9 +12,7 @@
 #include <thread>
 #include <vector>
 
-BOOST_AUTO_TEST_SUITE(SessionWriter)
-
-BOOST_AUTO_TEST_CASE(add_event)
+TEST_CASE("add_event")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
@@ -24,12 +22,12 @@ BOOST_AUTO_TEST_CASE(add_event)
   };
   eventSource.id = session.addEventSource(eventSource);
 
-  BOOST_TEST(writer.addEvent(eventSource.id, 0, 456, std::string("foo")));
+  CHECK(writer.addEvent(eventSource.id, 0, 456, std::string("foo")));
 
-  BOOST_TEST(getEvents(session, "%m") == std::vector<std::string>{"a=456 b=foo"}, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%m") == std::vector<std::string>{"a=456 b=foo"});
 }
 
-BOOST_AUTO_TEST_CASE(add_event_with_time)
+TEST_CASE("add_event_with_time")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
@@ -41,12 +39,12 @@ BOOST_AUTO_TEST_CASE(add_event_with_time)
 
   const auto now = std::chrono::system_clock::now();
   const auto clock = std::uint64_t(now.time_since_epoch().count());
-  BOOST_TEST(writer.addEvent(eventSource.id, clock, 456, std::string("foo")));
+  CHECK(writer.addEvent(eventSource.id, clock, 456, std::string("foo")));
 
-  BOOST_TEST(getEvents(session, "%d %m") == std::vector<std::string>{timePointToString(now) + " a=456 b=foo"}, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%d %m") == std::vector<std::string>{timePointToString(now) + " a=456 b=foo"});
 }
 
-BOOST_AUTO_TEST_CASE(set_clock_sync_and_add_event_with_time)
+TEST_CASE("set_clock_sync_and_add_event_with_time")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
@@ -59,12 +57,12 @@ BOOST_AUTO_TEST_CASE(set_clock_sync_and_add_event_with_time)
   const binlog::ClockSync clockSync{0, 1, 100 * std::nano::den, 0, "UTC"};
   session.setClockSync(clockSync);
 
-  BOOST_TEST(writer.addEvent(eventSource.id, 123, 456, std::string("foo")));
+  CHECK(writer.addEvent(eventSource.id, 123, 456, std::string("foo")));
 
-  BOOST_TEST(getEvents(session, "%d %m") == std::vector<std::string>{"1970.01.01 00:03:43 a=456 b=foo"}, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%d %m") == std::vector<std::string>{"1970.01.01 00:03:43 a=456 b=foo"});
 }
 
-BOOST_AUTO_TEST_CASE(reset_clock_sync_and_add_events_with_time)
+TEST_CASE("reset_clock_sync_and_add_events_with_time")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
@@ -77,22 +75,22 @@ BOOST_AUTO_TEST_CASE(reset_clock_sync_and_add_events_with_time)
 
   const binlog::ClockSync clockSync{0, 1, 100 * std::nano::den, 0, "UTC"};
   session.setClockSync(clockSync);
-  BOOST_TEST(writer.addEvent(eventSource.id, 123, 456, std::string("foo")));
+  CHECK(writer.addEvent(eventSource.id, 123, 456, std::string("foo")));
   session.consume(stream);
 
   const binlog::ClockSync clockSync2{0, 2, 200 * std::nano::den, 0, "UTC"};
   session.setClockSync(clockSync2);
-  BOOST_TEST(writer.addEvent(eventSource.id, 122, 789, std::string("bar")));
+  CHECK(writer.addEvent(eventSource.id, 122, 789, std::string("bar")));
   session.consume(stream);
 
   const std::vector<std::string> expectedEvents{
     "1970.01.01 00:03:43 a=456 b=foo",
     "1970.01.01 00:04:21 a=789 b=bar",
   };
-  BOOST_TEST(streamToEvents(stream, "%d %m") == expectedEvents, boost::test_tools::per_element());
+  CHECK(streamToEvents(stream, "%d %m") == expectedEvents);
 }
 
-BOOST_AUTO_TEST_CASE(add_event_with_writer_id_name)
+TEST_CASE("add_event_with_writer_id_name")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
@@ -104,12 +102,12 @@ BOOST_AUTO_TEST_CASE(add_event_with_writer_id_name)
 
   writer.setId(111);
   writer.setName("John");
-  BOOST_TEST(writer.addEvent(eventSource.id, 0, 456, std::string("foo")));
+  CHECK(writer.addEvent(eventSource.id, 0, 456, std::string("foo")));
 
-  BOOST_TEST(getEvents(session, "%t %n %m") == std::vector<std::string>{"111 John a=456 b=foo"}, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%t %n %m") == std::vector<std::string>{"111 John a=456 b=foo"});
 }
 
-BOOST_AUTO_TEST_CASE(add_event_with_writer_id_name_ctor)
+TEST_CASE("add_event_with_writer_id_name_ctor")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128, 111, "John");
@@ -119,12 +117,12 @@ BOOST_AUTO_TEST_CASE(add_event_with_writer_id_name_ctor)
   };
   eventSource.id = session.addEventSource(eventSource);
 
-  BOOST_TEST(writer.addEvent(eventSource.id, 0, 456, std::string("foo")));
+  CHECK(writer.addEvent(eventSource.id, 0, 456, std::string("foo")));
 
-  BOOST_TEST(getEvents(session, "%t %n %m") == std::vector<std::string>{"111 John a=456 b=foo"}, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%t %n %m") == std::vector<std::string>{"111 John a=456 b=foo"});
 }
 
-BOOST_AUTO_TEST_CASE(add_event_then_close)
+TEST_CASE("add_event_then_close")
 {
   // Make sure event reaches the consumer, even after the producer is destructed
 
@@ -138,13 +136,13 @@ BOOST_AUTO_TEST_CASE(add_event_then_close)
     };
     eventSource.id = session.addEventSource(eventSource);
 
-    BOOST_TEST(writer.addEvent(eventSource.id, 0, 456, std::string("foo")));
+    CHECK(writer.addEvent(eventSource.id, 0, 456, std::string("foo")));
   }
 
-  BOOST_TEST(getEvents(session, "%m") == std::vector<std::string>{"a=456 b=foo"}, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%m") == std::vector<std::string>{"a=456 b=foo"});
 }
 
-BOOST_AUTO_TEST_CASE(consume_metadata_twice)
+TEST_CASE("consume_metadata_twice")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
@@ -154,21 +152,21 @@ BOOST_AUTO_TEST_CASE(consume_metadata_twice)
   };
   eventSource.id = session.addEventSource(eventSource);
 
-  BOOST_TEST(writer.addEvent(eventSource.id, 0, 123, std::string("foo")));
+  CHECK(writer.addEvent(eventSource.id, 0, 123, std::string("foo")));
   getEvents(session, ""); // consume metadata and data
 
   const auto now = std::chrono::system_clock::now();
   const auto clock = std::uint64_t(now.time_since_epoch().count());
-  BOOST_TEST(writer.addEvent(eventSource.id, clock, 456, std::string("bar")));
+  CHECK(writer.addEvent(eventSource.id, clock, 456, std::string("bar")));
 
   TestStream stream;
   session.reconsumeMetadata(stream); // add clock sync and event source
   session.consume(stream); // consume the second event
 
-  BOOST_TEST(streamToEvents(stream, "%d %m") == std::vector<std::string>{timePointToString(now) + " a=456 b=bar"}, boost::test_tools::per_element());
+  CHECK(streamToEvents(stream, "%d %m") == std::vector<std::string>{timePointToString(now) + " a=456 b=bar"});
 }
 
-BOOST_AUTO_TEST_CASE(sources_first)
+TEST_CASE("sources_first")
 {
   binlog::Session session;
   binlog::SessionWriter writer1(session, 128);
@@ -181,7 +179,7 @@ BOOST_AUTO_TEST_CASE(sources_first)
     };
     eventSource.id = session.addEventSource(eventSource);
 
-    BOOST_TEST(writer1.addEvent(eventSource.id, 0, 456, std::string("foo")));
+    CHECK(writer1.addEvent(eventSource.id, 0, 456, std::string("foo")));
   }
 
   // Add EventSource 2 from writer 2, add Event using EventSource 1
@@ -191,7 +189,7 @@ BOOST_AUTO_TEST_CASE(sources_first)
     };
     eventSource.id = session.addEventSource(eventSource);
 
-    BOOST_TEST(writer2.addEvent(eventSource.id, 0, true, std::vector<int>{1,2,3}));
+    CHECK(writer2.addEvent(eventSource.id, 0, true, std::vector<int>{1,2,3}));
   }
 
   // Expect correct output: event sources are consumed first.
@@ -199,10 +197,10 @@ BOOST_AUTO_TEST_CASE(sources_first)
     "a=456 b=foo",
     "c=true d=[1, 2, 3]",
   };
-  BOOST_TEST(getEvents(session, "%m") == expectedEvents, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%m") == expectedEvents);
 }
 
-BOOST_AUTO_TEST_CASE(add_events_from_threads)
+TEST_CASE("add_events_from_threads")
 {
   binlog::Session session;
 
@@ -265,10 +263,10 @@ BOOST_AUTO_TEST_CASE(add_events_from_threads)
     }
   }
 
-  BOOST_TEST(events == expectedEvents, boost::test_tools::per_element());
+  CHECK(events == expectedEvents);
 }
 
-BOOST_AUTO_TEST_CASE(queue_is_full)
+TEST_CASE("queue_is_full")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
@@ -285,7 +283,7 @@ BOOST_AUTO_TEST_CASE(queue_is_full)
   for (int i = 0; i < 256; ++i)
   {
     // even if the queue is full, writer allocates a new queue, returns true
-    BOOST_TEST(writer.addEvent(eventSource.id, 0, std::vector<int>{i,i+1,i+2}));
+    CHECK(writer.addEvent(eventSource.id, 0, std::vector<int>{i,i+1,i+2}));
   }
 
   std::vector<std::string> expectedEvents;
@@ -301,14 +299,14 @@ BOOST_AUTO_TEST_CASE(queue_is_full)
   const binlog::Session::ConsumeResult cr = session.consume(stream);
 
   // make sure old channels are closed
-  BOOST_TEST(cr.channelsPolled > 1);
-  BOOST_TEST(cr.channelsRemoved + 1 == cr.channelsPolled);
+  CHECK(cr.channelsPolled > 1);
+  CHECK(cr.channelsRemoved + 1 == cr.channelsPolled);
 
   // make sure the events are correct, and the writer properties are preserved
-  BOOST_TEST(streamToEvents(stream, "%t %n %m") == expectedEvents, boost::test_tools::per_element());
+  CHECK(streamToEvents(stream, "%t %n %m") == expectedEvents);
 }
 
-BOOST_AUTO_TEST_CASE(move_ctor)
+TEST_CASE("move_ctor")
 {
   binlog::Session session;
   binlog::SessionWriter writerToBeMoved(session, 128);
@@ -317,8 +315,8 @@ BOOST_AUTO_TEST_CASE(move_ctor)
   // no channel is closed
   std::ostringstream out;
   const binlog::Session::ConsumeResult cr = session.consume(out);
-  BOOST_TEST(cr.channelsPolled == 1);
-  BOOST_TEST(cr.channelsRemoved == 0);
+  CHECK(cr.channelsPolled == 1);
+  CHECK(cr.channelsRemoved == 0);
 
   // channel is still operational
   binlog::EventSource eventSource{
@@ -326,12 +324,12 @@ BOOST_AUTO_TEST_CASE(move_ctor)
   };
   eventSource.id = session.addEventSource(eventSource);
 
-  BOOST_TEST(writer.addEvent(eventSource.id, 0, 456, std::string("foo")));
+  CHECK(writer.addEvent(eventSource.id, 0, 456, std::string("foo")));
 
-  BOOST_TEST(getEvents(session, "%m") == std::vector<std::string>{"a=456 b=foo"}, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%m") == std::vector<std::string>{"a=456 b=foo"});
 }
 
-BOOST_AUTO_TEST_CASE(move_assign)
+TEST_CASE("move_assign")
 {
   binlog::Session session;
   binlog::SessionWriter writer1(session, 128);
@@ -345,21 +343,21 @@ BOOST_AUTO_TEST_CASE(move_assign)
   };
   eventSource.id = session.addEventSource(eventSource);
 
-  BOOST_TEST(writer1.addEvent(eventSource.id, 0, 123, std::string("foo")));
-  BOOST_TEST(writer2.addEvent(eventSource.id, 0, 456, std::string("bar")));
+  CHECK(writer1.addEvent(eventSource.id, 0, 123, std::string("foo")));
+  CHECK(writer2.addEvent(eventSource.id, 0, 456, std::string("bar")));
 
   writer2 = std::move(writer1);
-  BOOST_TEST(writer2.addEvent(eventSource.id, 0, 789, std::string("baz")));
+  CHECK(writer2.addEvent(eventSource.id, 0, 789, std::string("baz")));
 
   const std::vector<std::string> expectedEvents{
     "W1 a=123 b=foo",
     "W1 a=789 b=baz",
     "W2 a=456 b=bar",
   };
-  BOOST_TEST(getEvents(session, "%n %m") == expectedEvents, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%n %m") == expectedEvents);
 }
 
-BOOST_AUTO_TEST_CASE(swap_writers_of_different_sessions)
+TEST_CASE("swap_writers_of_different_sessions")
 {
   binlog::Session sa;
   binlog::SessionWriter wa(sa, 128);
@@ -372,5 +370,3 @@ BOOST_AUTO_TEST_CASE(swap_writers_of_different_sessions)
   // but sb is destructed first. ASAN will detect
   // if wa accesses a destructed channel.
 }
-
-BOOST_AUTO_TEST_SUITE_END()

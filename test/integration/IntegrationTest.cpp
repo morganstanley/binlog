@@ -1,4 +1,5 @@
-#include <boost/test/unit_test.hpp>
+#define DOCTEST_CONFIG_IMPLEMENT
+#include <doctest/doctest.h>
 
 #include <mserialize/string_view.hpp>
 
@@ -31,10 +32,10 @@ std::string executePipeline(std::string cmd)
     std::replace(cmd.begin(), cmd.end(), '/', '\\');
   #endif
 
-  BOOST_TEST_MESSAGE("Cmd: " + cmd);
+  INFO("Cmd: ", cmd);
 
   FILE* f = popen(cmd.data(), "r");
-  BOOST_TEST_REQUIRE(f != nullptr);
+  REQUIRE(f != nullptr);
 
   std::string result;
 
@@ -44,7 +45,7 @@ std::string executePipeline(std::string cmd)
     result.append(buf, rs);
   }
 
-  BOOST_TEST(pclose(f) != -1);
+  CHECK(pclose(f) != -1);
   return result;
 }
 
@@ -98,56 +99,46 @@ void runReadDiff(const std::string& name, const std::string& format)
       << " | " << g_bread_path << " -f \"" << format << "\" - ";
   const std::string actual = executePipeline(cmd.str());
   const std::string expected = expectedDataFromSource(name);
-  BOOST_TEST(expected == actual);
+  CHECK(expected == actual);
 }
 
-BOOST_AUTO_TEST_SUITE(RunReadDiff)
-
-BOOST_AUTO_TEST_CASE(Logging)               { runReadDiff("Logging", "%S %m"); }
-BOOST_AUTO_TEST_CASE(LoggingFundamentals)   { runReadDiff("LoggingFundamentals", "%m"); }
-BOOST_AUTO_TEST_CASE(LoggingContainers)     { runReadDiff("LoggingContainers", "%m"); }
-BOOST_AUTO_TEST_CASE(LoggingStrings)        { runReadDiff("LoggingStrings", "%m"); }
-BOOST_AUTO_TEST_CASE(LoggingCStrings)       { runReadDiff("LoggingCStrings", "%m"); }
-BOOST_AUTO_TEST_CASE(LoggingPointers)       { runReadDiff("LoggingPointers", "%m"); }
-BOOST_AUTO_TEST_CASE(LoggingTuples)         { runReadDiff("LoggingTuples", "%m"); }
-BOOST_AUTO_TEST_CASE(LoggingEnums)          { runReadDiff("LoggingEnums", "%m"); }
-BOOST_AUTO_TEST_CASE(LoggingAdaptedStructs) { runReadDiff("LoggingAdaptedStructs", "%m"); }
-BOOST_AUTO_TEST_CASE(LoggingTimePoint)      { runReadDiff("LoggingTimePoint", "%m"); }
-BOOST_AUTO_TEST_CASE(NamedWriters)          { runReadDiff("NamedWriters", "%n %m"); }
-BOOST_AUTO_TEST_CASE(SeverityControl)       { runReadDiff("SeverityControl", "%S %m"); }
-BOOST_AUTO_TEST_CASE(Categories)            { runReadDiff("Categories", "%C %n %m"); }
+TEST_CASE("Logging")               { runReadDiff("Logging", "%S %m"); }
+TEST_CASE("LoggingFundamentals")   { runReadDiff("LoggingFundamentals", "%m"); }
+TEST_CASE("LoggingContainers")     { runReadDiff("LoggingContainers", "%m"); }
+TEST_CASE("LoggingStrings")        { runReadDiff("LoggingStrings", "%m"); }
+TEST_CASE("LoggingCStrings")       { runReadDiff("LoggingCStrings", "%m"); }
+TEST_CASE("LoggingPointers")       { runReadDiff("LoggingPointers", "%m"); }
+TEST_CASE("LoggingTuples")         { runReadDiff("LoggingTuples", "%m"); }
+TEST_CASE("LoggingEnums")          { runReadDiff("LoggingEnums", "%m"); }
+TEST_CASE("LoggingAdaptedStructs") { runReadDiff("LoggingAdaptedStructs", "%m"); }
+TEST_CASE("LoggingTimePoint")      { runReadDiff("LoggingTimePoint", "%m"); }
+TEST_CASE("NamedWriters")          { runReadDiff("NamedWriters", "%n %m"); }
+TEST_CASE("SeverityControl")       { runReadDiff("SeverityControl", "%S %m"); }
+TEST_CASE("Categories")            { runReadDiff("Categories", "%C %n %m"); }
 
 #if __cplusplus >= 201703L
 
-BOOST_AUTO_TEST_CASE(LoggingOptionals)      { runReadDiff("LoggingOptionals", "%m"); }
+TEST_CASE("LoggingOptionals")      { runReadDiff("LoggingOptionals", "%m"); }
 
 #endif
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE(Bread)
-
-BOOST_AUTO_TEST_CASE(DateFormat)
+TEST_CASE("DateFormat")
 {
   // read dateformat.blog, convert to text, check result
   std::ostringstream cmd;
   cmd << g_bread_path << " -f \"%u %m\" -d \"%Y-%m-%dT%H:%M:%S.%NZ\" " << g_src_dir << "data/dateformat.blog";
   const std::string actual = executePipeline(cmd.str());
   const std::string expected = "2019-12-02T13:38:33.602967233Z Hello\n";
-  BOOST_TEST(expected == actual);
+  CHECK(expected == actual);
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE(Brecovery)
-
-BOOST_AUTO_TEST_CASE(RecoverMetadataAndData)
+TEST_CASE("RecoverMetadataAndData")
 {
   // check gdb
   const std::string gdbpath = "/usr/bin/gdb";
   if (! fileReadable(gdbpath))
   {
-    BOOST_TEST_MESSAGE("gdb not found, skip this test");
+    MESSAGE("gdb not found, skip this test");
     return;
   }
 
@@ -163,14 +154,14 @@ BOOST_AUTO_TEST_CASE(RecoverMetadataAndData)
     " 'log w1 bye w1'"
     " 'log w2 bye w2'"
     " terminate";
-  BOOST_TEST_MESSAGE("Run GDB: " + gdbcmd.str());
+  MESSAGE("Run GDB: ", gdbcmd.str());
   const int gdbretval = std::system(gdbcmd.str().data());
   (void) gdbretval; // return value is implementation specified
 
   // check the core
   if (! fileReadable(corepath))
   {
-    BOOST_TEST_MESSAGE("Could not generate corefile, skip this test");
+    MESSAGE("Could not generate corefile, skip this test");
     return;
   }
 
@@ -185,34 +176,38 @@ BOOST_AUTO_TEST_CASE(RecoverMetadataAndData)
   const std::string expected2 = "hello w2\nbye w2\nhello w1\nbye w1\n";
   if (recovered == expected1)
   {
-    BOOST_TEST(recovered == expected1);
+    CHECK(recovered == expected1);
   }
   else
   {
-    BOOST_TEST(recovered == expected2);
+    CHECK(recovered == expected2);
   }
 
   std::remove(corepath.data());
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-bool initMasterSuite()
+void initGlobals(int argc, const char* argv[])
 {
-  boost::unit_test::framework::master_test_suite().p_name.value = "Binlog Integration Test";
-
-  // Boost.Test only allows custom args after the -- separator
-  int argc = boost::unit_test::framework::master_test_suite().argc;
-  char** argv = boost::unit_test::framework::master_test_suite().argv;
-
   g_bread_path = (argc > 1) ? argv[1] : "./bread" + extension();
   g_inttest_dir = (argc > 2) ? argv[2] + std::string("/") : "./";
   g_src_dir = (argc > 3) ? argv[3] + std::string("/test/integration/") : "../test/integration/";
-
-  return true;
 }
 
-int main(int argc, /*const*/ char* argv[])
+int main(int argc, const char* argv[])
 {
-  return boost::unit_test::unit_test_main(&initMasterSuite, argc, argv);
+  int testargc = argc;
+  for (int i = 0; i < argc; ++i)
+  {
+    if (argv[i] == std::string("--"))
+    {
+      testargc = i;
+      break;
+    }
+  }
+
+  initGlobals(argc - testargc, argv + testargc);
+
+  doctest::Context context(testargc, argv);
+
+  return context.run();
 }
