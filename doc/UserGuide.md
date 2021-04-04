@@ -114,7 +114,7 @@ that satisfies the following constraints:
  - Dereferencing it yields to a loggable type
  - It is declared as being an optional, e.g:
 
-        [catchfile test/integration/LoggingOptionals.cpp optspec]
+        [catchfile test/integration/LoggingBoostTypes.cpp optspec]
 
 ## Logging Pairs and Tuples
 

@@ -7,8 +7,7 @@ Binlog consist of three main components:
  - A compiled executable to read the logs
  - A compiled library to read the logs programmatically
 
-In addition, as an **optional** dependency, **tests** depend on Boost 1.64.0 or higher,
-and performance tests on [Google Benchmark][].
+In addition, as an **optional** dependency, performance tests depend on [Google Benchmark][].
 
 ## Build and Use
 
@@ -55,8 +54,6 @@ To be used when invoking `cmake`.
  - `-DBINLOG_USE_TSAN`: use [thread sanitizer][] (with gcc or clang)
  - `-DBINLOG_USE_UBSAN`: use [undefined behavior sanitizer][] (with gcc or clang)
  - `-DBINLOG_GEN_COVERAGE`: generate coverage data
- - `-DBINLOG_FORCE_TESTS`: fail during configuration if tests will not be built
- - `-DBOOST_ROOT`: specifies the path to an alternate boost installation (tests depend on boost)
 
 [address sanitizer]: https://github.com/google/sanitizers/wiki/AddressSanitizer
 [thread sanitizer]: https://github.com/google/sanitizers/wiki/ThreadSanitizerCppManual
@@ -107,7 +104,6 @@ When building with `clang`, requires: `llvm-profdata`, `llvm-tools`.
 ## Test
 
 Make sure that the targets are up-to-date, `ctest` doesn't check that by default.
-Tests require Boost 1.64.0 or higher.
 
     Release/$ ctest -VV
 

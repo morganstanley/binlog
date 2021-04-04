@@ -10,8 +10,11 @@
 #include <mserialize/make_template_deserializable.hpp>
 #include <mserialize/make_template_serializable.hpp>
 
-#include <boost/optional/optional.hpp>
 #include <doctest/doctest.h>
+
+#ifdef BINLOG_HAS_BOOST
+  #include <boost/optional/optional.hpp>
+#endif
 
 #include <algorithm> // equal
 #include <cmath> // isnan
@@ -86,17 +89,6 @@ bool pointee_equal(const T* a, const T* b)
 }
 
 } // namespace
-
-// specialization required by the optional tests
-
-namespace mserialize {
-namespace detail {
-
-template <typename T>
-struct is_optional<boost::optional<T>> : std::true_type {};
-
-} // namespace detail
-} // namespace mserialize
 
 TEST_CASE_TEMPLATE("arithmetic_min_max", T, ARITHMETIC_TYPES)
 {
@@ -460,6 +452,17 @@ TEST_CASE_TEMPLATE("mixed_smart_pointers", T, SMART_POINTERS(std::vector<std::tu
   CHECK(*out == value);
 }
 
+#ifdef BINLOG_HAS_BOOST
+
+namespace mserialize {
+namespace detail {
+
+template <typename T>
+struct is_optional<boost::optional<T>> : std::true_type {};
+
+} // namespace detail
+} // namespace mserialize
+
 TEST_CASE("optional")
 {
   // empty
@@ -490,6 +493,8 @@ TEST_CASE("optional")
     CHECK(*out == *in);
   }
 }
+
+#endif // BINLOG_HAS_BOOST
 
 TEST_CASE("cenum")
 {
