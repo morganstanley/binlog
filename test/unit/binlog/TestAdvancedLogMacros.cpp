@@ -5,16 +5,14 @@
 #include <binlog/Session.hpp>
 #include <binlog/SessionWriter.hpp>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <map>
 #include <memory> // unique_ptr
 #include <string>
 #include <vector>
 
-BOOST_AUTO_TEST_SUITE(AdvancedLogMacros)
-
-BOOST_AUTO_TEST_CASE(wc_no_arg)
+TEST_CASE("wc_no_arg")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 512);
@@ -34,10 +32,10 @@ BOOST_AUTO_TEST_CASE(wc_no_arg)
     "ERRO my_cat Hello",
     "CRIT my_cat Hello",
   };
-  BOOST_TEST(getEvents(session, "%S %C %m") == expectedEvents, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%S %C %m") == expectedEvents);
 }
 
-BOOST_AUTO_TEST_CASE(wc_more_args)
+TEST_CASE("wc_more_args")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 512);
@@ -61,10 +59,10 @@ BOOST_AUTO_TEST_CASE(wc_more_args)
     "ERRO my_cat Hello [(1, 2), (3, 4)]",
     "CRIT my_cat Hello 123 {null} [(1, 2), (3, 4)] 456",
   };
-  BOOST_TEST(getEvents(session, "%S %C %m") == expectedEvents, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%S %C %m") == expectedEvents);
 }
 
-BOOST_AUTO_TEST_CASE(wc_writer_name)
+TEST_CASE("wc_writer_name")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 512);
@@ -86,10 +84,10 @@ BOOST_AUTO_TEST_CASE(wc_writer_name)
     "ERRO my_cat W Hello",
     "CRIT my_cat W Hello",
   };
-  BOOST_TEST(getEvents(session, "%S %C %n %m") == expectedEvents, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%S %C %n %m") == expectedEvents);
 }
 
-BOOST_AUTO_TEST_CASE(w_mixed)
+TEST_CASE("w_mixed")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 512);
@@ -111,7 +109,5 @@ BOOST_AUTO_TEST_CASE(w_mixed)
     "ERRO main W2 Hello",
     "CRIT main W2 Hello 123",
   };
-  BOOST_TEST(getEvents(session, "%S %C %n %m") == expectedEvents, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%S %C %n %m") == expectedEvents);
 }
-
-BOOST_AUTO_TEST_SUITE_END()

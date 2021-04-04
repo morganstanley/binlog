@@ -9,7 +9,7 @@
 
 #include "test_utils.hpp"
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <array>
 #include <cstdint>
@@ -137,9 +137,7 @@ MSERIALIZE_MAKE_TEMPLATE_SERIALIZABLE(
 
 MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(UnknownSpecial, key, value)
 
-BOOST_AUTO_TEST_SUITE(EventStream)
-
-BOOST_AUTO_TEST_CASE(read_event)
+TEST_CASE("read_event")
 {
   const binlog::EventSource eventSource = testEventSource(123);
   const TestEvent<> event{123, 0, {}};
@@ -151,16 +149,16 @@ BOOST_AUTO_TEST_CASE(read_event)
   binlog::EventStream eventStream;
 
   const binlog::Event* e1 = eventStream.nextEvent(stream);
-  BOOST_TEST_REQUIRE(e1 != nullptr);
-  BOOST_TEST_REQUIRE(e1->source != nullptr);
-  BOOST_TEST(*e1->source == eventSource);
-  BOOST_TEST(e1->arguments.empty());
+  REQUIRE(e1 != nullptr);
+  REQUIRE(e1->source != nullptr);
+  CHECK(*e1->source == eventSource);
+  CHECK(e1->arguments.empty());
 
   const binlog::Event* e2 = eventStream.nextEvent(stream);
-  BOOST_TEST(e2 == nullptr);
+  CHECK(e2 == nullptr);
 }
 
-BOOST_AUTO_TEST_CASE(read_event_with_args)
+TEST_CASE("read_event_with_args")
 {
   const binlog::EventSource eventSource = testEventSource(123, "foobar", "(iy[c)");
   const TestEvent<int, bool, std::string> event{123, 0, std::make_tuple(789, true, "foo")};
@@ -172,9 +170,9 @@ BOOST_AUTO_TEST_CASE(read_event_with_args)
   binlog::EventStream eventStream;
 
   const binlog::Event* e1 = eventStream.nextEvent(stream);
-  BOOST_TEST_REQUIRE(e1 != nullptr);
-  BOOST_TEST_REQUIRE(e1->source != nullptr);
-  BOOST_TEST(*e1->source == eventSource);
+  REQUIRE(e1 != nullptr);
+  REQUIRE(e1->source != nullptr);
+  CHECK(*e1->source == eventSource);
 
   std::stringstream argStr;
   {
@@ -183,13 +181,13 @@ BOOST_AUTO_TEST_CASE(read_event_with_args)
     binlog::Range arguments(e1->arguments);
     mserialize::visit(e1->source->argumentTags, visitor, arguments);
   }
-  BOOST_TEST(argStr.str() == "(789, true, foo)");
+  CHECK(argStr.str() == "(789, true, foo)");
 
   const binlog::Event* e2 = eventStream.nextEvent(stream);
-  BOOST_TEST(e2 == nullptr);
+  CHECK(e2 == nullptr);
 }
 
-BOOST_AUTO_TEST_CASE(multiple_sources)
+TEST_CASE("multiple_sources")
 {
   const binlog::EventSource eventSource1 = testEventSource(123, "foo");
   const binlog::EventSource eventSource2 = testEventSource(0, "bar");
@@ -216,13 +214,13 @@ BOOST_AUTO_TEST_CASE(multiple_sources)
   for (const binlog::EventSource* source : sources)
   {
     const binlog::Event* e = eventStream.nextEvent(stream);
-    BOOST_TEST_REQUIRE(e != nullptr);
-    BOOST_TEST_REQUIRE(e->source != nullptr);
-    BOOST_TEST(*e->source == *source);
+    REQUIRE(e != nullptr);
+    REQUIRE(e->source != nullptr);
+    CHECK(*e->source == *source);
   }
 }
 
-BOOST_AUTO_TEST_CASE(override_event_source)
+TEST_CASE("override_event_source")
 {
   const binlog::EventSource eventSource1 = testEventSource(123, "foo");
   const binlog::EventSource eventSource2 = testEventSource(123, "bar");
@@ -236,12 +234,12 @@ BOOST_AUTO_TEST_CASE(override_event_source)
   binlog::EventStream eventStream;
 
   const binlog::Event* e1 = eventStream.nextEvent(stream);
-  BOOST_TEST_REQUIRE(e1 != nullptr);
-  BOOST_TEST_REQUIRE(e1->source != nullptr);
-  BOOST_TEST(*e1->source == eventSource2);
+  REQUIRE(e1 != nullptr);
+  REQUIRE(e1->source != nullptr);
+  CHECK(*e1->source == eventSource2);
 }
 
-BOOST_AUTO_TEST_CASE(read_event_invalid_source)
+TEST_CASE("read_event_invalid_source")
 {
   const binlog::EventSource eventSource = testEventSource(123);
   const TestEvent<> event{124, 0, {}};
@@ -252,10 +250,10 @@ BOOST_AUTO_TEST_CASE(read_event_invalid_source)
 
   binlog::EventStream eventStream;
 
-  BOOST_CHECK_THROW(eventStream.nextEvent(stream), std::runtime_error);
+  CHECK_THROWS_AS(eventStream.nextEvent(stream), std::runtime_error);
 }
 
-BOOST_AUTO_TEST_CASE(continue_after_event_invalid_source)
+TEST_CASE("continue_after_event_invalid_source")
 {
   const binlog::EventSource eventSource = testEventSource(123);
   const TestEvent<> event1{124, 0, {}};
@@ -268,21 +266,21 @@ BOOST_AUTO_TEST_CASE(continue_after_event_invalid_source)
 
   binlog::EventStream eventStream;
 
-  BOOST_CHECK_THROW(eventStream.nextEvent(stream), std::runtime_error);
+  CHECK_THROWS_AS(eventStream.nextEvent(stream), std::runtime_error);
 
   const binlog::Event* e = eventStream.nextEvent(stream);
-  BOOST_TEST_REQUIRE(e != nullptr);
-  BOOST_TEST_REQUIRE(e->source != nullptr);
-  BOOST_TEST(*e->source == eventSource);
+  REQUIRE(e != nullptr);
+  REQUIRE(e->source != nullptr);
+  CHECK(*e->source == eventSource);
 }
 
-BOOST_AUTO_TEST_CASE(default_writer_prop)
+TEST_CASE("default_writer_prop")
 {
   binlog::EventStream eventStream;
-  BOOST_TEST(eventStream.writerProp() == binlog::WriterProp{});
+  CHECK(eventStream.writerProp() == binlog::WriterProp{});
 }
 
-BOOST_AUTO_TEST_CASE(multiple_writerProps)
+TEST_CASE("multiple_writerProps")
 {
   const binlog::EventSource eventSource = testEventSource(123);
   const binlog::WriterProp writerProp1{1, "foo", 0};
@@ -302,17 +300,17 @@ BOOST_AUTO_TEST_CASE(multiple_writerProps)
 
   binlog::EventStream eventStream;
 
-  BOOST_TEST(eventStream.nextEvent(stream) != nullptr);
-  BOOST_TEST(eventStream.writerProp() == writerProp1);
-  BOOST_TEST(eventStream.nextEvent(stream) != nullptr);
-  BOOST_TEST(eventStream.writerProp() == writerProp2);
-  BOOST_TEST(eventStream.nextEvent(stream) != nullptr);
-  BOOST_TEST(eventStream.writerProp() == writerProp2);
-  BOOST_TEST(eventStream.nextEvent(stream) != nullptr);
-  BOOST_TEST(eventStream.writerProp() == writerProp1);
+  CHECK(eventStream.nextEvent(stream) != nullptr);
+  CHECK(eventStream.writerProp() == writerProp1);
+  CHECK(eventStream.nextEvent(stream) != nullptr);
+  CHECK(eventStream.writerProp() == writerProp2);
+  CHECK(eventStream.nextEvent(stream) != nullptr);
+  CHECK(eventStream.writerProp() == writerProp2);
+  CHECK(eventStream.nextEvent(stream) != nullptr);
+  CHECK(eventStream.writerProp() == writerProp1);
 }
 
-BOOST_AUTO_TEST_CASE(continue_after_event_invalid_writer_prop)
+TEST_CASE("continue_after_event_invalid_writer_prop")
 {
   const binlog::EventSource eventSource1 = testEventSource(123);
   const binlog::EventSource eventSource2 = testEventSource(124);
@@ -331,27 +329,27 @@ BOOST_AUTO_TEST_CASE(continue_after_event_invalid_writer_prop)
 
   binlog::EventStream eventStream;
 
-  BOOST_TEST(eventStream.nextEvent(stream) != nullptr);
-  BOOST_TEST(eventStream.writerProp() == writerProp1);
-  BOOST_CHECK_THROW(eventStream.nextEvent(stream), std::runtime_error);
+  CHECK(eventStream.nextEvent(stream) != nullptr);
+  CHECK(eventStream.writerProp() == writerProp1);
+  CHECK_THROWS_AS(eventStream.nextEvent(stream), std::runtime_error);
 
   // after corrupt writerProp entry, progress can be made:
   const binlog::Event* e = eventStream.nextEvent(stream);
-  BOOST_TEST_REQUIRE(e != nullptr);
-  BOOST_TEST_REQUIRE(e->source != nullptr);
-  BOOST_TEST(*e->source == eventSource2);
+  REQUIRE(e != nullptr);
+  REQUIRE(e->source != nullptr);
+  CHECK(*e->source == eventSource2);
 
   // and the old writerProp is not corrupted
-  BOOST_TEST(eventStream.writerProp() == writerProp1);
+  CHECK(eventStream.writerProp() == writerProp1);
 }
 
-BOOST_AUTO_TEST_CASE(default_clockSync)
+TEST_CASE("default_clockSync")
 {
   binlog::EventStream eventStream;
-  BOOST_TEST(eventStream.clockSync() == binlog::ClockSync{});
+  CHECK(eventStream.clockSync() == binlog::ClockSync{});
 }
 
-BOOST_AUTO_TEST_CASE(multiple_clockSyncs)
+TEST_CASE("multiple_clockSyncs")
 {
   const binlog::EventSource eventSource = testEventSource(123);
   const binlog::ClockSync clockSync1{1, 2, 3, 4, "foo"};
@@ -367,13 +365,13 @@ BOOST_AUTO_TEST_CASE(multiple_clockSyncs)
 
   binlog::EventStream eventStream;
 
-  BOOST_TEST(eventStream.nextEvent(stream) != nullptr);
-  BOOST_TEST(eventStream.clockSync() == clockSync1);
-  BOOST_TEST(eventStream.nextEvent(stream) != nullptr);
-  BOOST_TEST(eventStream.clockSync() == clockSync2);
+  CHECK(eventStream.nextEvent(stream) != nullptr);
+  CHECK(eventStream.clockSync() == clockSync1);
+  CHECK(eventStream.nextEvent(stream) != nullptr);
+  CHECK(eventStream.clockSync() == clockSync2);
 }
 
-BOOST_AUTO_TEST_CASE(continue_after_event_invalid_clockSync)
+TEST_CASE("continue_after_event_invalid_clockSync")
 {
   const binlog::EventSource eventSource1 = testEventSource(123);
   const binlog::EventSource eventSource2 = testEventSource(124);
@@ -392,21 +390,21 @@ BOOST_AUTO_TEST_CASE(continue_after_event_invalid_clockSync)
 
   binlog::EventStream eventStream;
 
-  BOOST_TEST(eventStream.nextEvent(stream) != nullptr);
-  BOOST_TEST(eventStream.clockSync() == clockSync1);
-  BOOST_CHECK_THROW(eventStream.nextEvent(stream), std::runtime_error);
+  CHECK(eventStream.nextEvent(stream) != nullptr);
+  CHECK(eventStream.clockSync() == clockSync1);
+  CHECK_THROWS_AS(eventStream.nextEvent(stream), std::runtime_error);
 
   // after corrupt clockSync entry, progress can be made:
   const binlog::Event* e = eventStream.nextEvent(stream);
-  BOOST_TEST_REQUIRE(e != nullptr);
-  BOOST_TEST_REQUIRE(e->source != nullptr);
-  BOOST_TEST(*e->source == eventSource2);
+  REQUIRE(e != nullptr);
+  REQUIRE(e->source != nullptr);
+  CHECK(*e->source == eventSource2);
 
   // and the old clockSync is not corrupted
-  BOOST_TEST(eventStream.clockSync() == clockSync1);
+  CHECK(eventStream.clockSync() == clockSync1);
 }
 
-BOOST_AUTO_TEST_CASE(unknown_specials_are_ignored)
+TEST_CASE("unknown_specials_are_ignored")
 {
   // To allow schema evolution and extensions,
   // unknown special entries are ignored.
@@ -425,9 +423,7 @@ BOOST_AUTO_TEST_CASE(unknown_specials_are_ignored)
   binlog::EventStream eventStream;
 
   const binlog::Event* e1 = eventStream.nextEvent(stream);
-  BOOST_TEST_REQUIRE(e1 != nullptr);
-  BOOST_TEST_REQUIRE(e1->source != nullptr);
-  BOOST_TEST(*e1->source == eventSource);
+  REQUIRE(e1 != nullptr);
+  REQUIRE(e1->source != nullptr);
+  CHECK(*e1->source == eventSource);
 }
-
-BOOST_AUTO_TEST_SUITE_END()

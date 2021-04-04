@@ -1,6 +1,6 @@
 #include <binlog/detail/OstreamBuffer.hpp>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <cstdint>
 #include <sstream>
@@ -30,62 +30,58 @@ struct TestcaseBase
 
 } // namespace
 
-BOOST_AUTO_TEST_SUITE(OstreamBuffer)
-
-BOOST_FIXTURE_TEST_CASE(empty, TestcaseBase)
+TEST_CASE_FIXTURE(TestcaseBase, "empty")
 {
-  BOOST_TEST(result() == "");
+  CHECK(result() == "");
   buf.write(nullptr, 0);
-  BOOST_TEST(result() == "");
+  CHECK(result() == "");
 }
 
-BOOST_FIXTURE_TEST_CASE(put, TestcaseBase)
+TEST_CASE_FIXTURE(TestcaseBase, "put")
 {
   buf.put('a');
   buf.put('b');
   buf.put('c');
-  BOOST_TEST(result() == "abc");
+  CHECK(result() == "abc");
 }
 
-BOOST_FIXTURE_TEST_CASE(write, TestcaseBase)
+TEST_CASE_FIXTURE(TestcaseBase, "write")
 {
   buf.write("defgh", 5);
-  BOOST_TEST(result() == "defgh");
+  CHECK(result() == "defgh");
 }
 
-BOOST_FIXTURE_TEST_CASE(shift_op, TestcaseBase)
+TEST_CASE_FIXTURE(TestcaseBase, "shift_op")
 {
-  BOOST_TEST(toString(true) == "true");
-  BOOST_TEST(toString(false) == "false");
+  CHECK(toString(true) == "true");
+  CHECK(toString(false) == "false");
 
-  BOOST_TEST(toString('x') == "x");
+  CHECK(toString('x') == "x");
 
-  BOOST_TEST(toString<std::int8_t>(23) == "23");
-  BOOST_TEST(toString<std::int16_t>(123) == "123");
-  BOOST_TEST(toString<std::int32_t>(-123) == "-123");
-  BOOST_TEST(toString<std::int64_t>(1357246) == "1357246");
+  CHECK(toString<std::int8_t>(23) == "23");
+  CHECK(toString<std::int16_t>(123) == "123");
+  CHECK(toString<std::int32_t>(-123) == "-123");
+  CHECK(toString<std::int64_t>(1357246) == "1357246");
 
-  BOOST_TEST(toString<std::uint8_t>(23) == "23");
-  BOOST_TEST(toString<std::uint16_t>(123) == "123");
-  BOOST_TEST(toString<std::uint32_t>(456) == "456");
-  BOOST_TEST(toString<std::uint64_t>(1357246) == "1357246");
+  CHECK(toString<std::uint8_t>(23) == "23");
+  CHECK(toString<std::uint16_t>(123) == "123");
+  CHECK(toString<std::uint32_t>(456) == "456");
+  CHECK(toString<std::uint64_t>(1357246) == "1357246");
 
-  BOOST_TEST(toString<float>(0.0f) == "0");
-  BOOST_TEST(toString<float>(1.0f) == "1");
-  BOOST_TEST(toString<float>(1.2f) == "1.2");
-  BOOST_TEST(toString<float>(123.456f) == "123.456");
+  CHECK(toString<float>(0.0f) == "0");
+  CHECK(toString<float>(1.0f) == "1");
+  CHECK(toString<float>(1.2f) == "1.2");
+  CHECK(toString<float>(123.456f) == "123.456");
 
-  BOOST_TEST(toString<double>(0.0) == "0");
-  BOOST_TEST(toString<double>(1.0) == "1");
-  BOOST_TEST(toString<double>(-1.2) == "-1.2");
-  BOOST_TEST(toString<double>(123.456) == "123.456");
+  CHECK(toString<double>(0.0) == "0");
+  CHECK(toString<double>(1.0) == "1");
+  CHECK(toString<double>(-1.2) == "-1.2");
+  CHECK(toString<double>(123.456) == "123.456");
 
-  BOOST_TEST(toString<long double>(0.0) == "0");
-  BOOST_TEST(toString<long double>(1.0) == "1");
-  BOOST_TEST(toString<long double>(1.2) == "1.2");
-  BOOST_TEST(toString<long double>(-123.456) == "-123.456");
+  CHECK(toString<long double>(0.0) == "0");
+  CHECK(toString<long double>(1.0) == "1");
+  CHECK(toString<long double>(1.2) == "1.2");
+  CHECK(toString<long double>(-123.456) == "-123.456");
 
-  BOOST_TEST(toString("foobar") == "foobar");
+  CHECK(toString("foobar") == "foobar");
 }
-
-BOOST_AUTO_TEST_SUITE_END()

@@ -1,6 +1,6 @@
 #include <mserialize/visit.hpp>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <cstdint>
 #include <ios>
@@ -19,43 +19,41 @@ std::string hexvalue(int i)
 
 } // namespace
 
-BOOST_AUTO_TEST_SUITE(MserializeInttohex)
-
-BOOST_AUTO_TEST_CASE(empty)
+TEST_CASE("empty")
 {
   mserialize::detail::IntegerToHex hex;
-  BOOST_TEST(hex.value() == "");
-  BOOST_TEST(hex.delimited_value('x', 'y') == "xy");
+  CHECK(hex.value() == "");
+  CHECK(hex.delimited_value('x', 'y') == "xy");
 }
 
-BOOST_AUTO_TEST_CASE(convert_positive_int)
+TEST_CASE("convert_positive_int")
 {
   for (int i = 0; i < 512; ++i)
   {
     mserialize::detail::IntegerToHex hex;
     hex.visit(i);
-    BOOST_TEST(hex.value() == hexvalue(i));
-    BOOST_TEST(hex.delimited_value('!', '?') == '!' + hexvalue(i) + '?');
+    CHECK(hex.value() == hexvalue(i));
+    CHECK(hex.delimited_value('!', '?') == '!' + hexvalue(i) + '?');
   }
 }
 
-BOOST_AUTO_TEST_CASE(convert_min)
+TEST_CASE("convert_min")
 {
   mserialize::detail::IntegerToHex hex;
   hex.visit(std::numeric_limits<std::int64_t>::min());
-  BOOST_TEST(hex.value() == "-8000000000000000");
-  BOOST_TEST(hex.delimited_value('!', '?') == "!-8000000000000000?");
+  CHECK(hex.value() == "-8000000000000000");
+  CHECK(hex.delimited_value('!', '?') == "!-8000000000000000?");
 }
 
-BOOST_AUTO_TEST_CASE(convert_max)
+TEST_CASE("convert_max")
 {
   mserialize::detail::IntegerToHex hex;
   hex.visit(std::numeric_limits<std::uint64_t>::max());
-  BOOST_TEST(hex.value() == "FFFFFFFFFFFFFFFF");
-  BOOST_TEST(hex.delimited_value('!', '?') == "!FFFFFFFFFFFFFFFF?");
+  CHECK(hex.value() == "FFFFFFFFFFFFFFFF");
+  CHECK(hex.delimited_value('!', '?') == "!FFFFFFFFFFFFFFFF?");
 }
 
-BOOST_AUTO_TEST_CASE(multi_visit)
+TEST_CASE("multi_visit")
 {
   mserialize::detail::IntegerToHex hex;
 
@@ -65,8 +63,6 @@ BOOST_AUTO_TEST_CASE(multi_visit)
   }
 
   // only the last visited integer value is kept:
-  BOOST_TEST(hex.value() == "100");
-  BOOST_TEST(hex.delimited_value('x', 'y') == "x100y");
+  CHECK(hex.value() == "100");
+  CHECK(hex.delimited_value('x', 'y') == "x100y");
 }
-
-BOOST_AUTO_TEST_SUITE_END()

@@ -6,7 +6,7 @@
 #include <binlog/SessionWriter.hpp>
 #include <binlog/Severity.hpp>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <string>
 #include <vector>
@@ -25,15 +25,13 @@ void logOnEveryLevel(binlog::SessionWriter& writer)
 
 int failIfCalled()
 {
-  BOOST_FAIL("Argument of disabled severity evaluated");
+  FAIL("Argument of disabled severity evaluated");
   return 0;
 }
 
 } // namespace
 
-BOOST_AUTO_TEST_SUITE(CreateSourceAndEventIf)
-
-BOOST_AUTO_TEST_CASE(there_and_back_again)
+TEST_CASE("there_and_back_again")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 4096);
@@ -65,10 +63,10 @@ BOOST_AUTO_TEST_CASE(there_and_back_again)
       "TRAC", "DEBG", "INFO",   "WARN",   "ERRO", "CRIT",
   };
 
-  BOOST_TEST(getEvents(session, "%S") == expectedEvents, boost::test_tools::per_element());
+  CHECK(getEvents(session, "%S") == expectedEvents);
 }
 
-BOOST_AUTO_TEST_CASE(no_eval_if_disabled)
+TEST_CASE("no_eval_if_disabled")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
@@ -78,7 +76,5 @@ BOOST_AUTO_TEST_CASE(no_eval_if_disabled)
     writer, binlog::Severity::info, category, 0, "{}", failIfCalled()
   );
 
-  BOOST_TEST(true); // if reached, we are fine.
+  CHECK(true); // if reached, we are fine.
 }
-
-BOOST_AUTO_TEST_SUITE_END()
