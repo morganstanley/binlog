@@ -24,14 +24,7 @@ include(UndefinedSanitizer)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
-
-set(Boost_USE_STATIC_LIBS OFF)
-if(BINLOG_FORCE_TESTS)
-  find_package(Boost 1.64.0 REQUIRED COMPONENTS unit_test_framework filesystem system)
-else()
-  find_package(Boost 1.64.0 COMPONENTS unit_test_framework filesystem system)
-endif()
-
+find_package(Boost 1.64.0)
 find_package(benchmark COMPONENTS benchmark)
 
 #---------------------------
@@ -43,20 +36,14 @@ if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
   set(BINLOG_IS_TOPLEVEL_PROJECT ON)
 endif()
 
-function(include_boost target)
-  if(CMAKE_VERSION VERSION_GREATER 3.5)
-    target_link_libraries(${target} Boost::boost) # headers
-  else()
-    target_include_directories(${target} SYSTEM PRIVATE ${Boost_INCLUDE_DIRS})
-  endif()
-endfunction()
-
-function(link_boost target library)
-  if(CMAKE_VERSION VERSION_GREATER 3.5)
-    target_link_libraries(${target} "Boost::${library}")
-  else()
-    string(TOUPPER ${library} LIBRARY)
-    target_link_libraries(${target} "${Boost_${LIBRARY}_LIBRARY}")
+function(optional_include_boost target)
+  if(Boost_FOUND)
+    if(CMAKE_VERSION VERSION_GREATER 3.5)
+      target_link_libraries(${target} Boost::boost) # headers
+    else()
+      target_include_directories(${target} SYSTEM PRIVATE ${Boost_INCLUDE_DIRS})
+    endif()
+    target_compile_definitions(${target} PRIVATE BINLOG_HAS_BOOST)
   endif()
 endfunction()
 
@@ -240,8 +227,6 @@ add_example(TscClock)
 # Unit Test
 #---------------------------
 
-if(Boost_FOUND)
-
   message(STATUS "Build unit tests")
 
   add_executable(UnitTest
@@ -283,8 +268,7 @@ if(Boost_FOUND)
       DOCTEST_CONFIG_SUPER_FAST_ASSERTS
       DOCTEST_CONFIG_NO_MULTI_LANE_ATOMICS
     )
-    include_boost(UnitTest)
-    link_boost(UnitTest unit_test_framework)
+    optional_include_boost(UnitTest) # used by: roundtrip.cpp
     target_link_libraries(UnitTest binlog)
     target_link_libraries(UnitTest Threads::Threads) # used by: TestQueue, TestSessionWriter, TestCreateSourceAndEvent
     target_include_directories(UnitTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/bin)
@@ -293,15 +277,9 @@ if(Boost_FOUND)
   add_test(NAME UnitTest COMMAND UnitTest -s --force-colors)
   set_property(TEST UnitTest PROPERTY ENVIRONMENT ASAN_OPTIONS=detect_leaks=1)
 
-else()
-  message(STATUS "Boost not found, will not build unit tests")
-endif()
-
 #---------------------------
 # Integration Test
 #---------------------------
-
-if(Boost_FOUND)
 
   message(STATUS "Build integration tests")
 
@@ -310,10 +288,6 @@ if(Boost_FOUND)
       DOCTEST_CONFIG_SUPER_FAST_ASSERTS
       DOCTEST_CONFIG_NO_MULTI_LANE_ATOMICS
     )
-    include_boost(IntegrationTest)
-    link_boost(IntegrationTest unit_test_framework)
-    link_boost(IntegrationTest filesystem)
-    link_boost(IntegrationTest system)
     target_link_libraries(IntegrationTest headers)
     target_include_directories(IntegrationTest SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/test) # for doctest/doctest.h
     set_target_properties(IntegrationTest PROPERTIES CXX_CLANG_TIDY "")
@@ -330,12 +304,9 @@ if(Boost_FOUND)
   add_inttest(Logging)
   add_inttest(LoggingFundamentals)
   add_inttest(LoggingContainers)
-    include_boost(LoggingContainers)
   add_inttest(LoggingStrings)
-    include_boost(LoggingStrings)
   add_inttest(LoggingCStrings)
   add_inttest(LoggingPointers)
-    include_boost(LoggingPointers)
   add_inttest(LoggingTuples)
   add_inttest(LoggingTimePoint)
   add_inttest(LoggingEnums)
@@ -355,12 +326,14 @@ if(Boost_FOUND)
 
   if(${CMAKE_CXX_STANDARD} GREATER_EQUAL 17)
     add_inttest(LoggingOptionals)
-      include_boost(LoggingOptionals)
   endif()
 
-else()
-  message(STATUS "Boost not found, will not build integration tests")
-endif()
+  if(Boost_FOUND)
+    target_compile_definitions(IntegrationTest PRIVATE BINLOG_HAS_BOOST)
+
+    add_inttest(LoggingBoostTypes)
+      optional_include_boost(LoggingBoostTypes)
+  endif()
 
 #---------------------------
 # Performance Test

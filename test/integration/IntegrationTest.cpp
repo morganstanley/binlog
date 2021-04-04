@@ -122,6 +122,12 @@ TEST_CASE("LoggingOptionals")      { runReadDiff("LoggingOptionals", "%m"); }
 
 #endif
 
+#ifdef BINLOG_HAS_BOOST
+
+TEST_CASE("LoggingBoostTypes")     { runReadDiff("LoggingBoostTypes", "%m"); }
+
+#endif
+
 TEST_CASE("DateFormat")
 {
   // read dateformat.blog, convert to text, check result

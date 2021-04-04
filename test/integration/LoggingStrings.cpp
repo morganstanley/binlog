@@ -2,8 +2,6 @@
 
 #include <mserialize/string_view.hpp>
 
-#include <boost/container/string.hpp>
-
 #include <iostream>
 
 #include <string>
@@ -16,11 +14,10 @@ int main()
   // Outputs: Hello String!
   //]
 
-  boost::container::string bs = "foo";
   const char* ccs = "bar";
   mserialize::string_view sv = "baz";
-  BINLOG_INFO("Strings: {}, {}, {}", bs, ccs, sv);
-  // Outputs: Strings: foo, bar, baz
+  BINLOG_INFO("Strings: {}, {}", ccs, sv);
+  // Outputs: Strings: bar, baz
 
   // const char arr[] = "string"; is not tested,
   // because of the 0 terminator at the end.
