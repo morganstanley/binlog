@@ -204,6 +204,16 @@ The pretty printed text format is affected by the `-d` flag when using [bread](#
 If `%d` (localtime) appears first in the `-f` (format) parameter, the time point is converted to producer-local timezone
 (this is the default). If `%u` (UTC) appears first, the time point is shown in UTC.
 
+If C++17 is available, standard filesystem types can be made loggable:
+
+    [catchfile test/integration/LoggingFilesystem.cpp fs]
+
+The supported filesystem types are: `path`, `directory_entry`, `file_type`, `perms`, `space_info`, `file_status`.
+On platforms where `path::value_type` is `char` (e.g: POSIX platforms), `path` objects are serialized using the `native` member,
+therefore no extra memory allocation is required.
+On platforms where `path::value_type` is **not** `char` (e.g: on Windows), `path` objects are serialized using the `string` member,
+which may result in extra memory allocations.
+
 # Tools
 
 ## bread
