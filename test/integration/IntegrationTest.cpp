@@ -119,6 +119,7 @@ TEST_CASE("Categories")            { runReadDiff("Categories", "%C %n %m"); }
 #if __cplusplus >= 201703L
 
 TEST_CASE("LoggingOptionals")      { runReadDiff("LoggingOptionals", "%m"); }
+TEST_CASE("LoggingFilesystem")     { runReadDiff("LoggingFilesystem", "%m"); }
 
 #endif
 

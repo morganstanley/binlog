@@ -146,6 +146,14 @@ bool PrettyPrinter::printStruct(detail::OstreamBuffer& out, mserialize::Visitor:
     return true;
   }
 
+  if ((sb.name == "std::filesystem::path" && sb.tag == "`str'[c")
+  || (sb.name == "std::filesystem::directory_entry" && sb.tag == "`path'{std::filesystem::path`str'[c}"))
+  {
+    const std::uint32_t size = input.read<std::uint32_t>();
+    out.write(input.view(size), size);
+    return true;
+  }
+
   return false;
 }
 
