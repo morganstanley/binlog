@@ -290,6 +290,18 @@ BINLOG_INFO("Now: {}", now);
 The pretty printed text format is affected by the <code>-d</code> flag when using <a href="#bread">bread</a>.
 If <code>%d</code> (localtime) appears first in the <code>-f</code> (format) parameter, the time point is converted to producer-local timezone
 (this is the default). If <code>%u</code> (UTC) appears first, the time point is shown in UTC.</p>
+<p>If C++17 is available, standard filesystem types can be made loggable:</p>
+<pre><code>#include &lt;binlog/adapt_stdfilesystem.hpp&gt; // must be included to log std::filesystem types, requires C++17
+
+const std::filesystem::path p("/path/to/file");
+BINLOG_INFO("std::filesystem::path: {}", p);
+// Outputs: std::filesystem::path: /path/to/file
+</code></pre>
+<p>The supported filesystem types are: <code>path</code>, <code>directory_entry</code>, <code>file_type</code>, <code>perms</code>, <code>space_info</code>, <code>file_status</code>.
+On platforms where <code>path::value_type</code> is <code>char</code> (e.g: POSIX platforms), <code>path</code> objects are serialized using the <code>native</code> member,
+therefore no extra memory allocation is required.
+On platforms where <code>path::value_type</code> is <strong>not</strong> <code>char</code> (e.g: on Windows), <code>path</code> objects are serialized using the <code>string</code> member,
+which may result in extra memory allocations.</p>
 <h1 id="tools"><a class="toclink" href="#tools">Tools</a></h1>
 <h2 id="bread"><a class="toclink" href="#bread">bread</a></h2>
 <p>The binary logfile produced by Binlog is not human-readable,
