@@ -158,7 +158,7 @@ jobs:
         run: |
           mkdir Release
           cd Release
-          cmake ..
+          cmake -DCMAKE_CXX_STANDARD=17 ..
           make -j2 VERBOSE=1
       - name: Test
         run: |
@@ -174,7 +174,7 @@ jobs:
         run: |
           mkdir Release
           cd Release
-          cmake ..
+          cmake -DCMAKE_CXX_STANDARD=17 ..
       - name: Build
         run: |
           cmake --build Release --config Release -j2
