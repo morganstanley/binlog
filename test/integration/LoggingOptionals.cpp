@@ -4,8 +4,8 @@
 
 #include <binlog/binlog.hpp>
 
-#include <optional>
 #include <iostream>
+#include <optional>
 
 int main()
 {

@@ -116,7 +116,7 @@ jobs:
           cd Clang
           export CC=$(which clang)
           export CXX=$(which clang++)
-          cmake -DBINLOG_USE_CLANG_TIDY=On ..
+          cmake -DCMAKE_CXX_STANDARD=17 -DBINLOG_USE_CLANG_TIDY=On ..
       - name: Build
         run: |
           cd Clang
