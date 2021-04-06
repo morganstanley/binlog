@@ -214,6 +214,13 @@ therefore no extra memory allocation is required.
 On platforms where `path::value_type` is **not** `char` (e.g: on Windows), `path` objects are serialized using the `string` member,
 which may result in extra memory allocations.
 
+If C++17 is available, standard variant types can be made loggable:
+
+    [catchfile test/integration/LoggingVariants.cpp variant]
+
+To log a variant, every alternative must be loggable. The number of alternatives must be less than 256.
+Monostate and valueless-by-exception variants are supported.
+
 # Tools
 
 ## bread

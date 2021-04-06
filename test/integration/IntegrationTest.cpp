@@ -120,6 +120,7 @@ TEST_CASE("Categories")            { runReadDiff("Categories", "%C %n %m"); }
 
 TEST_CASE("LoggingOptionals")      { runReadDiff("LoggingOptionals", "%m"); }
 TEST_CASE("LoggingFilesystem")     { runReadDiff("LoggingFilesystem", "%m"); }
+TEST_CASE("LoggingVariants")       { runReadDiff("LoggingVariants", "%m"); }
 
 #endif
 
