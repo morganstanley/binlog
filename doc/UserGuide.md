@@ -102,11 +102,6 @@ apply `binlog::address` or cast the pointer to a `void*`:
 
     [catchfile test/integration/LoggingPointers.cpp address]
 
-If C++17 is available, the standard optional with a loggable `value_type`
-can be made loggable:
-
-    [catchfile test/integration/LoggingOptionals.cpp stdopt]
-
 Aside the standard pointers, any pointer or optional-like type is loggable
 that satisfies the following constraints:
 
@@ -195,6 +190,8 @@ see the Mserialize documentation on [Adapting custom types][mserialize-act] and
 
 ## Logging Standard Types
 
+### chrono
+
 `std::chrono::system_clock::time_point` objects can be logged after adoption by including a header file:
 
     [catchfile test/integration/LoggingTimePoint.cpp timepoint]
@@ -203,6 +200,14 @@ The object is serialized as a single number (nanoseconds since epoch), and prett
 The pretty printed text format is affected by the `-d` flag when using [bread](#bread).
 If `%d` (localtime) appears first in the `-f` (format) parameter, the time point is converted to producer-local timezone
 (this is the default). If `%u` (UTC) appears first, the time point is shown in UTC.
+
+### optional
+
+If C++17 is available, the standard optional with a loggable `value_type` can be made loggable:
+
+    [catchfile test/integration/LoggingOptionals.cpp stdopt]
+
+### filesystem
 
 If C++17 is available, standard filesystem types can be made loggable:
 
@@ -213,6 +218,8 @@ On platforms where `path::value_type` is `char` (e.g: POSIX platforms), `path` o
 therefore no extra memory allocation is required.
 On platforms where `path::value_type` is **not** `char` (e.g: on Windows), `path` objects are serialized using the `string` member,
 which may result in extra memory allocations.
+
+### variant
 
 If C++17 is available, standard variant types can be made loggable:
 
