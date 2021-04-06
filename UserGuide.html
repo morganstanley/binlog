@@ -43,7 +43,13 @@
 <li><a href="#logging-pairs-and-tuples">Logging Pairs and Tuples</a></li>
 <li><a href="#logging-enums">Logging Enums</a></li>
 <li><a href="#logging-user-defined-structures">Logging User Defined Structures</a></li>
-<li><a href="#logging-standard-types">Logging Standard Types</a></li>
+<li><a href="#logging-standard-types">Logging Standard Types</a><ul>
+<li><a href="#chrono">chrono</a></li>
+<li><a href="#optional">optional</a></li>
+<li><a href="#filesystem">filesystem</a></li>
+<li><a href="#variant">variant</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a href="#tools">Tools</a><ul>
@@ -171,15 +177,6 @@ apply <code>binlog::address</code> or cast the pointer to a <code>void*</code>:<
 <pre><code>BINLOG_INFO("Raw pointer value: {} {}", binlog::address(any_pointer), void_pointer);
 // Outputs: Raw pointer value: 0xF777123 0xF777123
 </code></pre>
-<p>If C++17 is available, the standard optional with a loggable <code>value_type</code>
-can be made loggable:</p>
-<pre><code>#include &lt;binlog/adapt_stdoptional.hpp&gt; // must be included to log std::optional, requires C++17
-
-std::optional&lt;int&gt; opt(123);
-std::optional&lt;int&gt; emptyOpt;
-BINLOG_INFO("Optionals: {} {}", opt, emptyOpt);
-// Outputs: Optionals: 123 {null}
-</code></pre>
 <p>Aside the standard pointers, any pointer or optional-like type is loggable
 that satisfies the following constraints:</p>
 <ul>
@@ -279,6 +276,7 @@ For more information and to make templates or recursive types loggable,
 see the Mserialize documentation on <a href="Mserialize.html#adapting-custom-types">Adapting custom types</a> and
 <a href="Mserialize.html#adapting-user-defined-recursive-types-for-visitation">Adapting user defined recursive types for visitation</a>.</p>
 <h2 id="logging-standard-types"><a class="toclink" href="#logging-standard-types">Logging Standard Types</a></h2>
+<h3 id="chrono"><a class="toclink" href="#chrono">chrono</a></h3>
 <p><code>std::chrono::system_clock::time_point</code> objects can be logged after adoption by including a header file:</p>
 <pre><code>#include &lt;binlog/adapt_stdtimepoint.hpp&gt; // must be included to log std::chrono::system_clock::time_point
 
@@ -290,6 +288,16 @@ BINLOG_INFO("Now: {}", now);
 The pretty printed text format is affected by the <code>-d</code> flag when using <a href="#bread">bread</a>.
 If <code>%d</code> (localtime) appears first in the <code>-f</code> (format) parameter, the time point is converted to producer-local timezone
 (this is the default). If <code>%u</code> (UTC) appears first, the time point is shown in UTC.</p>
+<h3 id="optional"><a class="toclink" href="#optional">optional</a></h3>
+<p>If C++17 is available, the standard optional with a loggable <code>value_type</code> can be made loggable:</p>
+<pre><code>#include &lt;binlog/adapt_stdoptional.hpp&gt; // must be included to log std::optional, requires C++17
+
+std::optional&lt;int&gt; opt(123);
+std::optional&lt;int&gt; emptyOpt;
+BINLOG_INFO("Optionals: {} {}", opt, emptyOpt);
+// Outputs: Optionals: 123 {null}
+</code></pre>
+<h3 id="filesystem"><a class="toclink" href="#filesystem">filesystem</a></h3>
 <p>If C++17 is available, standard filesystem types can be made loggable:</p>
 <pre><code>#include &lt;binlog/adapt_stdfilesystem.hpp&gt; // must be included to log std::filesystem types, requires C++17
 
@@ -302,6 +310,17 @@ On platforms where <code>path::value_type</code> is <code>char</code> (e.g: POSI
 therefore no extra memory allocation is required.
 On platforms where <code>path::value_type</code> is <strong>not</strong> <code>char</code> (e.g: on Windows), <code>path</code> objects are serialized using the <code>string</code> member,
 which may result in extra memory allocations.</p>
+<h3 id="variant"><a class="toclink" href="#variant">variant</a></h3>
+<p>If C++17 is available, standard variant types can be made loggable:</p>
+<pre><code>#include &lt;binlog/adapt_stdvariant.hpp&gt; // must be included to log std::variant types, requires C++17
+
+std::variant&lt;int, std::string, float&gt; v{"works"};
+std::variant&lt;std::monostate&gt; mono;
+BINLOG_INFO("std::variant: {}, monostate: {}, valueless_by_exception: {}", v, mono, valueless);
+// Outputs: std::variant: works, monostate: {null}, valueless_by_exception: {null}
+</code></pre>
+<p>To log a variant, every alternative must be loggable. The number of alternatives must be less than 256.
+Monostate and valueless-by-exception variants are supported.</p>
 <h1 id="tools"><a class="toclink" href="#tools">Tools</a></h1>
 <h2 id="bread"><a class="toclink" href="#bread">bread</a></h2>
 <p>The binary logfile produced by Binlog is not human-readable,
@@ -566,7 +585,7 @@ The Binlog test suite tests if this requirement holds on a given platform.</p>
       <hr/>
       <footer class="text-center text-muted">
         Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a> |
-        Generated: 2021. 04. 05.
+        Generated: 2021. 04. 06.
       </footer>
       <hr/>
     </div>
