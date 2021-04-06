@@ -330,6 +330,7 @@ add_example(TscClock)
   if(${CMAKE_CXX_STANDARD} GREATER_EQUAL 17)
     add_inttest(LoggingOptionals)
     add_inttest(LoggingFilesystem)
+    add_inttest(LoggingVariants)
   endif()
 
   if(Boost_FOUND)
