@@ -112,6 +112,7 @@ TEST_CASE("LoggingTuples")         { runReadDiff("LoggingTuples", "%m"); }
 TEST_CASE("LoggingEnums")          { runReadDiff("LoggingEnums", "%m"); }
 TEST_CASE("LoggingAdaptedStructs") { runReadDiff("LoggingAdaptedStructs", "%m"); }
 TEST_CASE("LoggingTimePoint")      { runReadDiff("LoggingTimePoint", "%m"); }
+TEST_CASE("LoggingErrorCode")      { runReadDiff("LoggingErrorCode", "%m"); }
 TEST_CASE("NamedWriters")          { runReadDiff("NamedWriters", "%n %m"); }
 TEST_CASE("SeverityControl")       { runReadDiff("SeverityControl", "%S %m"); }
 TEST_CASE("Categories")            { runReadDiff("Categories", "%C %n %m"); }
