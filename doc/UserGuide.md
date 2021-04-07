@@ -201,6 +201,14 @@ The pretty printed text format is affected by the `-d` flag when using [bread](#
 If `%d` (localtime) appears first in the `-f` (format) parameter, the time point is converted to producer-local timezone
 (this is the default). If `%u` (UTC) appears first, the time point is shown in UTC.
 
+### error_code
+
+`std::error_code` objects can be logged after adoption by including a header file:
+
+    [catchfile test/integration/LoggingErrorCode.cpp ec]
+
+The error code is serialized in terms of the `message` member, therefore it may result in memory allocations.
+
 ### optional
 
 If C++17 is available, the standard optional with a loggable `value_type` can be made loggable:
