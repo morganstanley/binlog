@@ -45,6 +45,7 @@
 <li><a href="#logging-user-defined-structures">Logging User Defined Structures</a></li>
 <li><a href="#logging-standard-types">Logging Standard Types</a><ul>
 <li><a href="#chrono">chrono</a></li>
+<li><a href="#error_code">error_code</a></li>
 <li><a href="#optional">optional</a></li>
 <li><a href="#filesystem">filesystem</a></li>
 <li><a href="#variant">variant</a></li>
@@ -288,6 +289,15 @@ BINLOG_INFO("Now: {}", now);
 The pretty printed text format is affected by the <code>-d</code> flag when using <a href="#bread">bread</a>.
 If <code>%d</code> (localtime) appears first in the <code>-f</code> (format) parameter, the time point is converted to producer-local timezone
 (this is the default). If <code>%u</code> (UTC) appears first, the time point is shown in UTC.</p>
+<h3 id="error_code"><a class="toclink" href="#error_code">error_code</a></h3>
+<p><code>std::error_code</code> objects can be logged after adoption by including a header file:</p>
+<pre><code>#include &lt;binlog/adapt_stderrorcode.hpp&gt; // must be included to log std::error_code
+
+std::error_code ec;
+BINLOG_INFO("ec: {}", ec);
+// Outputs: ec: Success
+</code></pre>
+<p>The error code is serialized in terms of the <code>message</code> member, therefore it may result in memory allocations.</p>
 <h3 id="optional"><a class="toclink" href="#optional">optional</a></h3>
 <p>If C++17 is available, the standard optional with a loggable <code>value_type</code> can be made loggable:</p>
 <pre><code>#include &lt;binlog/adapt_stdoptional.hpp&gt; // must be included to log std::optional, requires C++17
@@ -585,7 +595,7 @@ The Binlog test suite tests if this requirement holds on a given platform.</p>
       <hr/>
       <footer class="text-center text-muted">
         Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a> |
-        Generated: 2021. 04. 06.
+        Generated: 2021. 04. 08.
       </footer>
       <hr/>
     </div>
