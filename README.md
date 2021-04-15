@@ -103,3 +103,13 @@ with various recent versions of GCC, Clang and MSVC.
 
 [Documentation]: http://binlog.org/UserGuide.html
 [Google Benchmark]: https://github.com/google/benchmark
+
+## Releases
+
+Binlog is developed in a "[live at head][]" fashion.
+Every commit that is merged into the `main` branch goes through the same pipeline
+that builds and tests the whole library on every supported platform.
+If it is in `main`, it is considered stable. Time to time, a GitHub release is created,
+for the convenience of those who are uncomfortable with using (or unable to use) untagged commits.
+
+[live at head]: https://www.youtube.com/watch?v=tISy7EJQPzI
