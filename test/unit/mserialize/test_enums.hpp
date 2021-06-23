@@ -36,6 +36,14 @@ enum class UnsignedLargeEnumClass : std::uint64_t
   Oscar = UINT64_MAX
 };
 
+struct EnumNest
+{
+  enum class Nested
+  {
+    Bird
+  } Nested; // field name and enum name are the same
+};
+
 } // namespace test
 
 #endif // TEST_UNIT_MSERIALIZE_TEST_ENUMS_HPP
