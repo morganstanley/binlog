@@ -35,9 +35,9 @@
 #define MSERIALIZE_MAKE_ENUM_TAG(...)                          \
   namespace mserialize {                                       \
   template <>                                                  \
-  struct CustomTag<MSERIALIZE_FIRST(__VA_ARGS__)>              \
+  struct CustomTag<enum MSERIALIZE_FIRST(__VA_ARGS__)>         \
   {                                                            \
-    using Enum = MSERIALIZE_FIRST(__VA_ARGS__);                \
+    typedef enum MSERIALIZE_FIRST(__VA_ARGS__) Enum;           \
     using underlying_t = std::underlying_type_t<Enum>;         \
                                                                \
     static constexpr auto tag_string()                         \
