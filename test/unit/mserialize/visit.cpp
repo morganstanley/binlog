@@ -12,6 +12,7 @@
 
 #include <doctest/doctest.h>
 
+#include <limits>
 #include <sstream>
 
 namespace {
