@@ -109,9 +109,6 @@ static_assert(mserialize::tag<test::LargeEnumClass>() == "/l`test::LargeEnumClas
 MSERIALIZE_MAKE_ENUM_TAG(test::UnsignedLargeEnumClass, Lima, Mike, November, Oscar)
 static_assert(mserialize::tag<test::UnsignedLargeEnumClass>() == "/L`test::UnsignedLargeEnumClass'0`Lima'400`Mike'4000`November'FFFFFFFFFFFFFFFF`Oscar'\\", "");
 
-MSERIALIZE_MAKE_ENUM_TAG(test::EnumNest::Nested, Bird)
-static_assert(mserialize::tag<enum test::EnumNest::Nested>() == "/i`test::EnumNest::Nested'0`Bird'\\", "");
-
 // test MSERIALIZE_MAKE_STRUCT_TAG
 
 struct Empty {};
