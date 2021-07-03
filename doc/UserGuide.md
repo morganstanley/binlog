@@ -152,6 +152,11 @@ For scoped enums, the enumerators must be prefixed with the enum name, as usual:
 
 The maximum number of enumerators is limited to 100.
 
+To adapt enum types shadowed by non-type declarations (e.g: a field),
+the following workaround is required:
+
+    [catchfile test/integration/LoggingEnums.cpp shadowed]
+
 ## Logging User Defined Structures
 
 User defined types outside the categories above can be still logged,
