@@ -36,6 +36,15 @@ enum class UnsignedLargeEnumClass : std::uint64_t
   Oscar = UINT64_MAX
 };
 
+
+typedef enum : int {
+  Papa
+} UnnamedEnumTypedef;
+
 } // namespace test
+
+enum UnscopedEnum : int {
+  Quebec
+};
 
 #endif // TEST_UNIT_MSERIALIZE_TEST_ENUMS_HPP
