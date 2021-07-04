@@ -236,6 +236,19 @@ BINLOG_INFO("Scoped enum: {}", ScopedEnum::Epsilon);
 // Outputs: Scoped enum: Epsilon
 </code></pre>
 <p>The maximum number of enumerators is limited to 100.</p>
+<p>To adapt enum types shadowed by non-type declarations (e.g: a field),
+the following workaround is required:</p>
+<pre><code>struct Nest {
+  enum Nested
+  {
+    Bird
+  } Nested; // Note: field name is same as enum name
+};
+
+// BINLOG_ADAPT_ENUM(Nest::Nested, Bird) // Doesn't work, type is shadowed by field.
+typedef enum Nest::Nested NestedT; // workaround: use elaborated type specifier
+BINLOG_ADAPT_ENUM(NestedT, Bird)
+</code></pre>
 <h2 id="logging-user-defined-structures"><a class="toclink" href="#logging-user-defined-structures">Logging User Defined Structures</a></h2>
 <p>User defined types outside the categories above can be still logged,
 if adapted:</p>
@@ -595,7 +608,7 @@ The Binlog test suite tests if this requirement holds on a given platform.</p>
       <hr/>
       <footer class="text-center text-muted">
         Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a> |
-        Generated: 2021. 06. 29.
+        Generated: 2021. 07. 04.
       </footer>
       <hr/>
     </div>
