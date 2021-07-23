@@ -1,6 +1,8 @@
 #ifndef BINLOG_ADAPT_STRUCT_HPP
 #define BINLOG_ADAPT_STRUCT_HPP
 
+#include <mserialize/make_derived_struct_serializable.hpp>
+#include <mserialize/make_derived_struct_tag.hpp>
 #include <mserialize/make_struct_serializable.hpp>
 #include <mserialize/make_struct_tag.hpp>
 #include <mserialize/make_template_serializable.hpp>
@@ -47,6 +49,31 @@
   MSERIALIZE_MAKE_STRUCT_TAG(__VA_ARGS__)          \
   MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(__VA_ARGS__) \
   /**/
+
+/**
+ * BINLOG_ADAPT_DERIVED(Derived, (Bases...), members...)
+ *
+ * Make `Derived` loggable, without repeating the
+ * members of bases.
+ *
+ * Example:
+ *
+ *     struct Derived : Base { int x; }
+ *     BINLOG_ADAPT_DERIVED(Derived, (Base), x)
+ *
+ * Example for multiple inheritance:
+ *
+ *     struct Derived : Base1, Base2 { int x; }
+ *     BINLOG_ADAPT_DERIVED(Derived, (Base1, Base2), x)
+ *
+ * `Derived` must be publicly derived from Bases....
+ * Bases... must be loggable types.
+ *
+ * @see BINLOG_ADAPT_STRUCT on members... and restrictions.
+ */
+#define BINLOG_ADAPT_DERIVED(...)                                             \
+  MSERIALIZE_EXPAND(MSERIALIZE_MAKE_DERIVED_STRUCT_TAG(__VA_ARGS__))          \
+  MSERIALIZE_EXPAND(MSERIALIZE_MAKE_DERIVED_STRUCT_SERIALIZABLE(__VA_ARGS__)) \
 
 /**
  * BINLOG_ADAPT_TEMPLATE(TemplateArgs, TypenameWithTemplateArgs, members...)

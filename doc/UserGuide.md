@@ -187,6 +187,13 @@ The member list can be empty. The maximum number of members is limited to 100.
 `BINLOG_ADAPT_STRUCT` must be called in global scope, outside of any namespace.
 The type must not be recursive, e.g: `Foo` can't have a to be logged `Foo*` typed member.
 
+User defined types that derive from base classes already adapted for logging
+can be adapted, without enumerating the base members again:
+
+    [catchfile test/integration/LoggingAdaptedStructs.cpp derived]
+
+The second argument of `BINLOG_ADAPT_DERIVED` must be a list of adapted base classes, multiple inheritance is supported.
+
 User defined templates can be adapted for logging in a similar way:
 
     [catchfile test/integration/LoggingAdaptedStructs.cpp adapt_template]
