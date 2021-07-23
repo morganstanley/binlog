@@ -41,6 +41,7 @@ class Private
 };
 BINLOG_ADAPT_STRUCT(Private, a, b)
 
+//[adapt_template
 template <typename A, typename B, std::size_t C>
 struct Triplet
 {
@@ -49,6 +50,7 @@ struct Triplet
   std::array<int, C> c{};
 };
 BINLOG_ADAPT_TEMPLATE((typename A, typename B, std::size_t C), (Triplet<A,B,C>), a, b, c)
+//]
 
 class first
 {

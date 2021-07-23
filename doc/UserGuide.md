@@ -186,8 +186,12 @@ The member list does not have to be exhaustive, e.g: mutex members can be omitte
 The member list can be empty. The maximum number of members is limited to 100.
 `BINLOG_ADAPT_STRUCT` must be called in global scope, outside of any namespace.
 The type must not be recursive, e.g: `Foo` can't have a to be logged `Foo*` typed member.
-For more information and to make templates or recursive types loggable,
-see the Mserialize documentation on [Adapting custom types][mserialize-act] and
+
+User defined templates can be adapted for logging in a similar way:
+
+    [catchfile test/integration/LoggingAdaptedStructs.cpp adapt_template]
+
+For more information see the Mserialize documentation on [Adapting custom types][mserialize-act] and
 [Adapting user defined recursive types for visitation][mserialize-rec].
 
 [mserialize-act]: Mserialize.html#adapting-custom-types
