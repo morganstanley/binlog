@@ -1,10 +1,13 @@
 #include "test_enums.hpp"
 #include "test_streams.hpp"
+#include "test_structs.hpp"
 #include "test_type_lists.hpp"
 
 #include <mserialize/deserialize.hpp>
 #include <mserialize/serialize.hpp>
 
+#include <mserialize/make_derived_struct_deserializable.hpp>
+#include <mserialize/make_derived_struct_serializable.hpp>
 #include <mserialize/make_struct_deserializable.hpp>
 #include <mserialize/make_struct_serializable.hpp>
 #include <mserialize/make_template_deserializable.hpp>
@@ -773,3 +776,40 @@ TEST_CASE("template_with_value_args")
   roundtrip_into(in, out);
   CHECK(in == out);
 }
+
+// derived struct de/serialization
+
+#ifndef _WIN32
+
+// Disable this test on MSVC.
+// MSERIALIZE_MAKE_DERIVED_STRUCT_TAG Derived1 fails with
+// not enough arguments for function-like macro invocation 'MSERIALIZE_FOREACH_3'.
+// I suspect that (Base2, Base3) does not expand properly, because
+// of the nonstandard msvc preprocessor - but I no capacity to fix it. PR is welcome.
+// The actual user-facing functionality (BINLOG_ADAPT_DERIVED) works.
+// (MSERIALIZE_EXPAND does the trick there for some reason)
+
+MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(Base1, a)
+MSERIALIZE_MAKE_STRUCT_DESERIALIZABLE(Base1, a)
+
+MSERIALIZE_MAKE_DERIVED_STRUCT_SERIALIZABLE(Base2, (Base1), b)
+MSERIALIZE_MAKE_DERIVED_STRUCT_DESERIALIZABLE(Base2, (Base1), b)
+
+MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(Base3, c)
+MSERIALIZE_MAKE_STRUCT_DESERIALIZABLE(Base3, c)
+
+MSERIALIZE_MAKE_DERIVED_STRUCT_SERIALIZABLE(Derived1, (Base2, Base3), d, e)
+MSERIALIZE_MAKE_DERIVED_STRUCT_DESERIALIZABLE(Derived1, (Base2, Base3), d, e)
+
+MSERIALIZE_MAKE_DERIVED_STRUCT_SERIALIZABLE(Derived2, (Derived1))
+MSERIALIZE_MAKE_DERIVED_STRUCT_DESERIALIZABLE(Derived2, (Derived1))
+
+TEST_CASE("class_hierarchy")
+{
+  const Derived2 in(1, 2, "3", 4, 5);
+  Derived2 out;
+  roundtrip_into(in, out);
+  CHECK(in == out);
+}
+
+#endif // _WIN32
