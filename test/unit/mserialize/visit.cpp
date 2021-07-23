@@ -1,5 +1,6 @@
 #include "test_enums.hpp"
 #include "test_streams.hpp"
+#include "test_structs.hpp"
 #include "test_type_lists.hpp"
 
 #include <mserialize/make_enum_tag.hpp>
@@ -7,6 +8,8 @@
 #include <mserialize/tag.hpp>
 #include <mserialize/visit.hpp>
 
+#include <mserialize/make_derived_struct_serializable.hpp>
+#include <mserialize/make_derived_struct_tag.hpp>
 #include <mserialize/make_struct_serializable.hpp>
 #include <mserialize/make_struct_tag.hpp>
 
@@ -605,3 +608,44 @@ TEST_CASE("empty_prefix_of_containing_struct")
   mserialize::visit(tag, visitor, stream);
   CHECK(visitor.value() == "StB(FooBar,`f'{Foo}) { f({Foo}): StB(Foo,) { } , } ");
 }
+
+// derived struct serialization and visitation
+
+#ifndef _WIN32
+
+// Disable this test on MSVC.
+// MSERIALIZE_MAKE_DERIVED_STRUCT_TAG Derived1 fails with
+// not enough arguments for function-like macro invocation 'MSERIALIZE_FOREACH_3'.
+// I suspect that (Base2, Base3) does not expand properly, because
+// of the nonstandard msvc preprocessor - but I no capacity to fix it. PR is welcome.
+// The actual user-facing functionality (BINLOG_ADAPT_DERIVED) works.
+// (MSERIALIZE_EXPAND does the trick there for some reason)
+
+MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(Base1, a)
+MSERIALIZE_MAKE_STRUCT_TAG(Base1, a)
+
+MSERIALIZE_MAKE_DERIVED_STRUCT_SERIALIZABLE(Base2, (Base1), b)
+MSERIALIZE_MAKE_DERIVED_STRUCT_TAG(Base2, (Base1), b)
+
+MSERIALIZE_MAKE_STRUCT_SERIALIZABLE(Base3, c)
+MSERIALIZE_MAKE_STRUCT_TAG(Base3, c)
+
+MSERIALIZE_MAKE_DERIVED_STRUCT_SERIALIZABLE(Derived1, (Base2, Base3), d, e)
+MSERIALIZE_MAKE_DERIVED_STRUCT_TAG(Derived1, (Base2, Base3), d, e)
+
+MSERIALIZE_MAKE_DERIVED_STRUCT_SERIALIZABLE(Derived2, (Derived1))
+MSERIALIZE_MAKE_DERIVED_STRUCT_TAG(Derived2, (Derived1))
+
+TEST_CASE("visit_class_hierarchy")
+{
+  const Derived2 in(1, 2, "3", 4, 5);
+  const std::string out = serialize_and_visit<ToString>(in);
+  CHECK(out == "StB(Derived2,`'{Derived1`'{Base2`'{Base1`a'i}`b'i}`'{Base3`c'[c}`d'i`e'i}) { "
+               "({Derived1`'{Base2`'{Base1`a'i}`b'i}`'{Base3`c'[c}`d'i`e'i}): "
+               "StB(Derived1,`'{Base2`'{Base1`a'i}`b'i}`'{Base3`c'[c}`d'i`e'i) { "
+               "({Base2`'{Base1`a'i}`b'i}): StB(Base2,`'{Base1`a'i}`b'i) { ({Base1`a'i}): "
+               "StB(Base1,`a'i) { a(i): 1 , } , b(i): 2 , } , ({Base3`c'[c}): StB(Base3,`c'[c) { "
+               "c([c): SB(1,c)[ 3 ] , } , d(i): 4 , e(i): 5 , } , } ");
+}
+
+#endif // _WIN32

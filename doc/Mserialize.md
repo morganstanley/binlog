@@ -172,6 +172,14 @@ if visitation of objects serialized that way is desired.
 `MSERIALIZE_MAKE_STRUCT_TAG` cannot be used with recursive types.
 See [Adapting user defined recursive types for visitation](#adapting-user-defined-recursive-types-for-visitation) for a solution.
 
+A tag can be assigned to a class that derives from a base or bases
+that are tagged already, without enumerating the members of the bases again:
+
+    [catchfile test/unit/mserialize/documentation.cpp custom_tag_derived]
+
+The same rules apply as above, with the addition that the second argument must be
+a non-empty parenthesised list of tagged base classes.
+
 A tag can be assigned to class templates on the same conditions,
 except that a different macro must be called:
 

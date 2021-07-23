@@ -117,6 +117,13 @@ class Phi
 
 MSERIALIZE_MAKE_STRUCT_TAG(Phi, i)
 
+MSERIALIZE_MAKE_STRUCT_TAG(Beta)
+//[custom_tag_derived
+#include <mserialize/make_derived_struct_tag.hpp>
+
+MSERIALIZE_MAKE_DERIVED_STRUCT_TAG(Zeta, (Beta), e)
+//]
+
 //[adapt_custom_template_for_visit
 #include <mserialize/make_template_tag.hpp>
 

@@ -1,5 +1,7 @@
 #include "test_enums.hpp"
+#include "test_structs.hpp"
 
+#include <mserialize/make_derived_struct_tag.hpp>
 #include <mserialize/make_enum_tag.hpp>
 #include <mserialize/make_struct_tag.hpp>
 #include <mserialize/make_template_tag.hpp>
@@ -164,3 +166,25 @@ struct Pair
 MSERIALIZE_MAKE_TEMPLATE_TAG((typename A, typename B), (Pair<A,B>), a, b)
 
 static_assert(mserialize::tag<Pair<std::tuple<int,bool>, std::vector<char>>>() == "{Pair<A,B>`a'(iy)`b'[c}", "");
+
+// test MSERIALIZE_MAKE_DERIVED_STRUCT_TAG
+
+#ifndef _WIN32
+
+// Disable this test on MSVC.
+// MSERIALIZE_MAKE_DERIVED_STRUCT_TAG Derived1 fails with
+// not enough arguments for function-like macro invocation 'MSERIALIZE_FOREACH_3'.
+// I suspect that (Base2, Base3) does not expand properly, because
+// of the nonstandard msvc preprocessor - but I no capacity to fix it. PR is welcome.
+// The actual user-facing functionality (BINLOG_ADAPT_DERIVED) works.
+// (MSERIALIZE_EXPAND does the trick there for some reason)
+
+MSERIALIZE_MAKE_STRUCT_TAG(Base1, a)
+MSERIALIZE_MAKE_DERIVED_STRUCT_TAG(Base2, (Base1), b)
+MSERIALIZE_MAKE_STRUCT_TAG(Base3, c)
+MSERIALIZE_MAKE_DERIVED_STRUCT_TAG(Derived1, (Base2, Base3), d, e)
+MSERIALIZE_MAKE_DERIVED_STRUCT_TAG(Derived2, (Derived1))
+
+static_assert(mserialize::tag<Derived2>() == "{Derived2`'{Derived1`'{Base2`'{Base1`a'i}`b'i}`'{Base3`c'[c}`d'i`e'i}}", "");
+
+#endif // _WIN32
