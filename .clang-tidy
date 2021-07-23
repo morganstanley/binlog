@@ -9,6 +9,7 @@
 
 Checks: "\
   *,
+  -altera-*,\
   -fuchsia-*,\
   -bugprone-sizeof-expression,\
   -cppcoreguidelines-avoid-c-arrays,\
@@ -25,6 +26,7 @@ Checks: "\
   -cert-err58-cpp,\
   -cert-err60-cpp,\
   -readability-convert-member-functions-to-static,\
+  -readability-function-cognitive-complexity,\
   -readability-magic-numbers,\
   -readability-named-parameter,\
   -readability-uppercase-literal-suffix,\
