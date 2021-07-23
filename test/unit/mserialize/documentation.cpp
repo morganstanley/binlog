@@ -71,6 +71,16 @@ class Gamma
 };
 //]
 
+//[adapt_custom_derived_type
+#include <mserialize/make_derived_struct_deserializable.hpp>
+#include <mserialize/make_derived_struct_serializable.hpp>
+
+struct Zeta : Beta { int e = 0; };
+
+MSERIALIZE_MAKE_DERIVED_STRUCT_SERIALIZABLE(Zeta, (Beta), e)
+MSERIALIZE_MAKE_DERIVED_STRUCT_DESERIALIZABLE(Zeta, (Beta), e)
+//]
+
 //[visit_out
 #include <mserialize/serialize.hpp>
 #include <mserialize/tag.hpp>

@@ -89,6 +89,14 @@ declarations can be added to the type:
 
     [catchfile test/unit/mserialize/documentation.cpp adapt_custom_type_with_private_members]
 
+If a type publicly derives from serializable or deserializable bases, it can be made
+serializable and deserializable without repeating the fields of its bases:
+
+    [catchfile test/unit/mserialize/documentation.cpp adapt_custom_derived_type]
+
+The same rules apply as above, with the addition that the second argument must be
+a non-empty parenthesised list of serializable or deserializable base classes.
+
 Class templates can be made serializable and deserializable on the same conditions,
 except that a different macro must be called:
 
