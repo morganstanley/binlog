@@ -37,6 +37,7 @@ enum class UnsignedLargeEnumClass : std::uint64_t
 };
 
 
+// NOLINTNEXTLINE(modernize-use-using)
 typedef enum : int {
   Papa
 } UnnamedEnumTypedef;
