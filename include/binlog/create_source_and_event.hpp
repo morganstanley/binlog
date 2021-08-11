@@ -47,7 +47,7 @@
     if (_binlog_sid_v == 0)                                                                  \
     {                                                                                        \
       _binlog_sid_v = writer.session().addEventSource(binlog::EventSource{                   \
-        0, severity, #category, __func__, __FILE__, __LINE__, MSERIALIZE_FIRST(__VA_ARGS__), /* NOLINT */ \
+        0, severity, #category, __func__, __FILE__, std::uint64_t(__LINE__), MSERIALIZE_FIRST(__VA_ARGS__), /* NOLINT */ \
         binlog::detail::concatenated_tags(__VA_ARGS__).data()                                /* NOLINT */ \
       });                                                                                    \
       _binlog_sid.store(_binlog_sid_v);                                                      \
