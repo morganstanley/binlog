@@ -285,9 +285,30 @@ BINLOG_INFO("My foo: {}", Foo{1, "two"});
 <p>The member list does not have to be exhaustive, e.g: mutex members can be omitted, those will not be logged.
 The member list can be empty. The maximum number of members is limited to 100.
 <code>BINLOG_ADAPT_STRUCT</code> must be called in global scope, outside of any namespace.
-The type must not be recursive, e.g: <code>Foo</code> can't have a to be logged <code>Foo*</code> typed member.
-For more information and to make templates or recursive types loggable,
-see the Mserialize documentation on <a href="Mserialize.html#adapting-custom-types">Adapting custom types</a> and
+The type must not be recursive, e.g: <code>Foo</code> can't have a to be logged <code>Foo*</code> typed member.</p>
+<p>User defined types that derive from base classes already adapted for logging
+can be adapted, without enumerating the base members again:</p>
+<pre><code>struct Base { int a = 0; };
+struct Derived : Base { int b = 1; int c = 2; };
+
+BINLOG_ADAPT_STRUCT(Base, a)
+BINLOG_ADAPT_DERIVED(Derived, (Base), b, c)
+
+BINLOG_INFO("Hierarchy: {}", Derived{});
+// Outputs: Hierarchy: Derived{ Base{ a: 0 }, b: 1, c: 2 }
+</code></pre>
+<p>The second argument of <code>BINLOG_ADAPT_DERIVED</code> must be a list of adapted base classes, multiple inheritance is supported.</p>
+<p>User defined templates can be adapted for logging in a similar way:</p>
+<pre><code>template &lt;typename A, typename B, std::size_t C&gt;
+struct Triplet
+{
+  A a{};
+  B b{};
+  std::array&lt;int, C&gt; c{};
+};
+BINLOG_ADAPT_TEMPLATE((typename A, typename B, std::size_t C), (Triplet&lt;A,B,C&gt;), a, b, c)
+</code></pre>
+<p>For more information see the Mserialize documentation on <a href="Mserialize.html#adapting-custom-types">Adapting custom types</a> and
 <a href="Mserialize.html#adapting-user-defined-recursive-types-for-visitation">Adapting user defined recursive types for visitation</a>.</p>
 <h2 id="logging-standard-types"><a class="toclink" href="#logging-standard-types">Logging Standard Types</a></h2>
 <h3 id="chrono"><a class="toclink" href="#chrono">chrono</a></h3>
@@ -608,7 +629,7 @@ The Binlog test suite tests if this requirement holds on a given platform.</p>
       <hr/>
       <footer class="text-center text-muted">
         Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a> |
-        Generated: 2021. 08. 11.
+        Generated: 2021. 08. 24.
       </footer>
       <hr/>
     </div>

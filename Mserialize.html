@@ -191,6 +191,18 @@ declarations can be added to the type:</p>
   friend struct mserialize::CustomDeserializer;
 };
 </code></pre>
+<p>If a type publicly derives from serializable or deserializable bases, it can be made
+serializable and deserializable without repeating the fields of its bases:</p>
+<pre><code>#include &lt;mserialize/make_derived_struct_deserializable.hpp&gt;
+#include &lt;mserialize/make_derived_struct_serializable.hpp&gt;
+
+struct Zeta : Beta { int e = 0; };
+
+MSERIALIZE_MAKE_DERIVED_STRUCT_SERIALIZABLE(Zeta, (Beta), e)
+MSERIALIZE_MAKE_DERIVED_STRUCT_DESERIALIZABLE(Zeta, (Beta), e)
+</code></pre>
+<p>The same rules apply as above, with the addition that the second argument must be
+a non-empty parenthesised list of serializable or deserializable base classes.</p>
 <p>Class templates can be made serializable and deserializable on the same conditions,
 except that a different macro must be called:</p>
 <pre><code>#include &lt;mserialize/make_template_deserializable.hpp&gt;
@@ -281,6 +293,14 @@ friend struct mserialize::CustomTag;
 if visitation of objects serialized that way is desired.
 <code>MSERIALIZE_MAKE_STRUCT_TAG</code> cannot be used with recursive types.
 See <a href="#adapting-user-defined-recursive-types-for-visitation">Adapting user defined recursive types for visitation</a> for a solution.</p>
+<p>A tag can be assigned to a class that derives from a base or bases
+that are tagged already, without enumerating the members of the bases again:</p>
+<pre><code>#include &lt;mserialize/make_derived_struct_tag.hpp&gt;
+
+MSERIALIZE_MAKE_DERIVED_STRUCT_TAG(Zeta, (Beta), e)
+</code></pre>
+<p>The same rules apply as above, with the addition that the second argument must be
+a non-empty parenthesised list of tagged base classes.</p>
 <p>A tag can be assigned to class templates on the same conditions,
 except that a different macro must be called:</p>
 <pre><code>#include &lt;mserialize/make_template_tag.hpp&gt;
@@ -588,7 +608,7 @@ not described here.</p>
       <hr/>
       <footer class="text-center text-muted">
         Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a> |
-        Generated: 2021. 08. 11.
+        Generated: 2021. 08. 24.
       </footer>
       <hr/>
     </div>
