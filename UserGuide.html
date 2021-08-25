@@ -323,6 +323,14 @@ BINLOG_INFO("Now: {}", now);
 The pretty printed text format is affected by the <code>-d</code> flag when using <a href="#bread">bread</a>.
 If <code>%d</code> (localtime) appears first in the <code>-f</code> (format) parameter, the time point is converted to producer-local timezone
 (this is the default). If <code>%u</code> (UTC) appears first, the time point is shown in UTC.</p>
+<p>Certain helper types of <code>std::chrono::duration</code> can be logged after adoption by including a header file:</p>
+<pre><code>#include &lt;binlog/adapt_stdduration.hpp&gt; // must be included to log std::chrono::duration helper types
+
+BINLOG_INFO("{} {} {}", std::chrono::nanoseconds{1}, std::chrono::microseconds{2}, std::chrono::milliseconds{3});
+// Outputs: 1ns 2us 3ms
+BINLOG_INFO("{} {} {}", std::chrono::seconds{4}, std::chrono::minutes{5}, std::chrono::hours{6});
+// Outputs: 4s 5m 6h
+</code></pre>
 <h3 id="error_code"><a class="toclink" href="#error_code">error_code</a></h3>
 <p><code>std::error_code</code> objects can be logged after adoption by including a header file:</p>
 <pre><code>#include &lt;binlog/adapt_stderrorcode.hpp&gt; // must be included to log std::error_code
@@ -629,7 +637,7 @@ The Binlog test suite tests if this requirement holds on a given platform.</p>
       <hr/>
       <footer class="text-center text-muted">
         Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a> |
-        Generated: 2021. 08. 24.
+        Generated: 2021. 08. 25.
       </footer>
       <hr/>
     </div>
