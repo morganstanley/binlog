@@ -217,6 +217,10 @@ The pretty printed text format is affected by the `-d` flag when using [bread](#
 If `%d` (localtime) appears first in the `-f` (format) parameter, the time point is converted to producer-local timezone
 (this is the default). If `%u` (UTC) appears first, the time point is shown in UTC.
 
+Certain helper types of `std::chrono::duration` can be logged after adoption by including a header file:
+
+    [catchfile test/integration/LoggingDuration.cpp duration]
+
 ### error_code
 
 `std::error_code` objects can be logged after adoption by including a header file:
