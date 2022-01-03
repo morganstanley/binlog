@@ -246,7 +246,7 @@ the following workaround is required:</p>
 };
 
 // BINLOG_ADAPT_ENUM(Nest::Nested, Bird) // Doesn't work, type is shadowed by field.
-typedef enum Nest::Nested NestedT; // workaround: use elaborated type specifier
+typedef enum Nest::Nested NestedT; // workaround: use elaborated type specifier // NOLINT
 BINLOG_ADAPT_ENUM(NestedT, Bird)
 </code></pre>
 <h2 id="logging-user-defined-structures"><a class="toclink" href="#logging-user-defined-structures">Logging User Defined Structures</a></h2>
@@ -637,7 +637,7 @@ The Binlog test suite tests if this requirement holds on a given platform.</p>
       <hr/>
       <footer class="text-center text-muted">
         Feedback and help: <a href="https://github.com/Morgan-Stanley/binlog/issues">GitHub</a> |
-        Generated: 2021. 08. 25.
+        Generated: 2022. 01. 03.
       </footer>
       <hr/>
     </div>
