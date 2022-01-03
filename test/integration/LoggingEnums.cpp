@@ -28,7 +28,7 @@ struct Nest {
 };
 
 // BINLOG_ADAPT_ENUM(Nest::Nested, Bird) // Doesn't work, type is shadowed by field.
-typedef enum Nest::Nested NestedT; // workaround: use elaborated type specifier
+typedef enum Nest::Nested NestedT; // workaround: use elaborated type specifier // NOLINT
 BINLOG_ADAPT_ENUM(NestedT, Bird)
 //]
 

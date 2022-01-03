@@ -100,7 +100,7 @@ int main(int argc, /*const*/ char* argv[])
   bool sorted = false;
 
   int opt;
-  while ((opt = getopt(argc, argv, "f:d:sh")) != -1)
+  while ((opt = getopt(argc, argv, "f:d:sh")) != -1) // NOLINT(concurrency-mt-unsafe)
   {
     switch (opt)
     {
