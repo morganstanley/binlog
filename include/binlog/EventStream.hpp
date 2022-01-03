@@ -5,6 +5,8 @@
 #include <binlog/EntryStream.hpp>
 #include <binlog/Range.hpp>
 
+#include <binlog/detail/SegmentedMap.hpp>
+
 #include <istream>
 #include <map>
 
@@ -55,7 +57,7 @@ private:
 
   void readEvent(std::uint64_t eventSourceId, Range range);
 
-  std::map<std::uint64_t, EventSource> _eventSources; // TODO(benedek) perf: use SegmentedMap
+  detail::SegmentedMap<EventSource> _eventSources;
   WriterProp _writerProp;
   ClockSync _clockSync;
   Event _event;
