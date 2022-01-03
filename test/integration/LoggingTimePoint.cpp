@@ -14,7 +14,7 @@ int main()
   #ifdef _WIN32
     _putenv_s("TZ", "UTC");
   #else
-    setenv("TZ", "UTC", 1);
+    setenv("TZ", "UTC", 1); // NOLINT(concurrency-mt-unsafe)
   #endif
 
   //[timepoint

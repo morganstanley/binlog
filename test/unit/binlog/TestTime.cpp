@@ -45,7 +45,7 @@ TEST_CASE("system_clock_measures_utc")
 
   const std::chrono::system_clock::time_point epoch_tp{};
   const std::time_t epoch_tt = std::chrono::system_clock::to_time_t(epoch_tp);
-  const std::tm* t = std::gmtime(&epoch_tt);
+  const std::tm* t = std::gmtime(&epoch_tt); // NOLINT(concurrency-mt-unsafe)
 
   REQUIRE(t != nullptr);
   CHECK(t->tm_year == 70);
