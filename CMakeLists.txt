@@ -261,6 +261,7 @@ add_example(TscClock)
     test/unit/binlog/TestTextOutputStream.cpp
     test/unit/binlog/TestEventFilter.cpp
     test/unit/binlog/detail/TestOstreamBuffer.cpp
+    test/unit/binlog/detail/TestSegmentedMap.cpp
 
     bin/printers.cpp
     test/unit/binlog/TestPrinters.cpp

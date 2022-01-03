@@ -43,7 +43,7 @@ void EventStream::readEventSource(Range range)
 {
   EventSource eventSource;
   mserialize::deserialize(eventSource, range);
-  _eventSources[eventSource.id] = std::move(eventSource);
+  _eventSources.emplace(eventSource.id, std::move(eventSource));
 }
 
 void EventStream::readWriterProp(Range range)
@@ -64,13 +64,13 @@ void EventStream::readClockSync(Range range)
 
 void EventStream::readEvent(std::uint64_t eventSourceId, Range range)
 {
-  auto it = _eventSources.find(eventSourceId);
+  auto&& it = _eventSources.find(eventSourceId);
   if (it == _eventSources.end())
   {
     throw std::runtime_error("Event has invalid source id: " + std::to_string(eventSourceId));
   }
 
-  _event.source = &it->second;
+  _event.source = it;
   _event.clockValue = range.read<std::uint64_t>();
   _event.arguments = range;
 }
