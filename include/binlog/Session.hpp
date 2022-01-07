@@ -4,8 +4,7 @@
 #include <binlog/Entries.hpp>
 #include <binlog/Severity.hpp>
 #include <binlog/Time.hpp>
-#include <binlog/detail/Queue.hpp>
-#include <binlog/detail/QueueReader.hpp>
+#include <binlog/detail/Cueue.hpp>
 #include <binlog/detail/VectorOutputStream.hpp>
 
 #include <algorithm> // remove_if
@@ -58,12 +57,13 @@ public:
     Channel(Channel&&) = delete;
     void operator=(Channel&&) = delete;
 
-    detail::Queue& queue();
+    detail::CueueWriter queueWriter() { return _queue.writer(); }
+    detail::CueueReader queueReader() { return _queue.reader(); }
 
     WriterProp writerProp;      /**< Describes the writer of this channel (optional) */ // NOLINT
 
   private:
-    std::unique_ptr<char[]> _queue; /**< Magic, Queue, and the underlying buffer of `queue` */
+    detail::Cueue _queue;
   };
 
   /** Describe the result of a consume call */
@@ -209,42 +209,15 @@ private:
 
 inline Session::Channel::Channel(Session& session, std::size_t queueCapacity, WriterProp writerProp_)
   :writerProp(std::move(writerProp_)),
-   _queue(new char[sizeof(std::uint64_t) + sizeof(Session*) + sizeof(detail::Queue) + queueCapacity])
-{
-  // To be able to recover unconsumed queue data from memory dumps,
-  // put a magic number, a pointer to the owning session, the queue and the queue buffer
-  // next to each other.
-  char* buffer = _queue.get();
-
-  // The magic number is used to indentify the queue in the memory dump
-  new (buffer) std::uint64_t(0xFE213F716D34BCBC);
-  buffer += sizeof(std::uint64_t);
-
-  // Session* is used to separate the queues of different sessions of the program
-  new (buffer) Session*(&session);
-  buffer += sizeof(Session*);
-
-  // Queue is used normally to store log events, and also during recovery,
-  // to determine the unconsumed parts of the buffer.
-  static_assert(alignof(detail::Queue) <= alignof(std::uint64_t), "");
-  static_assert(alignof(detail::Queue) <= alignof(Session*), "");
-  char* queueBuffer = buffer + sizeof(detail::Queue);
-  new (buffer) detail::Queue(queueBuffer, queueCapacity);
-}
+   // To be able to recover unconsumed queue data from memory dumps,
+   // put a magic number, a pointer to the owning session, the queue and the queue buffer
+   // next to each other.
+   _queue(queueCapacity, 0xFE213F716D34BCBC, &session)
+{}
 
 inline Session::Channel::~Channel()
 {
-  // clear magic number - do not recover invalid data
-  std::uint64_t magic = 0;
-  memcpy(_queue.get(), &magic, sizeof(magic));
-
-  // destroy queue
-  queue().~Queue();
-}
-
-inline detail::Queue& Session::Channel::queue()
-{
-  return *reinterpret_cast<detail::Queue*>(_queue.get() + sizeof(std::uint64_t) + sizeof(Session*));
+  _queue.clearMagic();
 }
 
 inline Session::Session()
@@ -352,24 +325,19 @@ Session::ConsumeResult Session::consume(OutputStream& out)
 
     Channel& ch = *channelptr;
 
-    detail::QueueReader reader(ch.queue());
-    const detail::QueueReader::ReadResult data = reader.beginRead();
-    if (data.size())
+    detail::CueueReader reader = ch.queueReader();
+    const detail::CueueReader::ReadResult data = reader.beginRead();
+    if (data.size)
     {
       // consume writerProp entry
-      ch.writerProp.batchSize = data.size();
+      ch.writerProp.batchSize = data.size;
       result.bytesConsumed += consumeSpecialEntry(ch.writerProp, out);
 
       // consume queue data
-      out.write(data.buffer1, std::streamsize(data.size1));
-      if (data.size2)
-      {
-        // data wraps around the end of the queue, consume the second half as well
-        out.write(data.buffer2, std::streamsize(data.size2));
-      }
-
+      out.write(data.buffer, std::streamsize(data.size));
       reader.endRead();
-      result.bytesConsumed += data.size();
+
+      result.bytesConsumed += data.size;
     }
 
     if (isClosed)

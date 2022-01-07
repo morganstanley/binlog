@@ -157,24 +157,19 @@ bool readMetadata(std::istream& input, std::vector<RecoveredBuffer>& output)
   return true;
 }
 
-bool checkQueueInvariants(binlog::detail::Queue& queue)
+bool checkQueueInvariants(binlog::detail::CueueControlBlock& cb)
 {
-  if (queue.writeIndex > queue.capacity)
+  if (cb.writePosition < cb.readPosition)
   {
-    BINLOG_ERROR("  Queue invariant violated: writer={} > capacity={}", queue.writeIndex.load(), queue.capacity);
+    BINLOG_ERROR("  Queue invariant violated: writer={} < reader={}", cb.writePosition.load(), cb.readPosition.load());
     return false;
   }
 
-  if (queue.dataEnd > queue.capacity)
+  if (cb.writePosition > cb.readPosition + cb.capacity)
   {
-    BINLOG_ERROR("  Queue invariant violated: dataEnd={} > capacity={}", queue.dataEnd, queue.capacity);
+    BINLOG_ERROR("  Queue invariant violated: writer={} > reader={} + capacity={}", cb.writePosition.load(), cb.readPosition.load(), cb.capacity);
     return false;
-  }
 
-  if (queue.readIndex > queue.capacity)
-  {
-    BINLOG_ERROR("  Queue invariant violated: reader={} > capacity={}", queue.readIndex.load(), queue.capacity);
-    return false;
   }
 
   return true;
@@ -182,53 +177,49 @@ bool checkQueueInvariants(binlog::detail::Queue& queue)
 
 bool readData(std::istream& input, std::vector<RecoveredBuffer>& output)
 {
-  // get session ptr as a number
-  void* sessionptr = nullptr;
-  input.read(reinterpret_cast<char*>(&sessionptr), sizeof(void*));
-  const std::uintptr_t session = reinterpret_cast<std::uintptr_t>(sessionptr);
-
-  // get queue with writer and reader positions
+  // get queue control block with writer and reader positions
   // Depending on the standard/compiler, the assert below is invalid
   // because of the std::atomic inside Queue - but we do not care.
-  // static_assert(std::is_trivially_copyable<binlog::detail::Queue>::value, "Queue must be trivial");
-  binlog::detail::Queue queue(nullptr, 0);
-  input.read(reinterpret_cast<char*>(&queue), sizeof(queue));
+  // static_assert(std::is_trivially_copyable<binlog::detail::CueueControlBlock>::value, "CueueControlBlock must be trivial");
+  // The magic is already consumed from the input, do not read that.
+  binlog::detail::CueueControlBlock cb;
+  input.read(reinterpret_cast<char*>(&cb) + sizeof(std::uint64_t), sizeof(cb) - sizeof(std::uint64_t));
 
-  if (! checkQueueInvariants(queue)) { return false; }
+  if (! checkQueueInvariants(cb)) { return false; }
 
-  STDERR_INFO("  Queue state is valid: capacity={} windex={} rindex={} dataend={}",
-    queue.capacity, queue.writeIndex.load(), queue.readIndex.load(), queue.dataEnd);
+  STDERR_INFO("  Queue state is valid: capacity={} windex={} rindex={}",
+    cb.capacity, cb.writePosition.load(), cb.readPosition.load());
+
+  const std::uintptr_t session = reinterpret_cast<std::uintptr_t>(cb.discriminator);
 
   // get queue buffer
-  if (queue.capacity > remainingSize(input))
+  const std::size_t padding = 4096 - sizeof(cb); // space between control block and data
+  if (cb.capacity + padding > remainingSize(input))
   {
-    STDERR_ERROR("  Input doesn't have {} bytes", queue.capacity);
+    STDERR_ERROR("  Input doesn't have {} bytes", cb.capacity);
     return false;
   }
 
   std::vector<char> queueBuffer;
   try
   {
-    queueBuffer.resize(queue.capacity);
+    queueBuffer.resize(cb.capacity);
   }
   catch (const std::bad_alloc&)
   {
-    STDERR_ERROR("  Failed to allocate {} bytes for queue data", queue.capacity);
+    STDERR_ERROR("  Failed to allocate {} bytes for queue data", cb.capacity);
     return false;
   }
+  input.ignore(padding);
   input.read(queueBuffer.data(), std::streamsize(queueBuffer.size()));
 
   if (! input) { return false; }
 
   // create a reader, get the unread data from the buffer
-  queue.buffer = queueBuffer.data();
-  binlog::detail::QueueReader reader(queue);
-  const binlog::detail::QueueReader::ReadResult dataview = reader.beginRead();
+  binlog::detail::CueueReader reader(cb, queueBuffer.data());
+  const binlog::detail::CueueReader::ReadResult dataview = reader.beginRead();
 
-  std::vector<char> data;
-  data.reserve(dataview.size());
-  data.insert(data.end(), dataview.buffer1, dataview.buffer1 + dataview.size1);
-  data.insert(data.end(), dataview.buffer2, dataview.buffer2 + dataview.size2);
+  std::vector<char> data(dataview.buffer, dataview.buffer + dataview.size);
 
   if (! checkEntryBuffer(data)) { return false; }
 
