@@ -2,7 +2,7 @@
 #define BINLOG_SESSION_WRITER_HPP
 
 #include <binlog/Session.hpp>
-#include <binlog/detail/QueueWriter.hpp>
+#include <binlog/detail/Cueue.hpp>
 
 #include <mserialize/serialize.hpp>
 
@@ -117,13 +117,13 @@ private:
 
   Session* _session;
   std::shared_ptr<Session::Channel> _channel;
-  detail::QueueWriter _qw;
+  detail::CueueWriter _qw;
 };
 
 inline SessionWriter::SessionWriter(Session& session, std::size_t queueCapacity, std::uint64_t id, std::string name)
   :_session(& session),
    _channel(session.createChannel(queueCapacity)),
-   _qw(_channel->queue())
+   _qw(_channel->queueWriter())
 {
   if (id != 0) { setId(id); }
   if (! name.empty()) { setName(std::move(name)); }
@@ -177,7 +177,7 @@ inline bool SessionWriter::replaceChannel(std::size_t minQueueCapacity) noexcept
   {
     WriterProp wp{_channel->writerProp.id, _channel->writerProp.name, 0}; // avoid racing on the last field
     _channel = _session->createChannel(newCapacity, std::move(wp));
-    _qw = detail::QueueWriter(_channel->queue());
+    _qw = _channel->queueWriter();
   }
   catch (...)
   {

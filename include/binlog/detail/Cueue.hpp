@@ -124,6 +124,9 @@ public:
      _mask(qcb.capacity - 1)
   {}
 
+  /** @returns the maximum number of bytes the queue can store */
+  std::size_t capacity() const { return _qcb->capacity; }
+
   /** @returns the number of bytes currently available for write */
   std::size_t writeCapacity() const
   {
@@ -302,7 +305,13 @@ public:
     new (_map.get()) CueueControlBlock{0, nullptr, capacity, {0}, {0}};
   }
 
-  //std::size_t capacity() const { return _capacity; }
+  /** Same as above, but also sets magic and discriminator in the control block for recovery */
+  Cueue(std::size_t capacity, std::uint64_t magic, void* discriminator)
+    :Cueue(capacity)
+  {
+    controlblock().magic = magic;
+    controlblock().discriminator = discriminator;
+  }
 
   CueueControlBlock& controlblock()
   {
@@ -311,6 +320,11 @@ public:
 
   CueueWriter writer() { return CueueWriter(controlblock(), buffer()); }
   CueueReader reader() { return CueueReader(controlblock(), buffer()); }
+
+  void clearMagic()
+  {
+    controlblock().magic = 0;
+  }
 
 private:
   static const std::size_t cbsize = 4096; /**< Size of the control block before the buffer */
