@@ -260,6 +260,7 @@ add_example(TscClock)
     test/unit/binlog/TestEntryStream.cpp
     test/unit/binlog/TestTextOutputStream.cpp
     test/unit/binlog/TestEventFilter.cpp
+    test/unit/binlog/detail/TestCueue.cpp
     test/unit/binlog/detail/TestOstreamBuffer.cpp
     test/unit/binlog/detail/TestSegmentedMap.cpp
 
@@ -358,6 +359,7 @@ if (benchmark_FOUND)
   endfunction()
 
   add_benchmark(PerftestQueue)
+  add_benchmark(PerftestCueue)
   add_benchmark(PerftestSessionWriter)
 
 else ()
