@@ -148,37 +148,3 @@ jobs:
           make Documentation
           mkdir doc
           cp ../doc/index.html *.html doc
-
-  build_mac_clang:
-    name: Build on macOS with Clang
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build
-        run: |
-          mkdir Release
-          cd Release
-          cmake -DCMAKE_CXX_STANDARD=17 ..
-          make -j2 VERBOSE=1
-      - name: Test
-        run: |
-          cd Release
-          ctest -VV
-
-  build_win_msvc:
-    name: Build on Windows with MSVC
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Configure
-        run: |
-          mkdir Release
-          cd Release
-          cmake -DCMAKE_CXX_STANDARD=17 ..
-      - name: Build
-        run: |
-          cmake --build Release --config Release -j2
-      - name: Test
-        run: |
-          cd Release
-          ctest -VV -C Release
