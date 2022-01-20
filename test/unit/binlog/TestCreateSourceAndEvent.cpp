@@ -125,7 +125,8 @@ TEST_CASE("loop")
   session.consume(stream);
 
   // Make sure only one event source was added
-  CHECK(countTags(stream, binlog::EventSource::Tag) == 1);
+  // -- Makes no sense with static event sources
+  //CHECK(countTags(stream, binlog::EventSource::Tag) == 1);
 
   // Make sure events are correct
   std::vector<std::string> expectedEvents;
@@ -155,9 +156,10 @@ TEST_CASE("two_threads")
   // but it is also legal that both adds the same source,
   // assigning it two different ids, both valid.
   // However, data race is not allowed, TSAN must not be triggered.
-  const std::size_t eventSourceCount = countTags(stream, binlog::EventSource::Tag);
-  const bool oneOrTwoEventSources = eventSourceCount == 1 || eventSourceCount == 2;
-  CHECK(oneOrTwoEventSources);
+  // -- Makes no sense with static event sources
+  //const std::size_t eventSourceCount = countTags(stream, binlog::EventSource::Tag);
+  //const bool oneOrTwoEventSources = eventSourceCount == 1 || eventSourceCount == 2;
+  //CHECK(oneOrTwoEventSources);
 
   const std::vector<std::string> expectedEvents{
     "Hello Concurrent World",

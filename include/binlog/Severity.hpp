@@ -33,6 +33,32 @@ inline mserialize::cx_string<4> severityToString(Severity severity)
   }
 }
 
+inline constexpr const char* severityToConstCharPtr(Severity severity)
+{
+  switch (severity)
+  {
+    case Severity::trace:    return "TRAC";
+    case Severity::debug:    return "DEBG";
+    case Severity::info:     return "INFO";
+    case Severity::warning:  return "WARN";
+    case Severity::error:    return "ERRO";
+    case Severity::critical: return "CRIT";
+    case Severity::no_logs:  return "NOLG";
+    default:                 return "UNKW";
+  }
+}
+
+inline Severity severityFromString(mserialize::string_view str)
+{
+  if (str == "TRAC") { return Severity::trace;    }
+  if (str == "DEBG") { return Severity::debug;    }
+  if (str == "INFO") { return Severity::info;     }
+  if (str == "WARN") { return Severity::warning;  }
+  if (str == "ERRO") { return Severity::error;    }
+  if (str == "CRIT") { return Severity::critical; }
+  return Severity::no_logs;
+}
+
 } // namespace binlog
 
 #endif // BINLOG_SEVERITY_HPP

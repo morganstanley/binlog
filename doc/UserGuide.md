@@ -324,15 +324,15 @@ provided by `default_session()` and `default_thread_local_writer()`.
 an additional writer as the first argument, which it will use
 to add the event instead of the default writer.
 The log event, created by this macro, is first serialized into the
-queue of the `writer`, upon invocation. If this is the first
-call to this macro, the metadata associated with this event
-is also added to the session of the writer.
+queue of the `writer`, upon invocation.
+The metadata associated with the event (e.g: file, line, format string)
+is persisted compile time to the binary.
 This macro is available for each severity, i.e:
 `BINLOG_TRACE_W`, `BINLOG_DEBUG_W`, `BINLOG_INFO_W`, `BINLOG_WARNING_W`, `BINLOG_ERROR_W` and `BINLOG_CRITICAL_W`.
 Serialization is done using the [Mserialize][] library.
 
-When `session.consume` is called, first the available metadata is
-consumed and written to the provided stream. Then each writer queue
+When `session.consume` is called, first the metadata is
+consumed from the binary and written to the provided stream. Then each writer queue
 is polled for data. Available data is written to the provided stream
 in batches. At the end of the program, the health of the output stream
 is checked, to make sure errors are not swallowed (e.g: disk full).
@@ -455,3 +455,9 @@ yielding to undefined behavior. Possible resolutions include:
 and assumes that this clock measures UTC time (without leap seconds). This is required as of C++20.
 The Binlog test suite tests if this requirement holds on a given platform.
 
+**High Performance Branch**: The performance related additions of the `hiperf` branch
+put additional constraints on the platform Binlog can work on:
+
+ - Compiler: Clang
+ - Operating System: Linux
+ - Executable format: ELF

@@ -29,6 +29,7 @@ struct FilterAdapter
 std::vector<std::string> filterEvents(binlog::Session& session, binlog::EventFilter& filter)
 {
   FilterAdapter adapter{filter, {}};
+  session.reconsumeMetadata(adapter);
   session.consume(adapter);
   return streamToEvents(adapter.stream, "%S %m");
 }

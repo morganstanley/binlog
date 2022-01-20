@@ -16,8 +16,13 @@ namespace {
 std::vector<std::string> getEventsFromDefaultSession(const char* eventFormat)
 {
   TestStream stream;
-  const binlog::Session::ConsumeResult cr = binlog::consume(stream);
+
+  binlog::Session::ConsumeResult cr = binlog::default_session().reconsumeMetadata(stream);
   CHECK(stream.buffer.size() == cr.bytesConsumed);
+  const auto metadataSize = stream.buffer.size();
+
+  cr = binlog::consume(stream);
+  CHECK(stream.buffer.size() - metadataSize == cr.bytesConsumed);
   return streamToEvents(stream, eventFormat);
 }
 

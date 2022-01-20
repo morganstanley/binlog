@@ -3,6 +3,7 @@
 
 #include <binlog/Session.hpp>
 #include <binlog/SessionWriter.hpp>
+#include <binlog/create_source.hpp>
 
 #include <mserialize/cx_string.hpp>
 #include <mserialize/detail/preprocessor.hpp>
@@ -16,12 +17,11 @@
 /**
  * BINLOG_CREATE_SOURCE_AND_EVENT(writer, severity, category, clock, format, args...)
  *
- * When called for the first time, create an EventSource that describes
- * the call site (function, file, line), and other static properties
- * (severity, category, format string, argument tags) - and add it to the
- * session of `writer`.
- * Furthermore, each time it is called, add an event that references
- * the added event source with `clock` and `args...` to `writer`.
+ * Add a static event source that describes the callsite (function, file, line),
+ * and other static properties (severity, category, format string, argument tags)
+ * to the binary compile time.
+ * Each time it is called, add an event that references
+ * the event source with `clock` and `args...` to `writer`.
  * @see SessionWriter::addEvent.
  *
  * @param writer binlog::SessionWriter
@@ -32,8 +32,6 @@
  * @param args... any number of serializable, tagged, log arguments. Can be empty
  *
  * The number of arguments must match the number of {} placeholders in `format`.
- *
- * TODO(benedek) perf: do not instantiate a full EventSource
  */
 #define BINLOG_CREATE_SOURCE_AND_EVENT(writer, severity, category, clock, /* format, */ ...) \
   do {                                                                                       \
@@ -42,30 +40,35 @@
       decltype(binlog::detail::count_arguments(__VA_ARGS__))::value,                         \
       "Number of {} placeholders in format string must match number of arugments"            \
     );                                                                                       \
-    static std::atomic<std::uint64_t> _binlog_sid{0};                                        \
-    std::uint64_t _binlog_sid_v = _binlog_sid.load(std::memory_order_relaxed);               \
-    if (_binlog_sid_v == 0)                                                                  \
-    {                                                                                        \
-      _binlog_sid_v = writer.session().addEventSource(binlog::EventSource{                   \
-        0, severity, #category, __func__, __FILE__, std::uint64_t(__LINE__), MSERIALIZE_FIRST(__VA_ARGS__), /* NOLINT */ \
-        binlog::detail::concatenated_tags(__VA_ARGS__).data()                                /* NOLINT */ \
-      });                                                                                    \
-      _binlog_sid.store(_binlog_sid_v);                                                      \
-    }                                                                                        \
-    binlog::detail::addEventIgnoreFirst(writer, _binlog_sid_v, clock, __VA_ARGS__);          \
+    BINLOG_CREATE_SOURCE(                                                                    \
+      _binlog_sid, binlog::severityToConstCharPtr(severity), category,                       \
+      MSERIALIZE_FIRST(__VA_ARGS__),                                                         \
+      decltype(binlog::detail::concatenated_tags(__VA_ARGS__))::tag.data());                 \
+    binlog::detail::addEventIgnoreFirst(writer, _binlog_sid, clock, __VA_ARGS__);            \
   } while (false)                                                                            \
   /**/
 
 namespace binlog {
 namespace detail {
 
-// The first argument is dropped because __VA_ARGS__ cannot be empty,
-// therefore it is always combined with something unrelated.
-template <typename Unused, typename... T>
-constexpr auto concatenated_tags(Unused&&, T&&...)
+// Can't use the return value of cx_strcat directly, because sv.data(),
+// a pointer to a subobject of a temporary, cannot appear in a constexpr.
+// Instead, save it in a static field of this type.
+template <typename... T>
+struct ConcatenatedTags
 {
-  return mserialize::cx_strcat(mserialize::tag<T>()...);
-}
+  static constexpr auto tag = mserialize::cx_strcat(mserialize::tag<T>()...);
+};
+
+/**
+ * No temporary of non-literal type allowed in constant expression.
+ * Hack it around by avoiding taking reference to any argument,
+ * this function should only appear in non-evaluated context.
+ * The first argument is dropped because __VA_ARGS__ cannot be empty,
+ * therefore it is always combined with something unrelated.
+ */
+template <typename... T>
+ConcatenatedTags<T...> concatenated_tags(const char*, T&&...);
 
 /** @return the number of "{}" substrings in `str` */
 constexpr std::size_t count_placeholders(const char* str)
