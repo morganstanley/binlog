@@ -47,16 +47,14 @@ the typed contract between the binary log writer and reader.
     +---------------+            ( Channel )    |   +---------+  consume  +--------------+
     | SessionWriter |----------->( Channel )----+-->| Session |---------->| OutputStream |
     +---------------+                           |   +---------+           +--------------+
-           |                                    |        ^
-           |                     ( Channel )----+        |
-           |                                             |
-           +---------------------------------------------+
-                            addEventSource
+                                                |
+                                 ( Channel )----+
 
 The data flow of Binlog entries in a simple application is shown above.
 Each Producer owns a SessionWriter. Through the SessionWriter, Producers
-add EventSources (metadata) directly to the Session, and write Events (data) to a single-producer,
+ write Events (data) to a single-producer,
 single-consumer queue, wrapped by a Channel. Every Channel is co-owned by a Session and a SessionWriter.
+The Session reads the metadata from the binary of the running application.
 The Consumer reads the metadata from the Session, and the data from the Channels of the Session,
 and writes them to the OutputStream. The Producers ands the Consumer can be any user defined actor
 (thread, coroutine, fiber, etc.) - there's no hidden actor run by the Binlog library.
@@ -85,11 +83,11 @@ must be [recovered from the core dump][brecovery].
 The life of an Event begins with the creation of an EventSource.
 The EventSource describes the static properties of an Event,
 e.g: severity, category, function, file, line, format string and [argument tags][mserialize-tag].
-The newly created EventSource is added to the Session associated with the given SessionWriter.
-The Session assigns a unique identifier to the source, that will be used by the events produced
-by the source, and saves a copy of the EventSource. This happens only once for each EventSource.
+The EventSource is persisted compile time in the binary, with a runtime identifier assiciated with it,
+that is a combination of the offset of the event source in the binary, and the runtime load address of the program.
+This identifier is referenced by the Events created from the EventSource.
 
-After the source is created, space for an Event is allocated in the queue of the Channel
+When an event source is reached by the execution, space for an Event is allocated in the queue of the Channel
 associated with the given SessionWriter. If the allocation fails, a new Channel is created,
 and the old one becomes closed (as the writer drops its reference to it).
 Now there is enough space, the Event fields are serialized into the queue:

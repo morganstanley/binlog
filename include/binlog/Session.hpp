@@ -6,6 +6,7 @@
 #include <binlog/Time.hpp>
 #include <binlog/detail/Cueue.hpp>
 #include <binlog/detail/VectorOutputStream.hpp>
+#include <binlog/detail/read_sources.hpp>
 
 #include <algorithm> // remove_if
 #include <atomic>
@@ -203,6 +204,7 @@ private:
   std::atomic<Severity> _minSeverity = {Severity::trace};
 
   bool _consumeClockSync = true;
+  bool _scanSources = true;
 
   detail::VectorOutputStream _specialEntryBuffer;
 };
@@ -304,6 +306,17 @@ Session::ConsumeResult Session::consume(OutputStream& out)
     out.write(_clockSync.data(), _clockSync.ssize());
     result.bytesConsumed += std::size_t(_clockSync.ssize());
     _consumeClockSync = false;
+  }
+
+  // when consuming the first time, scan every loaded object for static event sources
+  if (_scanSources)
+  {
+    const auto eventSources = detail::event_sources_of_running_program();
+    for (const auto& eventSource : eventSources)
+    {
+      serializeSizePrefixedTagged(eventSource, _sources);
+    }
+    _scanSources = false;
   }
 
   // consume event sources before events

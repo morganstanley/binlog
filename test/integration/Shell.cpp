@@ -4,6 +4,7 @@
 
 #include <exception> // terminate
 #include <iostream>
+#include <sstream>
 #include <string>
 
 namespace {
@@ -59,6 +60,11 @@ void execute(mserialize::string_view command)
 
 int main(int argc, const char* argv[])
 {
+  // Move statically stored metadata to a recoverable storage by consuming,
+  // otherwise recovery will not work.
+  std::stringstream metadata;
+  binlog::consume(metadata);
+
   for (int i = 1; i < argc; ++i)
   {
     execute(argv[i]);
