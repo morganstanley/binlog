@@ -12,10 +12,23 @@
 #include <thread>
 #include <vector>
 
+namespace {
+
+// used to force static metadata into the session,
+// to avoid it overwriting the manually added sources later
+void consume(binlog::Session& session)
+{
+  std::stringstream stream;
+  session.consume(stream);
+}
+
+} // namespace
+
 TEST_CASE("add_event")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
+  consume(session);
 
   binlog::EventSource eventSource{
     0, binlog::Severity::info, "cat", "fun", "file", 123, "a={} b={}", "i[c"
@@ -31,6 +44,8 @@ TEST_CASE("add_event_with_time")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
+  TestStream stream;
+  session.consume(stream);
 
   binlog::EventSource eventSource{
     0, binlog::Severity::info, "cat", "fun", "file", 123, "a={} b={}", "i[c"
@@ -41,13 +56,16 @@ TEST_CASE("add_event_with_time")
   const auto clock = std::uint64_t(now.time_since_epoch().count());
   CHECK(writer.addEvent(eventSource.id, clock, 456, std::string("foo")));
 
-  CHECK(getEvents(session, "%d %m") == std::vector<std::string>{timePointToString(now) + " a=456 b=foo"});
+  session.consume(stream);
+  CHECK(streamToEvents(stream, "%d %m") == std::vector<std::string>{timePointToString(now) + " a=456 b=foo"});
 }
 
 TEST_CASE("set_clock_sync_and_add_event_with_time")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
+  TestStream stream;
+  session.consume(stream);
 
   binlog::EventSource eventSource{
     0, binlog::Severity::info, "cat", "fun", "file", 123, "a={} b={}", "i[c"
@@ -59,7 +77,8 @@ TEST_CASE("set_clock_sync_and_add_event_with_time")
 
   CHECK(writer.addEvent(eventSource.id, 123, 456, std::string("foo")));
 
-  CHECK(getEvents(session, "%d %m") == std::vector<std::string>{"1970.01.01 00:03:43 a=456 b=foo"});
+  session.consume(stream);
+  CHECK(streamToEvents(stream, "%d %m") == std::vector<std::string>{"1970.01.01 00:03:43 a=456 b=foo"});
 }
 
 TEST_CASE("reset_clock_sync_and_add_events_with_time")
@@ -67,6 +86,7 @@ TEST_CASE("reset_clock_sync_and_add_events_with_time")
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
   TestStream stream;
+  session.consume(stream);
 
   binlog::EventSource eventSource{
     0, binlog::Severity::info, "cat", "fun", "file", 123, "a={} b={}", "i[c"
@@ -94,6 +114,7 @@ TEST_CASE("add_event_with_writer_id_name")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
+  consume(session);
 
   binlog::EventSource eventSource{
     0, binlog::Severity::info, "cat", "fun", "file", 123, "a={} b={}", "i[c"
@@ -111,6 +132,7 @@ TEST_CASE("add_event_with_writer_id_name_ctor")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128, 111, "John");
+  consume(session);
 
   binlog::EventSource eventSource{
     0, binlog::Severity::info, "cat", "fun", "file", 123, "a={} b={}", "i[c"
@@ -127,6 +149,7 @@ TEST_CASE("add_event_then_close")
   // Make sure event reaches the consumer, even after the producer is destructed
 
   binlog::Session session;
+  consume(session);
 
   {
     binlog::SessionWriter writer(session, 128);
@@ -146,6 +169,7 @@ TEST_CASE("consume_metadata_twice")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
+  consume(session);
 
   binlog::EventSource eventSource{
     0, binlog::Severity::info, "cat", "fun", "file", 123, "a={} b={}", "i[c"
@@ -171,6 +195,7 @@ TEST_CASE("sources_first")
   binlog::Session session;
   binlog::SessionWriter writer1(session, 128);
   binlog::SessionWriter writer2(session, 128);
+  consume(session);
 
   // Add EventSource 1 from writer 1, add Event using EventSource 2
   {
@@ -203,6 +228,7 @@ TEST_CASE("sources_first")
 TEST_CASE("add_events_from_threads")
 {
   binlog::Session session;
+  consume(session);
 
   binlog::EventSource eventSource{
     0, binlog::Severity::info, "cat", "fun", "file", 123, "a={}", "i"
@@ -270,6 +296,7 @@ TEST_CASE("queue_is_full")
 {
   binlog::Session session;
   binlog::SessionWriter writer(session, 128);
+  consume(session);
 
   writer.setId(7);
   writer.setName("Seven");
@@ -311,6 +338,7 @@ TEST_CASE("move_ctor")
   binlog::Session session;
   binlog::SessionWriter writerToBeMoved(session, 128);
   binlog::SessionWriter writer(std::move(writerToBeMoved));
+  consume(session);
 
   // no channel is closed
   std::ostringstream out;
@@ -334,6 +362,7 @@ TEST_CASE("move_assign")
   binlog::Session session;
   binlog::SessionWriter writer1(session, 128);
   binlog::SessionWriter writer2(session, 128);
+  consume(session);
 
   writer1.setName("W1");
   writer2.setName("W2");
