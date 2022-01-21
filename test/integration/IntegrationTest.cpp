@@ -117,6 +117,7 @@ TEST_CASE("LoggingErrorCode")      { runReadDiff("LoggingErrorCode", "%m"); }
 TEST_CASE("NamedWriters")          { runReadDiff("NamedWriters", "%n %m"); }
 TEST_CASE("SeverityControl")       { runReadDiff("SeverityControl", "%S %m"); }
 TEST_CASE("Categories")            { runReadDiff("Categories", "%C %n %m"); }
+TEST_CASE("StaticStorage")         { runReadDiff("StaticStorage", "%m"); }
 
 #if __cplusplus >= 201703L
 

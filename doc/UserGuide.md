@@ -458,6 +458,6 @@ The Binlog test suite tests if this requirement holds on a given platform.
 **High Performance Branch**: The performance related additions of the `hiperf` branch
 put additional constraints on the platform Binlog can work on:
 
- - Compiler: Clang
+ - Compiler: Clang (any platform) or GCC (x86 and x86_64 only)
  - Operating System: Linux
  - Executable format: ELF

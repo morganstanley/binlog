@@ -322,6 +322,7 @@ add_example(TscClock)
   add_inttest(SeverityControl)
   add_inttest(Categories)
   add_inttest(Shell)
+  add_inttest(StaticStorage)
 
   if(BINLOG_USE_ASAN OR BINLOG_USE_TSAN)
     # Crash recovery test creates a coredump of Shell.
