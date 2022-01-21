@@ -54,8 +54,12 @@ namespace detail {
 // Can't use the return value of cx_strcat directly, because sv.data(),
 // a pointer to a subobject of a temporary, cannot appear in a constexpr.
 // Instead, save it in a static field of this type.
+// It must have an address (linkage), but it must not create a relocation
+// (e.g: because of vague linkage) in shared libs, therefore, it must be hidden.
 template <typename... T>
-struct ConcatenatedTags
+struct
+__attribute__((visibility("hidden")))
+ConcatenatedTags
 {
   static constexpr auto tag = mserialize::cx_strcat(mserialize::tag<T>()...);
 };
