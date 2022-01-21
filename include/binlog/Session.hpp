@@ -8,6 +8,8 @@
 #include <binlog/detail/VectorOutputStream.hpp>
 #include <binlog/detail/read_sources.hpp>
 
+#include <mserialize/string_view.hpp>
+
 #include <algorithm> // remove_if
 #include <atomic>
 #include <cstdint>
@@ -120,6 +122,18 @@ public:
    * @returns the id assigned to the added event source
    */
   std::uint64_t addEventSource(EventSource eventSource);
+
+  /**
+   * Scan the loaded libraries and read metadata from those paths that match `pathSuffix`.
+   *
+   * Must be called after a library, that uses binlog,
+   * is loaded with dlopen(), and before a subsequent consume() call,
+   * and before the library is dlcose()-ed.
+   *
+   * It will read event sources from every loaded library
+   * that is loaded from a path that ends with `pathSuffix`.
+   */
+  void addEventSources(mserialize::string_view pathSuffix);
 
   /** @returns Severity below writers should not add events */
   Severity minSeverity() const;
@@ -257,6 +271,17 @@ inline std::uint64_t Session::addEventSource(EventSource eventSource)
   eventSource.id = _nextSourceId;
   serializeSizePrefixedTagged(eventSource, _sources);
   return _nextSourceId++;
+}
+
+inline void Session::addEventSources(mserialize::string_view pathSuffix)
+{
+  std::lock_guard<std::mutex> lock(_mutex);
+
+  const auto eventSources = detail::event_sources_of_running_program(pathSuffix);
+  for (const auto& eventSource : eventSources)
+  {
+    serializeSizePrefixedTagged(eventSource, _sources);
+  }
 }
 
 inline Severity Session::minSeverity() const

@@ -327,8 +327,13 @@ add_example(TscClock)
     test/integration/StaticStorageSharedLib.cpp
   )
     target_link_libraries(StaticStorageSharedLib headers)
+  add_library(StaticStorageDynamicLib SHARED
+    test/integration/StaticStorageDynamicLib.cpp
+  )
+  target_link_libraries(StaticStorageDynamicLib headers)
   add_inttest(StaticStorage)
     target_link_libraries(StaticStorage StaticStorageSharedLib)
+    target_link_libraries(StaticStorage dl)
 
   if(BINLOG_USE_ASAN OR BINLOG_USE_TSAN)
     # Crash recovery test creates a coredump of Shell.
