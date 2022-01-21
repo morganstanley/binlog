@@ -17,6 +17,8 @@ inline void inline_function()
   BINLOG_INFO("Log from inline function");
 }
 
+void shared_lib_function();
+
 int main()
 {
   BINLOG_INFO("Log from main");
@@ -27,6 +29,9 @@ int main()
 
   inline_function();
   // Outputs: Log from inline function
+
+  shared_lib_function();
+  // Outputs: Log from shared lib function
 
   binlog::consume(std::cout);
   return 0;

@@ -19,11 +19,17 @@
 namespace binlog {
 namespace detail {
 
-inline void add_event_sources_of_file(const std::string& path, std::vector<EventSource>& result)
+inline void add_event_sources_of_file(const std::string& path, std::uintptr_t loadaddr, std::vector<EventSource>& result)
 {
   const MemoryMappedFile f(path.data());
   ElfW(Ehdr) ehdr;
   f.read(0, sizeof(ehdr), &ehdr);
+
+  if (ehdr.e_type == ET_EXEC)
+  {
+    // the load address is not added to the address of the sections of the main executable
+    loadaddr = 0;
+  }
 
   std::vector<ElfW(Shdr)> shdrs(ehdr.e_shnum);
   f.read(ehdr.e_shoff, shdrs.size() * sizeof(ElfW(Shdr)), shdrs.data());
@@ -55,7 +61,7 @@ inline void add_event_sources_of_file(const std::string& path, std::vector<Event
         f.read(shdr.sh_offset + offset, sizeof(ptrs), ptrs);
 
         result.push_back(EventSource{
-          (shdr.sh_addr + offset) / 64,
+          (loadaddr + shdr.sh_addr + offset) / 64,
           severityFromString(f.string(foffset(ptrs[0]))),
           f.string(foffset(ptrs[1])).to_string(),
           f.string(foffset(ptrs[2])).to_string(),
@@ -113,7 +119,7 @@ inline std::vector<EventSource> event_sources_of_running_program()
 
     try
     {
-      add_event_sources_of_file(m.path, result);
+      add_event_sources_of_file(m.path, m.begin, result);
     }
     catch (const std::runtime_error&)
     {
