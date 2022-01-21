@@ -4,6 +4,8 @@
 #include <binlog/Entries.hpp>
 #include <binlog/detail/MemoryMappedFile.hpp>
 
+#include <mserialize/string_view.hpp>
+
 #include <elf.h>
 #include <link.h>
 
@@ -103,7 +105,7 @@ inline MapRecord::MapRecord(const std::string& line)
   if (str.fail() || str.bad()) { begin = end = 0; }
 }
 
-inline std::vector<EventSource> event_sources_of_running_program()
+inline std::vector<EventSource> event_sources_of_running_program(mserialize::string_view pathsuffix = {})
 {
   std::vector<EventSource> result;
 
@@ -115,6 +117,7 @@ inline std::vector<EventSource> event_sources_of_running_program()
   {
     const MapRecord m(line);
     if (m.begin == m.end || m.path.empty() || m.offset != 0) { continue; }
+    if (! mserialize::string_view{m.path}.ends_with(pathsuffix)) { continue; }
     if (! visited.insert(m.path).second) { continue; }
 
     try

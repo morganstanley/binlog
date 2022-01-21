@@ -433,6 +433,22 @@ Usage is like before:
 
     [catchfile example/MultiOutput.cpp usage]
 
+# Runtime Loaded Libraries
+
+On the `hiperf` branch only, dynamic libraries loaded runtime with `dlopen`,
+that also use binlog, require special care.
+If such a library is loaded after the first consume call to a session,
+the session must be notified about the loaded library,
+before the library is unloaded by `dlclose` and before the session is consumed again,
+otherwise log events produced by the library will miss their metadata:
+
+    [catchfile test/integration/StaticStorage.cpp addEventSources]
+
+The `path` argument is treated as a suffix: the absolute path of the loaded library
+as it appears in `/proc/self/maps` must end with the given suffix. It is allowed
+to specify a suffix that matches more loaded objects, even the empty suffix,
+that matches everything, at the price of possibly consuming metadata twice.
+
 # Limitations
 
 **Logging in global destructor context**:
