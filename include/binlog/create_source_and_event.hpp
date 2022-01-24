@@ -61,8 +61,18 @@ struct
 __attribute__((visibility("hidden")))
 ConcatenatedTags
 {
+#if __cplusplus >= 201703L
   static constexpr auto tag = mserialize::cx_strcat(mserialize::tag<T>()...);
+#else
+  using tag_string_type = decltype(mserialize::cx_strcat(mserialize::tag<T>()...));
+  static constexpr tag_string_type tag = mserialize::cx_strcat(mserialize::tag<T>()...);
+#endif
 };
+
+#if __cplusplus < 201703L
+template <typename... T>
+constexpr typename ConcatenatedTags<T...>::tag_string_type ConcatenatedTags<T...>::tag;
+#endif
 
 /**
  * No temporary of non-literal type allowed in constant expression.
