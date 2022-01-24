@@ -70,18 +70,4 @@ TEST_CASE("min_severity")
   CHECK(session.minSeverity() == binlog::Severity::info);
 }
 
-TEST_CASE("sources_consumed_once")
-{
-  binlog::Session session;
-  binlog::EventSource eventSource;
-  session.addEventSource(eventSource);
-
-  NullOstream out;
-  binlog::Session::ConsumeResult cr = session.consume(out);
-  CHECK(cr.bytesConsumed != 0);
-
-  cr = session.consume(out);
-  CHECK(cr.bytesConsumed == 0);
-}
-
-// addEventSource and consume are further tested in TestSessionWriter.cpp
+// consume is further tested in TestSessionWriter.cpp

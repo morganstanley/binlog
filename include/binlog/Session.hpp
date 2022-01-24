@@ -109,21 +109,6 @@ public:
   void setChannelWriterName(Channel& channel, std::string name);
 
   /**
-   * Add `eventSource` to the set of metadata managed by this session.
-   *
-   * The returned id can be used by event producers to
-   * reference `eventSource` later in the stream.
-   *
-   * Events created after the addition of an EventSource
-   * (addEventSource happens before addEvent)
-   * are guaranteed to be consumed after the event source
-   * by `Session::consume`.
-   *
-   * @returns the id assigned to the added event source
-   */
-  std::uint64_t addEventSource(EventSource eventSource);
-
-  /**
    * Scan the loaded libraries and read metadata from those paths that match `pathSuffix`.
    *
    * Must be called after a library, that uses binlog,
@@ -211,7 +196,6 @@ private:
   detail::RecoverableVectorOutputStream _clockSync = {0xFE214F726E35BDBC, this};
   detail::RecoverableVectorOutputStream _sources = {0xFE214F726E35BDBC, this};
   std::streamsize _sourcesConsumePos = 0;
-  std::uint64_t _nextSourceId = 1;
 
   std::size_t _totalConsumedBytes = 0;
 
@@ -262,15 +246,6 @@ inline void Session::setChannelWriterName(Channel& channel, std::string name)
   std::lock_guard<std::mutex> lock(_mutex);
 
   channel.writerProp.name = std::move(name);
-}
-
-inline std::uint64_t Session::addEventSource(EventSource eventSource)
-{
-  std::lock_guard<std::mutex> lock(_mutex);
-
-  eventSource.id = _nextSourceId;
-  serializeSizePrefixedTagged(eventSource, _sources);
-  return _nextSourceId++;
 }
 
 inline void Session::addEventSources(mserialize::string_view pathSuffix)
