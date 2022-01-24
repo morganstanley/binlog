@@ -97,8 +97,6 @@ public:
    * a new channel is created, suitable to hold this event,
    * and the old one is closed.
    *
-   * @pre `eventSourceId` must be the id of an event source added to `session()`,
-   *      see Session::addEventSource.
    * @param eventSourceId The id of the source which produces the event
    * @param clock Value of the clock (specified by ClockSync),
    *        when the event was created (now).
