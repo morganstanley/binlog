@@ -6,13 +6,16 @@
 #include <fstream>
 #include <iostream>
 
-// Make __rdtsc available. Works on GCC, Clang, MSVC.
+// Make __rdtsc available. Works on x86 GCC, Clang, MSVC.
 // Other platforms might need different treatment.
 #ifdef _WIN32
   #include <intrin.h>
   #pragma intrinsic(__rdtsc)
-#else
+#elif defined(__i386__) or defined(__x86_64__)
   #include <x86intrin.h>
+#else
+  // other platform - provide a dummy implementation
+  std::uint64_t __rdtsc() { return 0; }
 #endif
 
 // Define a log macro, similar to BINLOG_INFO_W,
