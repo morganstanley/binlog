@@ -7,10 +7,12 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <ios>
 #include <memory>
 #include <system_error>
 #include <utility>
 
+#include <fcntl.h>
 #include <sys/mman.h>
 #include <unistd.h>
 
@@ -281,17 +283,18 @@ public:
  * twice, putting the maps next to each other.
  *
  * Limitations:
- *  - Linux only
+ *  - Linux/macOS only
  *  - capacity must be power of two, multiple of page size
- *  - requires tmpfs (e.g: /dev/shm)
+ *  - Linux requires tmpfs (e.g: /dev/shm)
  */
 class Cueue
 {
 public:
-  /** @param capacity must be a power of two, multiple of page size (4096) */
+  /** @param capacity must be a power of two, multiple of page size */
   explicit Cueue(std::size_t capacity)
   {
-    capacity = nextPowerTwo(std::max(capacity, 4096UL));
+    const std::size_t cbsize = controlblocksize();
+    capacity = nextPowerTwo(std::max(capacity, cbsize));
 
     // Create a large enough file in memory to host the control block and the buffer
     const File f(memoryfile(cbsize + capacity));
@@ -313,9 +316,16 @@ public:
     controlblock().discriminator = discriminator;
   }
 
+  std::size_t capacity() const { return controlblock().capacity; }
+
   CueueControlBlock& controlblock()
   {
     return *reinterpret_cast<CueueControlBlock*>(_map.get());
+  }
+
+  const CueueControlBlock& controlblock() const
+  {
+    return *reinterpret_cast<const CueueControlBlock*>(_map.get());
   }
 
   CueueWriter writer() { return CueueWriter(controlblock(), buffer()); }
@@ -327,7 +337,13 @@ public:
   }
 
 private:
-  static const std::size_t cbsize = 4096; /**< Size of the control block before the buffer */
+  /** Size of the control block before the buffeer */
+  static std::size_t controlblocksize()
+  {
+    long pagesize = sysconf(_SC_PAGESIZE); // NOLINT(google-runtime-int)
+    if (pagesize < 0) { throw_errno("sysconf"); }
+    return std::size_t(pagesize);
+  }
 
   static void throw_errno(const char* msg)
   {
@@ -337,11 +353,23 @@ private:
   /** Create a file descriptor that points to a `size` big chunk of memory */
   static File memoryfile(std::size_t size)
   {
+#ifdef __linux__
     // Do not use memfd_create to retain compatibility with older systems (e.g: rhel7)
     char path[] = "/dev/shm/binlog_XXXXXX";
     File f(mkstemp(path));
     if (!f) { throw_errno("mkstemp"); }
     unlink(path);
+#elif defined(__APPLE__)
+    // create a temp file to reserve a system-wide unique name
+    char path[] = "/tmp/binlog_XXXXXX";
+    File nf(mkstemp(path));
+    if (!nf) { throw_errno("mkstemp"); }
+
+    File f(shm_open(path, O_RDWR|O_CREAT|O_EXCL));
+    unlink(path);
+    if (!f) { throw_errno("shm_open"); }
+#endif
+
     if (ftruncate(*f, off_t(size)) != 0) { throw_errno("ftruncate"); }
     return f;
   }
@@ -357,10 +385,16 @@ private:
     );
     if (map.get() == MAP_FAILED) { throw_errno("mmap 1"); } // NOLINT
 
+#ifdef __linux__
+    const int platform_flags = MAP_POPULATE;
+#else
+    const int platform_flags = 0;
+#endif
+
     // Map f twice, put maps next to each other with MAP_FIXED
     // MAP_SHARED is required to have the changes propagated between maps
     char* first_addr = static_cast<char*>(map.get()) + offset;
-    const void* first_map = mmap(first_addr, size, rw, MAP_SHARED | MAP_FIXED | MAP_POPULATE, fd, off_t(offset));
+    const void* first_map = mmap(first_addr, size, rw, MAP_SHARED | MAP_FIXED | platform_flags, fd, off_t(offset));
     if (first_map != first_addr) { throw_errno("mmap 2"); }
 
     void* second_addr = first_addr + size;
@@ -377,7 +411,7 @@ private:
 
   char* buffer()
   {
-    return static_cast<char*>(_map.get()) + cbsize;
+    return static_cast<char*>(_map.get()) + controlblocksize();
   }
 
   MemoryMap _map;

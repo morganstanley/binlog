@@ -95,14 +95,15 @@ TEST_CASE("full_capacity")
 {
   std::size_t capacity = 4096;
   binlog::detail::Cueue q(capacity);
+  capacity = q.capacity();
 
   auto w = q.writer();
   auto r = q.reader();
 
   // full capacity can be used
   CHECK(w.beginWrite() == capacity);
-  const char wbuf[4096] = {0};
-  w.write(wbuf, std::streamsize(capacity));
+  const std::vector<char> wbuf(capacity, '0');
+  w.write(wbuf.data(), std::streamsize(capacity));
   w.endWrite();
 
   // no space left to write
@@ -117,7 +118,7 @@ TEST_CASE("full_capacity")
   // full capacity can be used, even if
   // only one byte was left at the end
   CHECK(w.beginWrite() == capacity);
-  w.write(wbuf, std::streamsize(capacity-1));
+  w.write(wbuf.data(), std::streamsize(capacity-1));
   w.endWrite();
 
   auto rr2 = r.beginRead();
