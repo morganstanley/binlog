@@ -14,9 +14,15 @@
 
 #ifdef __clang__
 
+#ifdef __APPLE__
+  #define BINLOG_SECTION_ATTR(name) __attribute__((section("__DATA_CONST," name), used))
+#else
+  #define BINLOG_SECTION_ATTR(name) __attribute__((section(name), used))
+#endif
+
 // The static_casts are needed to avoid section type conflicts with clang.
 #define BINLOG_CREATE_SOURCE(id, severity, category, format, argumenttags) \
-  __attribute__((section(".binlog.esrc"), used))                           \
+  BINLOG_SECTION_ATTR(".binlog.esrc")                                      \
   static constexpr const char* _binlog_esrc[] = {                          \
     severity,                                                              \
     #category,                                                             \

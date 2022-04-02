@@ -475,5 +475,5 @@ The Binlog test suite tests if this requirement holds on a given platform.
 put additional constraints on the platform Binlog can work on:
 
  - Compiler: Clang (any platform) or GCC (x86 and x86_64 only)
- - Operating System: Linux
- - Executable format: ELF
+ - Operating System: Linux or macOS
+ - Executable format: ELF or Mach-O

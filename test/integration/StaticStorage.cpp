@@ -65,7 +65,14 @@ int main()
   // Outputs: Log from shared lib function
 
   // dlopen requires additional care
-  call_dynamic_lib_function("libStaticStorageDynamicLib.so");
+#ifdef __linux__
+  const char libname[] = "libStaticStorageDynamicLib.so";
+#elif defined(__APPLE__)
+  const char libname[] = "libStaticStorageDynamicLib.dylib";
+#else
+  #error "Unsupported platform"
+#endif
+  call_dynamic_lib_function(libname);
   // Outputs: Log from dynamic lib function
 
   binlog::consume(std::cout);
