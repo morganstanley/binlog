@@ -215,15 +215,15 @@ TEST_CASE("queue_is_full")
   BINLOG_CREATE_SOURCE(eventSourceid, "INFO", "cat", "a={}", "[i");
 
   // add more data that would otherwise fit in the queue
-  for (int i = 0; i < 256; ++i)
+  for (int i = 0; i < 512; ++i)
   {
     // even if the queue is full, writer allocates a new queue, returns true
     CHECK(writer.addEvent(eventSourceid, 0, std::vector<int>{i,i+1,i+2}));
   }
 
   std::vector<std::string> expectedEvents;
-  expectedEvents.reserve(256);
-  for (int i = 0; i < 256; ++i)
+  expectedEvents.reserve(512);
+  for (int i = 0; i < 512; ++i)
   {
     std::ostringstream s;
     s << "7 Seven a=[" << i << ", " << i+1 << ", " << i+2 << "]";
