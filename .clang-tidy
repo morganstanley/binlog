@@ -11,6 +11,8 @@ Checks: "\
   *,
   -altera-*,\
   -fuchsia-*,\
+  -bugprone-easily-swappable-parameters,\
+  -bugprone-exception-escape,\
   -bugprone-sizeof-expression,\
   -cppcoreguidelines-avoid-c-arrays,\
   -cppcoreguidelines-avoid-magic-numbers,\
@@ -30,6 +32,7 @@ Checks: "\
   -readability-magic-numbers,\
   -readability-named-parameter,\
   -readability-uppercase-literal-suffix,\
+  -readability-suspicious-call-argument,\
   -misc-non-private-member-variables-in-classes,\
   -misc-no-recursion,\
   -modernize-avoid-c-arrays,\
