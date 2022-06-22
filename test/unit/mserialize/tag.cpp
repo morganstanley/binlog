@@ -188,3 +188,23 @@ MSERIALIZE_MAKE_DERIVED_STRUCT_TAG(Derived2, (Derived1))
 static_assert(mserialize::tag<Derived2>() == "{Derived2`'{Derived1`'{Base2`'{Base1`a'i}`b'i}`'{Base3`c'[c}`d'i`e'i}}", "");
 
 #endif // _WIN32
+
+// test has_tag
+
+// This is a private method, but still useful sometimes,
+// e.g: user wants to check if a template with a random member is loggable or not.
+
+struct Adapted{};
+MSERIALIZE_MAKE_STRUCT_TAG(Adapted)
+
+struct NotAdapted{};
+
+template <typename Nested>
+struct Nest
+{
+  Nested n;
+};
+MSERIALIZE_MAKE_TEMPLATE_TAG((typename Nested), (Nest<Nested>), n)
+
+static_assert(mserialize::detail::has_tag<Nest<Adapted>>::value, "");
+static_assert(!mserialize::detail::has_tag<Nest<NotAdapted>>::value, "");
