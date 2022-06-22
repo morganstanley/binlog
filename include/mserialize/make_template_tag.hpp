@@ -78,12 +78,25 @@
 // MSERIALIZE_UNTUPLE((Tuple<A,B,C>)) = Tuple<A,B,C>
 // MSERIALIZE_STRINGIZE_LIST(Tuple<A,B,C>) ~= "Tuple<A,B,C>"
 //
+// tag_guard: to make has_tag report correctly if T<A> has a tag or not,
+// (that depends on the template parameter), we first check if every member
+// has a tag (see conjunction), then either create a constructible member
+// (true_type, if every member has a tag), or a not-constructible member,
+// (BuiltinTag), making this spec also non-constructible - has_tag
+// checks constructibility.
 #define MSERIALIZE_MAKE_TEMPLATE_TAG(TemplateArgs, ...)           \
   namespace mserialize {                                          \
   template <MSERIALIZE_UNTUPLE(TemplateArgs)>                     \
   struct CustomTag<MSERIALIZE_UNTUPLE(MSERIALIZE_FIRST(__VA_ARGS__)), void> \
   {                                                               \
     using T = MSERIALIZE_UNTUPLE(MSERIALIZE_FIRST(__VA_ARGS__));  \
+    std::conditional_t<                                           \
+      mserialize::detail::conjunction<                            \
+        MSERIALIZE_FOREACH(MSERIALIZE_HAS_TAG, _, __VA_ARGS__)    \
+      std::true_type>::value,                                     \
+      std::true_type,                                             \
+      mserialize::detail::BuiltinTag<void>                        \
+    > tag_guard;                                                  \
     static constexpr auto tag_string()                            \
     {                                                             \
       return cx_strcat(                                           \
@@ -107,5 +120,9 @@
   /**/
 
 #define MSERIALIZE_STRINGIZE_LIST_I(_, a) "," #a
+
+#define MSERIALIZE_HAS_TAG(_, m)                                                      \
+  mserialize::detail::has_tag<decltype(mserialize::serializable_member_type(&T::m))>, \
+  /**/
 
 #endif // MSERIALIZE_MAKE_TEMPLATE_TAG_HPP
