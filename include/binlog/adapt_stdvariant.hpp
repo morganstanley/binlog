@@ -55,6 +55,13 @@ struct CustomSerializer<std::variant<T...>>
 template <typename... T>
 struct CustomTag<std::variant<T...>>
 {
+  // Make this type not-constructible, if some Tag<T> is not constructible
+  std::conditional_t<
+    detail::conjunction<detail::has_tag<T>...>::value,
+    std::true_type,
+    mserialize::detail::BuiltinTag<void>
+  > tag_guard;
+
   static constexpr auto tag_string()
   {
     return cx_strcat(
