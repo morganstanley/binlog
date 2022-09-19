@@ -186,27 +186,41 @@ if(NOT BINLOG_IS_TOPLEVEL_PROJECT)
   add_library(binlog::binlog  ALIAS binlog)
 endif()
 
+list(APPEND BINLOG_INSTALL_TARGETS "headers" "binlog")
+
 #---------------------------
 # bread
 #---------------------------
 
-add_executable(bread
-  bin/bread.cpp
-  bin/printers.cpp
-  $<$<CXX_COMPILER_ID:MSVC>:bin/getopt.cpp bin/binaryio.cpp>
-)
+option(BINLOG_BUILD_BREAD "Build the bread binary" ON)
+
+if (BINLOG_BUILD_BREAD)
+  add_executable(bread
+    bin/bread.cpp
+    bin/printers.cpp
+    $<$<CXX_COMPILER_ID:MSVC>:bin/getopt.cpp bin/binaryio.cpp>
+  )
   target_link_libraries(bread PRIVATE binlog)
   set_property(TARGET bread  PROPERTY INTERPROCEDURAL_OPTIMIZATION ${BINLOG_HAS_IPO})
+
+  list(APPEND BINLOG_INSTALL_TARGETS "bread")
+endif()
 
 #---------------------------
 # brecovery
 #---------------------------
 
-add_executable(brecovery
-  bin/brecovery.cpp
-  $<$<CXX_COMPILER_ID:MSVC>:bin/binaryio.cpp>
-)
+option(BINLOG_BUILD_BRECOVERY "Build the brecovery binary" ON)
+
+if (BINLOG_BUILD_BRECOVERY)
+  add_executable(brecovery
+    bin/brecovery.cpp
+    $<$<CXX_COMPILER_ID:MSVC>:bin/binaryio.cpp>
+  )
   target_link_libraries(brecovery PRIVATE binlog)
+
+  list(APPEND BINLOG_INSTALL_TARGETS "brecovery")
+endif()
 
 #---------------------------
 # Documentation
@@ -218,25 +232,32 @@ markdown_to_html_group(Documentation UserGuide Internals Mserialize)
 # Examples
 #---------------------------
 
-function(add_example name)
-  add_executable(${name} example/${name}.cpp)
-  target_link_libraries(${name} headers)
-endfunction()
+option(BINLOG_BUILD_EXAMPLES "Build the examples" ON)
 
-add_example(HelloWorld)
-add_example(DetailedHelloWorld)
-add_example(ConsumeLoop)
-add_example(LogRotation)
-add_example(TextOutput)
-  target_link_libraries(TextOutput binlog)
-add_example(MultiOutput)
-  target_link_libraries(MultiOutput binlog)
-add_example(TscClock)
+if (BINLOG_BUILD_EXAMPLES)
+  function(add_example name)
+    add_executable(${name} example/${name}.cpp)
+    target_link_libraries(${name} headers)
+  endfunction()
+
+  add_example(HelloWorld)
+  add_example(DetailedHelloWorld)
+  add_example(ConsumeLoop)
+  add_example(LogRotation)
+  add_example(TextOutput)
+    target_link_libraries(TextOutput binlog)
+  add_example(MultiOutput)
+    target_link_libraries(MultiOutput binlog)
+  add_example(TscClock)
+endif()
 
 #---------------------------
 # Unit Test
 #---------------------------
 
+option(BINLOG_BUILD_UNIT_TESTS "Build the unit tests" ON)
+
+if (BINLOG_BUILD_UNIT_TESTS)
   message(STATUS "Build unit tests")
 
   add_executable(UnitTest
@@ -287,11 +308,15 @@ add_example(TscClock)
 
   add_test(NAME UnitTest COMMAND UnitTest -s --force-colors)
   set_property(TEST UnitTest PROPERTY ENVIRONMENT ASAN_OPTIONS=detect_leaks=1)
+endif()
 
 #---------------------------
 # Integration Test
 #---------------------------
 
+option(BINLOG_BUILD_INTEGRATION_TESTS "Build the integration tests" ON)
+
+if (BINLOG_BUILD_INTEGRATION_TESTS)
   message(STATUS "Build integration tests")
 
   add_executable(IntegrationTest test/integration/IntegrationTest.cpp)
@@ -353,6 +378,7 @@ add_example(TscClock)
     add_inttest(LoggingBoostTypes)
       optional_include_boost(LoggingBoostTypes)
   endif()
+endif()
 
 #---------------------------
 # Performance Test
@@ -407,7 +433,7 @@ install(
 )
 
 install(
-  TARGETS bread brecovery headers binlog
+  TARGETS ${BINLOG_INSTALL_TARGETS}
   EXPORT binlogTargets
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib
