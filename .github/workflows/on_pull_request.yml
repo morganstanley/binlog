@@ -99,6 +99,33 @@ jobs:
           cd ThreadSanitized
           ctest -VV
 
+  build_linux_clang_cpp20:
+    name: Build on Linux with Clang, C++20
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Dependencies
+        run: |
+          # remove broken packages installed by default
+          sudo apt remove -y clang-6.0 libclang-common-6.0-dev libclang1-6.0 libllvm6.0
+          sudo apt install -y clang
+      - name: Configure
+        run: |
+          set -x
+          mkdir Clang
+          cd Clang
+          export CC=$(which clang)
+          export CXX=$(which clang++)
+          cmake -DCMAKE_CXX_STANDARD=20 ..
+      - name: Build
+        run: |
+          cd Clang
+          make -j2 VERBOSE=1
+      - name: Test
+        run: |
+          cd Clang
+          ctest -VV
+
   build_linux_clang_tidy:
     name: Build on Linux with Clang+Tidy
     runs-on: ubuntu-latest
