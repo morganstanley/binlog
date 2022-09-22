@@ -117,6 +117,43 @@
   MSERIALIZE_EXPAND(MSERIALIZE_MAKE_TEMPLATE_SERIALIZABLE(__VA_ARGS__)) \
   /**/
 
+#if __cplusplus >= 202002L // Otherwise __VA_OPT__ breaks
+/**
+ * BINLOG_ADAPT_CONCEPT(Concept, members...)
+ *
+ * Make types that model `Concept` loggable, in terms of the specified members.
+ *
+ * Example:
+ *
+ *     template<typename T>
+ *     concept Stringable = requires(T a)
+ *     {
+ *       { a.str() } -> std::convertible_to<std::string>;
+ *     };
+ *
+ *     BINLOG_ADAPT_CONCEPT(Stringable, str)
+ *
+ * The macro has to be called in global scope (outside of any namespace).
+ * `Concept` is a Named Requirement - see C++20 concepts.
+ *
+ * members... is a list of data members or getters `Concept` requires.
+ * members... can be empty.
+ * See BINLOG_ADAPT_STRUCT for limitations.
+ *
+ * Calling this macro requires C++20 or greater.
+ *
+ * If type Foo models concept Bar, and Bar is adapted using this macro,
+ * when a Foo object is logged (that is otherwise not adapted),
+ * on the output, the type name will be "Bar", not "Foo".
+ *
+ * @see BINLOG_ADAPT_STRUCT
+ */
+#define BINLOG_ADAPT_CONCEPT(Concept, ...)                                                                         \
+  MSERIALIZE_EXPAND(MSERIALIZE_MAKE_TEMPLATE_TAG((Concept Concept), (Concept) __VA_OPT__(,) __VA_ARGS__))          \
+  MSERIALIZE_EXPAND(MSERIALIZE_MAKE_TEMPLATE_SERIALIZABLE((Concept Concept), (Concept) __VA_OPT__(,) __VA_ARGS__)) \
+  /**/
+#endif // >= C++20
+
 /**
  * Allow member list of BINLOG_ADAPT_STRUCT or BINLOG_ADAPT_TEMPLATE
  * to reference private and protected members.
