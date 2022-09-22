@@ -198,6 +198,10 @@ User defined templates can be adapted for logging in a similar way:
 
     [catchfile test/integration/LoggingAdaptedStructs.cpp adapt_template]
 
+As of C++20, concepts can be also adapted for logging:
+
+    [catchfile test/integration/LoggingAdaptedConcepts.cpp concept]
+
 For more information see the Mserialize documentation on [Adapting custom types][mserialize-act] and
 [Adapting user defined recursive types for visitation][mserialize-rec].
 
