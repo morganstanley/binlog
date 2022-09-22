@@ -114,6 +114,13 @@ if(POLICY CMP0069)
   check_ipo_supported(RESULT BINLOG_HAS_IPO)
   if(BINLOG_HAS_IPO)
     message(STATUS "Use interprocedural optimization")
+
+    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+      # avoid error when mixing clang 10 lto and ld:
+      # /usr/bin/ld: libbinlog.a: error adding symbols: file format not recognized
+      message(STATUS "Use lld")
+      add_link_options("-fuse-ld=lld")
+    endif()
   endif()
 endif()
 

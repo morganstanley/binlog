@@ -108,7 +108,7 @@ jobs:
         run: |
           # remove broken packages installed by default
           sudo apt remove -y clang-6.0 libclang-common-6.0-dev libclang1-6.0 libllvm6.0
-          sudo apt install -y clang
+          sudo apt install -y clang lld
       - name: Configure
         run: |
           set -x
@@ -135,7 +135,7 @@ jobs:
         run: |
           # remove broken packages installed by default
           sudo apt remove -y clang-6.0 libclang-common-6.0-dev libclang1-6.0 libllvm6.0
-          sudo apt install -y clang clang-tidy
+          sudo apt install -y clang clang-tidy lld
       - name: Configure
         run: |
           set -x
