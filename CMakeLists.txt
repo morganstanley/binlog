@@ -336,6 +336,10 @@ add_example(TscClock)
     add_inttest(LoggingVariants)
   endif()
 
+  if(${CMAKE_CXX_STANDARD} GREATER_EQUAL 20)
+    add_inttest(LoggingAdaptedConcepts)
+  endif()
+
   if(Boost_FOUND)
     target_compile_definitions(IntegrationTest PRIVATE BINLOG_HAS_BOOST)
 

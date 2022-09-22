@@ -126,6 +126,12 @@ TEST_CASE("LoggingVariants")       { runReadDiff("LoggingVariants", "%m"); }
 
 #endif
 
+#if __cplusplus >= 202002L
+
+TEST_CASE("LoggingAdaptedConcepts") { runReadDiff("LoggingAdaptedConcepts", "%m"); }
+
+#endif
+
 #ifdef BINLOG_HAS_BOOST
 
 TEST_CASE("LoggingBoostTypes")     { runReadDiff("LoggingBoostTypes", "%m"); }
