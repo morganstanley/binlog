@@ -61,7 +61,7 @@ void printTwoDigits(binlog::detail::OstreamBuffer& out, int i)
 void printNineDigits(binlog::detail::OstreamBuffer& out, int i)
 {
   char buf[16];
-  snprintf(buf, sizeof(buf), "%.9d", i);
+  (void)snprintf(buf, sizeof(buf), "%.9d", i);
   out.write(buf, 9);
 }
 
