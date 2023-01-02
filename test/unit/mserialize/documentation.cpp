@@ -1,6 +1,10 @@
 // The purpose of this suite is to test snippets which are included in the documentation automatically.
 // This suite is not to test the features themselves, which are tested in other suites.
 
+// Different snippets that are extracted automatically into the doc
+// include the same headers, ignore them:
+// NOLINTBEGIN(readability-duplicate-include)
+
 #include <doctest/doctest.h>
 
 #include <sstream>
@@ -188,7 +192,7 @@ TEST_CASE("roundtrip")
     //]
   }
 
-  std::remove(path.data());
+  (void)std::remove(path.data());
   CHECK(true);
 }
 
@@ -243,6 +247,8 @@ TEST_CASE("visit")
     //]
   }
 
-  std::remove(path.data());
+  (void)std::remove(path.data());
   CHECK(true);
 }
+
+// NOLINTEND(readability-duplicate-include)

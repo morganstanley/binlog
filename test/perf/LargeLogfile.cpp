@@ -11,7 +11,7 @@ int main()
   BINLOG_INFO("Hello Large Logfile");
 
   std::size_t size = 0;
-  std::size_t targetSize = 300 * 1024 * 1024;
+  std::size_t targetSize = 300UL * 1024UL * 1024UL;
 
   const std::vector<int> numbers{1,2,3,4,5,6,7,8};
 

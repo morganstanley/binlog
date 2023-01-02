@@ -56,7 +56,7 @@ std::string timePointToString(std::chrono::system_clock::time_point tp)
   char buffer[128] = {0};
   const std::time_t tt = std::chrono::system_clock::to_time_t(tp);
   const std::tm* tm = std::localtime(&tt); // NOLINT(concurrency-mt-unsafe)
-  strftime(buffer, 128, "%Y.%m.%d %H:%M:%S", tm);
+  (void)strftime(buffer, 128, "%Y.%m.%d %H:%M:%S", tm);
   return buffer;
 }
 
