@@ -65,6 +65,22 @@ BINLOG_ADAPT_TEMPLATE((typename A), (Wrap<A>), a)
 
 static_assert(Stringable<Wrap<int>>);
 
+namespace ns {
+
+template<typename T>
+concept Stringable = requires(T a)
+{
+  { a.ns_str() } -> std::convertible_to<std::string>;
+};
+
+}
+
+BINLOG_ADAPT_CONCEPT(ns::Stringable, ns_str)
+
+struct NsFoo {
+  std::string ns_str() const { return "bar"; }
+};
+
 int main()
 {
   BINLOG_INFO("{}", Nothing{});
@@ -80,6 +96,9 @@ int main()
 
   BINLOG_INFO("{}", Wrap<int>{456});
   // Outputs: Wrap{ a: 456 }
+
+  BINLOG_INFO("{}", NsFoo{});
+  // Outputs: ns::Stringable{ ns_str: bar }
 
   binlog::consume(std::cout);
   return 0;
