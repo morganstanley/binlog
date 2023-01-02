@@ -10,38 +10,43 @@
 Checks: "\
   *,
   -altera-*,\
-  -fuchsia-*,\
+  -bugprone-easily-swappable-parameters,\
   -bugprone-sizeof-expression,\
+  -cert-err58-cpp,\
+  -cert-err60-cpp,\
   -cppcoreguidelines-avoid-c-arrays,\
   -cppcoreguidelines-avoid-magic-numbers,\
   -cppcoreguidelines-avoid-non-const-global-variables,\
+  -cppcoreguidelines-init-variables,\
   -cppcoreguidelines-macro-usage,\
-  -cppcoreguidelines-pro-type-vararg,\
-  -cppcoreguidelines-pro-type-reinterpret-cast,\
   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,\
   -cppcoreguidelines-pro-bounds-constant-array-index,\
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,\
-  -cppcoreguidelines-init-variables,\
+  -cppcoreguidelines-pro-type-reinterpret-cast,\
+  -cppcoreguidelines-pro-type-vararg,\
+  -fuchsia-*,\
+  -google-readability-casting,\
   -hicpp-*,\
-  -cert-err58-cpp,\
-  -cert-err60-cpp,\
-  -readability-convert-member-functions-to-static,\
-  -readability-function-cognitive-complexity,\
-  -readability-magic-numbers,\
-  -readability-named-parameter,\
-  -readability-uppercase-literal-suffix,\
-  -misc-non-private-member-variables-in-classes,\
+  -llvm-header-guard,\
   -misc-no-recursion,\
+  -misc-non-private-member-variables-in-classes,\
   -modernize-avoid-c-arrays,\
   -modernize-concat-nested-namespaces,\
   -modernize-return-braced-init-list,\
   -modernize-unary-static-assert,\
   -modernize-use-auto,\
+  -modernize-use-default-member-init,\
   -modernize-use-nodiscard,\
   -modernize-use-trailing-return-type,\
-  -llvm-header-guard,\
+  -readability-convert-member-functions-to-static,\
+  -readability-function-cognitive-complexity,\
+  -readability-identifier-length,\
+  -readability-magic-numbers,\
+  -readability-named-parameter,\
+  -readability-uppercase-literal-suffix,\
   -llvmlibc-*,\
   -google-runtime-references"
+
 
 HeaderFilterRegex: '.*binlog/.*|.*mserialize/.*'
 
