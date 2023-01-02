@@ -198,7 +198,7 @@ User defined templates can be adapted for logging in a similar way:
 
     [catchfile test/integration/LoggingAdaptedStructs.cpp adapt_template]
 
-As of C++20, concepts can be also adapted for logging:
+As of C++20, concepts can be also adapted for logging (namespaced concepts are also supported):
 
     [catchfile test/integration/LoggingAdaptedConcepts.cpp concept]
 
