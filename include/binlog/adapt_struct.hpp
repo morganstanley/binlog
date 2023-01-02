@@ -149,8 +149,8 @@
  * @see BINLOG_ADAPT_STRUCT
  */
 #define BINLOG_ADAPT_CONCEPT(Concept, ...)                                                                         \
-  MSERIALIZE_EXPAND(MSERIALIZE_MAKE_TEMPLATE_TAG((Concept Concept), (Concept) __VA_OPT__(,) __VA_ARGS__))          \
-  MSERIALIZE_EXPAND(MSERIALIZE_MAKE_TEMPLATE_SERIALIZABLE((Concept Concept), (Concept) __VA_OPT__(,) __VA_ARGS__)) \
+  MSERIALIZE_EXPAND(MSERIALIZE_MAKE_TEMPLATE_TAG_I((Concept C), (C), (Concept) __VA_OPT__(,) __VA_ARGS__))         \
+  MSERIALIZE_EXPAND(MSERIALIZE_MAKE_TEMPLATE_SERIALIZABLE((Concept C), (C) __VA_OPT__(,) __VA_ARGS__)) \
   /**/
 #endif // >= C++20
 
