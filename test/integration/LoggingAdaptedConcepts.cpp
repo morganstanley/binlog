@@ -81,6 +81,8 @@ struct NsFoo {
   std::string ns_str() const { return "bar"; }
 };
 
+struct DerivedNsFoo : NsFoo {};
+
 int main()
 {
   BINLOG_INFO("{}", Nothing{});
@@ -98,6 +100,9 @@ int main()
   // Outputs: Wrap{ a: 456 }
 
   BINLOG_INFO("{}", NsFoo{});
+  // Outputs: ns::Stringable{ ns_str: bar }
+
+  BINLOG_INFO("{}", DerivedNsFoo{});
   // Outputs: ns::Stringable{ ns_str: bar }
 
   binlog::consume(std::cout);
