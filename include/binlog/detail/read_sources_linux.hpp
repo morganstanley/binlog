@@ -42,7 +42,7 @@ inline void add_event_sources_of_file(const std::string& path, std::uintptr_t lo
   {
     for (const ElfW(Shdr)& shdr : shdrs)
     {
-      if (shdr.sh_addr < v && shdr.sh_addr + shdr.sh_size > v)
+      if (shdr.sh_addr <= v && shdr.sh_addr + shdr.sh_size > v)
       {
         return v - shdr.sh_addr + shdr.sh_offset;
       }
