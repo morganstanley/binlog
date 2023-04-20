@@ -9,47 +9,28 @@
 #include <elf.h>
 #include <link.h>
 
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <fstream>
-#include <set>
-#include <sstream>
-#include <string>
 #include <vector>
 
 namespace binlog {
 namespace detail {
 
-inline void add_event_sources_of_file(const std::string& path, std::uintptr_t loadaddr, std::vector<EventSource>& result)
+struct EventSourcesOfRunningProgram {
+  mserialize::string_view pathsuffix;
+  std::vector<EventSource> result;
+};
+
+inline void collect_sources_of_mapped_object(const MemoryMappedFile& f, dl_phdr_info* info, std::vector<EventSource>& result)
 {
-  const MemoryMappedFile f(path.data());
+  // Read ELF header
   ElfW(Ehdr) ehdr;
   f.read(0, sizeof(ehdr), &ehdr);
 
-  if (ehdr.e_type == ET_EXEC)
-  {
-    // the load address is not added to the address of the sections of the main executable
-    loadaddr = 0;
-  }
-
+  // Read ELF section headers
   std::vector<ElfW(Shdr)> shdrs(ehdr.e_shnum);
   f.read(ehdr.e_shoff, shdrs.size() * sizeof(ElfW(Shdr)), shdrs.data());
 
+  // Find our section
   const ElfW(Off) string_table_offset = shdrs.at(ehdr.e_shstrndx).sh_offset;
-
-  auto foffset = [&shdrs](std::uint64_t v) // TODO(benedek) perf: cache last hit
-  {
-    for (const ElfW(Shdr)& shdr : shdrs)
-    {
-      if (shdr.sh_addr < v && shdr.sh_addr + shdr.sh_size > v)
-      {
-        return v - shdr.sh_addr + shdr.sh_offset;
-      }
-    }
-    throw std::runtime_error("address out of bounds");
-  };
-
   const mserialize::string_view event_source_section_name(".binlog.esrc");
 
   for (const ElfW(Shdr)& shdr : shdrs)
@@ -57,81 +38,68 @@ inline void add_event_sources_of_file(const std::string& path, std::uintptr_t lo
     const auto section_name = f.string(string_table_offset + shdr.sh_name);
     if (section_name == event_source_section_name)
     {
-      std::uint64_t ptrs[8];
-      for (ElfW(Xword) offset = 0; offset < shdr.sh_size; offset += sizeof(ptrs))
+      // find this section mapped into one of the segments
+      for (int i = 0; i < info->dlpi_phnum; ++i)
       {
-        f.read(shdr.sh_offset + offset, sizeof(ptrs), ptrs);
+        const ElfW(Phdr)& phdr = info->dlpi_phdr[i];
+        if (phdr.p_offset <= shdr.sh_offset && shdr.sh_offset + shdr.sh_size <= phdr.p_offset + phdr.p_filesz)
+        {
+          // this segment contains our section
+          const auto offset = shdr.sh_offset - phdr.p_offset;
 
-        result.push_back(EventSource{
-          (loadaddr + shdr.sh_addr + offset) / 64,
-          severityFromString(f.string(foffset(ptrs[0]))),
-          f.string(foffset(ptrs[1])).to_string(),
-          f.string(foffset(ptrs[2])).to_string(),
-          f.string(foffset(ptrs[3])).to_string(),
-          std::strtoul(f.string(foffset(ptrs[4])).data(), nullptr, 10),
-          f.string(foffset(ptrs[5])).to_string(),
-          f.string(foffset(ptrs[6])).to_string()
-        });
+          const char* data = reinterpret_cast<const char*>(info->dlpi_addr + phdr.p_vaddr + offset); // NOLINT
+          const char* end = data + shdr.sh_size;
+          const char* ptrs[8];
+          for (const char* p = data; p + sizeof(ptrs) <= end; p += sizeof(ptrs))
+          {
+            memcpy(ptrs, p, sizeof(ptrs));
+            result.push_back(EventSource{
+                std::uintptr_t(p) / 64,
+                severityFromString(ptrs[0]),
+                ptrs[1],
+                ptrs[2],
+                ptrs[3],
+                std::strtoul(ptrs[4], nullptr, 10),
+                ptrs[5],
+                ptrs[6],
+            });
+          }
+
+          break;
+        }
       }
     }
   }
 }
 
-/** Represents a line in /proc/<pid>/maps. */
-struct MapRecord
+inline int collect_sources_of_loaded_object(dl_phdr_info* info, size_t, void* vsources)
 {
-  explicit MapRecord(const std::string& line);
+  // man dl_iterate_phdr: For the main program, the dlpi_name field will be an empty string.
+  const char* path = (info->dlpi_name[0] != '\0') ? info->dlpi_name : "/proc/self/exe";
 
-  std::uintptr_t begin = 0;
-  std::uintptr_t end = 0;
-  std::uintptr_t offset = 0;
-  std::string path;
-};
-
-inline MapRecord::MapRecord(const std::string& line)
-{
-  std::istringstream str(line);
-  str >> std::hex >> begin;
-  str.ignore(1, '-');
-  str >> std::hex >> end;
-  str.ignore(1, ' ');
-  str.ignore(16, ' '); // perms
-  str >> std::hex >> offset;
-  str.ignore(1, ' ');
-  str.ignore(16, ' '); // device
-  str.ignore(16, ' '); // inode
-  str >> path;
-
-  if (str.fail() || str.bad()) { begin = end = 0; }
-}
-
-inline std::vector<EventSource> event_sources_of_running_program(mserialize::string_view pathsuffix = {})
-{
-  std::vector<EventSource> result;
-
-  std::set<std::string> visited;
-
-  std::ifstream maps("/proc/self/maps");
-  std::string line;
-  while (std::getline(maps, line))
+  EventSourcesOfRunningProgram& sources = *reinterpret_cast<EventSourcesOfRunningProgram*>(vsources);
+  if (mserialize::string_view(path).ends_with(sources.pathsuffix))
   {
-    const MapRecord m(line);
-    if (m.begin == m.end || m.path.empty() || m.offset != 0) { continue; }
-    if (! mserialize::string_view{m.path}.ends_with(pathsuffix)) { continue; }
-    if (! visited.insert(m.path).second) { continue; }
-
     try
     {
-      add_event_sources_of_file(m.path, m.begin, result);
+      const MemoryMappedFile f(path);
+      collect_sources_of_mapped_object(f, info, sources.result);
     }
     catch (const std::runtime_error&)
     {
-      // unable to parse pseudo modules: [heap], [stack], [vdso], [vsyscall]
+      // unable to open file: it might have been deleted, or pseudo file (vdso).
       // there's no way to propagate this error up, noop for now.
     }
   }
 
-  return result;
+  return 0;
+}
+
+inline std::vector<EventSource> event_sources_of_running_program(mserialize::string_view pathsuffix = {})
+{
+  EventSourcesOfRunningProgram sources{pathsuffix, {}};
+  dl_iterate_phdr(collect_sources_of_loaded_object, &sources);
+  return sources.result;
 }
 
 } // namespace detail
