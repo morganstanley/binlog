@@ -90,7 +90,7 @@
 #define BINLOG_CREATE_SOURCE(id, severity, category, format, argumenttags) \
   std::uint64_t id;                                                        \
   __asm__ __volatile__(                                                    \
-    ".pushsection \".binlog.esrc\",\"?\",@progbits" "\n"                   \
+    ".pushsection \".binlog.esrc\",\"wa?\",@progbits""\n"                  \
     "0:"                                            "\n"                   \
     BINLOG_EVENT_SOURCE_FIELDS_ASM                  "\n"                   \
     ".popsection"                                   "\n"                   \
