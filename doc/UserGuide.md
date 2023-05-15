@@ -289,7 +289,7 @@ compressed logfiles:
 With piping, a live logfile that is being written by the application can be read,
 even if log rotation is configured:
 
-    $ tail -c0 -F logfile.blog | bread
+    $ tail -c +0 -F logfile.blog | bread
 
 To customize the output and for further options, see the builtin help:
 
