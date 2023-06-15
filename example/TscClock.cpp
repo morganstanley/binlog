@@ -8,7 +8,7 @@
 
 // Make __rdtsc available. Works on x86 GCC, Clang, MSVC.
 // Other platforms might need different treatment.
-#ifdef _WIN32
+#ifdef _MSC_VER
   #include <intrin.h>
   #pragma intrinsic(__rdtsc)
 #elif defined(__i386__) or defined(__x86_64__)
