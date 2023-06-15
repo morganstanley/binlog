@@ -205,3 +205,21 @@ jobs:
         run: |
           cd Release
           ctest -VV -C Release
+
+  build_win_mingw:
+    name: Build on Windows with MinGW
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Configure
+        run: |
+          mkdir Release
+          cd Release
+          cmake -DCMAKE_CXX_STANDARD=17 -G "MinGW Makefiles" ..
+      - name: Build
+        run: |
+          cmake --build Release --config Release -j2
+      - name: Test
+        run: |
+          cd Release
+          ctest -VV -C Release
