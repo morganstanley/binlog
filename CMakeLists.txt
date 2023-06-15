@@ -198,7 +198,7 @@ if (BINLOG_BUILD_BREAD)
   add_executable(bread
     bin/bread.cpp
     bin/printers.cpp
-    $<$<CXX_COMPILER_ID:MSVC>:bin/getopt.cpp bin/binaryio.cpp>
+    $<$<PLATFORM_ID:Windows>:bin/getopt.cpp bin/binaryio.cpp>
   )
   target_link_libraries(bread PRIVATE binlog)
   set_property(TARGET bread  PROPERTY INTERPROCEDURAL_OPTIMIZATION ${BINLOG_HAS_IPO})
@@ -215,7 +215,7 @@ option(BINLOG_BUILD_BRECOVERY "Build the brecovery binary" ON)
 if (BINLOG_BUILD_BRECOVERY)
   add_executable(brecovery
     bin/brecovery.cpp
-    $<$<CXX_COMPILER_ID:MSVC>:bin/binaryio.cpp>
+    $<$<PLATFORM_ID:Windows>:bin/binaryio.cpp>
   )
   target_link_libraries(brecovery PRIVATE binlog)
 
@@ -333,7 +333,7 @@ if (BINLOG_BUILD_INTEGRATION_TESTS)
   set_property(TEST IntegrationTest PROPERTY ENVIRONMENT ASAN_OPTIONS=detect_leaks=1:allocator_may_return_null=1)
 
   function(add_inttest name)
-    add_executable(${name} test/integration/${name}.cpp $<$<CXX_COMPILER_ID:MSVC>:bin/binaryio.cpp>)
+    add_executable(${name} test/integration/${name}.cpp $<$<PLATFORM_ID:Windows>:bin/binaryio.cpp>)
     target_link_libraries(${name} headers)
   endfunction()
 
