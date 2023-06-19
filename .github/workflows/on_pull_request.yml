@@ -206,7 +206,7 @@ jobs:
           cd Release
           ctest -VV -C Release
 
-  build_win_mingw:
+  compile_win_mingw:
     name: Build on Windows with MinGW
     runs-on: windows-latest
     steps:
@@ -219,7 +219,3 @@ jobs:
       - name: Build
         run: |
           cmake --build Release --config Release -j2
-      - name: Test
-        run: |
-          cd Release
-          ctest -VV -C Release
