@@ -57,6 +57,36 @@ std::chrono::nanoseconds clockToNsSinceEpoch(const ClockSync& clockSync, std::ui
  */
 void nsSinceEpochToBrokenDownTimeUTC(std::chrono::nanoseconds sinceEpoch, BrokenDownTime& dst);
 
+/** Get the duration elapsed since the UNIX epoch in UTC (no leaps seconds) */
+inline
+  #ifdef __linux__
+    std::chrono::nanoseconds
+  #else
+    std::chrono::system_clock::duration
+  #endif
+clockSinceEpoch()
+{
+  // Depending on how libstdc++ is built (_GLIBCXX_USE_CLOCK_GETTIME_SYSCALL),
+  // system_clock::now() can result in a clock_gettime syscall,
+  // which is really slow compared to the vsyscall equivalent.
+  // Call clock_gettime unconditionally on linux:
+  #ifdef __linux__
+    struct timespec ts{};
+    clock_gettime(CLOCK_REALTIME, &ts);
+    return std::chrono::nanoseconds{
+      std::chrono::seconds{ts.tv_sec} + std::chrono::nanoseconds{ts.tv_nsec}
+    };
+  #else
+    return std::chrono::system_clock::now().time_since_epoch();
+  #endif
+}
+
+/** Get the number of clock ticks since the UNIX epoch in UTC (no leaps seconds) */
+inline std::uint64_t clockNow()
+{
+  return std::uint64_t(clockSinceEpoch().count());
+}
+
 /**
  * Create a ClockSync corresponding to std::chrono::system_clock.
  *
@@ -67,11 +97,10 @@ void nsSinceEpochToBrokenDownTimeUTC(std::chrono::nanoseconds sinceEpoch, Broken
 inline ClockSync systemClockSync()
 {
   using Clock = std::chrono::system_clock;
-  static_assert(Clock::period::num == 1, "Clock measures integer fractions of a second");
 
-  const auto now = Clock::now();
-  const auto since_epoch = now.time_since_epoch();
-  const std::time_t now_tt = Clock::to_time_t(now);
+  const auto since_epoch = clockSinceEpoch();
+  const auto now_tp = Clock::time_point(std::chrono::duration_cast<Clock::duration>(since_epoch));
+  const std::time_t now_tt = Clock::to_time_t(now_tp);
 
   std::tm now_tm{};
   #ifdef _WIN32
@@ -98,12 +127,9 @@ inline ClockSync systemClockSync()
     tzName[0] = 0;
   }
 
-  // on linux, clock_gettime is used directly
-  #ifdef __linux__
-    const uint64_t frequency = 1'000'000'000; // nanoseconds
-  #else
-    const uint64_t frequency = std::uint64_t(Clock::period::den);
-  #endif
+  using Period = decltype(since_epoch)::period;
+  static_assert(Period::num == 1, "Clock measures integer fractions of a second");
+  const uint64_t frequency = std::uint64_t(Period::den);
 
   return ClockSync{
     std::uint64_t(since_epoch.count()),
@@ -112,25 +138,6 @@ inline ClockSync systemClockSync()
     offset,
     tzName
   };
-}
-
-/** Get the number of nanoseconds since the UNIX epoch in UTC (no leaps seconds) */
-inline std::uint64_t clockNow()
-{
-  // Depending on how libstdc++ is built (_GLIBCXX_USE_CLOCK_GETTIME_SYSCALL),
-  // system_clock::now() can result in a clock_gettime syscall,
-  // which is really slow compared to the vsyscall equivalent.
-  // Call clock_gettime unconditionally on linux:
-  #ifdef __linux__
-    struct timespec ts{};
-    clock_gettime(CLOCK_REALTIME, &ts);
-    const std::chrono::nanoseconds nanos{
-      std::chrono::seconds{ts.tv_sec} + std::chrono::nanoseconds{ts.tv_nsec}
-    };
-    return std::uint64_t(nanos.count());
-  #else
-    return std::uint64_t(std::chrono::system_clock::now().time_since_epoch().count());
-  #endif
 }
 
 } // namespace binlog
