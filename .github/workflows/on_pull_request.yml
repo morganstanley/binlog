@@ -99,8 +99,8 @@ jobs:
           cd ThreadSanitized
           ctest -VV
 
-  build_linux_clang_cpp20:
-    name: Build on Linux with Clang, C++20
+  build_linux_clang_cpp17:
+    name: Build on Linux with Clang, C++17
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -114,7 +114,7 @@ jobs:
           cd Clang
           export CC=$(which clang)
           export CXX=$(which clang++)
-          cmake -DCMAKE_CXX_STANDARD=20 ..
+          cmake -DCMAKE_CXX_STANDARD=17 ..
       - name: Build
         run: |
           cd Clang
@@ -181,7 +181,7 @@ jobs:
         run: |
           mkdir Release
           cd Release
-          cmake -DCMAKE_CXX_STANDARD=17 ..
+          cmake -DCMAKE_CXX_STANDARD=20 ..
           make -j2 VERBOSE=1
       - name: Test
         run: |
