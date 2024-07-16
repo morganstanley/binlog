@@ -21,6 +21,13 @@ void logUnsigned()
   BINLOG_INFO("{} {} {} {}", a, b, c, T(40));
 }
 
+template <typename T>
+void logDouble()
+{
+  T f = 1234234.0234242;
+  BINLOG_INFO("{}", f);
+}
+
 int main()
 {
   logSigned<signed short>(); // NOLINT
@@ -65,6 +72,11 @@ int main()
   // Outputs: -20 30 30 -40
   // Outputs: -20 30 30 -40
   // Outputs: -20 30 30 -40
+
+  logDouble<double>();
+  logDouble<long double>();
+  // Outputs: 1234234.0234242
+  // Outputs: 1234234.0234242
 
   char c = 'A';
   const char cc = 'B';
