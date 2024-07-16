@@ -70,18 +70,16 @@ TEST_CASE_FIXTURE(TestcaseBase, "shift_op")
 
   CHECK(toString<float>(0.0f) == "0");
   CHECK(toString<float>(1.0f) == "1");
-  CHECK(toString<float>(1.2f) == "1.2");
-  CHECK(toString<float>(123.456f) == "123.456");
+  CHECK(toString<float>(120.5625f) == "120.5625");
 
   CHECK(toString<double>(0.0) == "0");
   CHECK(toString<double>(1.0) == "1");
-  CHECK(toString<double>(-1.2) == "-1.2");
-  CHECK(toString<double>(123.456) == "123.456");
+  CHECK(toString<double>(120.5625) == "120.5625");
 
   CHECK(toString<long double>(0.0) == "0");
   CHECK(toString<long double>(1.0) == "1");
-  CHECK(toString<long double>(1.2) == "1.2");
-  CHECK(toString<long double>(-123.456) == "-123.456");
+  CHECK(toString<long double>(-120.5625) == "-120.5625");
+  CHECK(toString<long double>(1234234.0234242) == "1234234.0234242");
 
   CHECK(toString("foobar") == "foobar");
 }

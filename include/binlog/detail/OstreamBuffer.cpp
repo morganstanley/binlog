@@ -47,14 +47,14 @@ OstreamBuffer& OstreamBuffer::operator<<(bool b)
 OstreamBuffer& OstreamBuffer::operator<<(double v)
 {
   reserve(64);
-  _p += snprintf(_p, 64, "%g", v);
+  _p += snprintf(_p, 64, "%.16g", v);
   return *this;
 }
 
 OstreamBuffer& OstreamBuffer::operator<<(long double v)
 {
   reserve(128);
-  _p += snprintf(_p, 128, "%Lg", v);
+  _p += snprintf(_p, 128, "%.16Lg", v);
   return *this;
 }
 
