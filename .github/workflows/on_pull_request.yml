@@ -7,7 +7,7 @@ jobs:
     name: Build on Linux with GCC
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - name: Install Dependencies
         run: |
           # enable optional tests of interacting with boost types
@@ -43,7 +43,7 @@ jobs:
     name: Build on Linux with GCC, C++17
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - name: Configure
         run: |
           set -x
@@ -63,7 +63,7 @@ jobs:
     name: Build on Linux with GCC+ASAN+UBSAN
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - name: Configure
         run: |
           set -x
@@ -83,7 +83,7 @@ jobs:
     name: Build on Linux with GCC+TSAN
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - name: Configure
         run: |
           set -x
@@ -103,7 +103,7 @@ jobs:
     name: Build on Linux with Clang, C++17
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - name: Install Dependencies
         run: |
           sudo apt install -y clang lld
@@ -128,7 +128,7 @@ jobs:
     name: Build on Linux with Clang+Tidy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - name: Install Dependencies
         run: |
           sudo apt install -y clang clang-tidy lld
@@ -154,7 +154,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2.3.1
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -176,7 +176,7 @@ jobs:
     name: Build on macOS with Clang
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - name: Build
         run: |
           mkdir Release
@@ -192,7 +192,7 @@ jobs:
     name: Build on Windows with MSVC
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - name: Configure
         run: |
           mkdir Release
@@ -210,7 +210,7 @@ jobs:
     name: Build on Windows with MinGW
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - name: Configure
         run: |
           mkdir Release
