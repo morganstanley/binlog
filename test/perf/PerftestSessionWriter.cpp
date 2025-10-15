@@ -18,7 +18,8 @@ void doNotOptimizeBuffer(const char* buf, std::size_t size)
 {
   for (std::size_t i = 0; i < size; ++i)
   {
-    benchmark::DoNotOptimize(buf[i]);
+    auto buf_data = buf[i];
+    benchmark::DoNotOptimize(buf_data);
   }
 }
 
