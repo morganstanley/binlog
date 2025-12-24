@@ -1,6 +1,6 @@
 # Binlog
 
-![Lifecycle Active](https://badgen.net/badge/Lifecycle/Active/green)  
+![Lifecycle Active](https://img.shields.io/badge/Lifecycle-Active-brightgreen)  
 
 A high performance C++ log library to produce structured binary logs.
 
